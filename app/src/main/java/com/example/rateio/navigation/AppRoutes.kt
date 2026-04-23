@@ -7,7 +7,7 @@ sealed interface Route {
     @Serializable sealed class TopLevel : Route {
         @Serializable data object Home : TopLevel()
         @Serializable data object Browse : TopLevel()
-        @Serializable data object Settings : TopLevel()
+        @Serializable data object Profile : TopLevel()
     }
 
     @Serializable data class RateItemDetail(

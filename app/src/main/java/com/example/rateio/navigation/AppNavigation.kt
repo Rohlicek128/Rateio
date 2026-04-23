@@ -16,9 +16,11 @@ import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.filled.VerifiedUser
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
@@ -42,6 +44,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
 import com.example.rateio.features.home.HomeScreen
+import com.example.rateio.features.rating.RateItemDetail
 
 
 @Composable
@@ -89,44 +92,43 @@ fun AppNavigation(navController: NavHostController = rememberNavController()) {
                         )
                         // Settings
                         NavigationBarItem(
-                            selected = currentDestination?.hasRoute<Route.TopLevel.Settings>() == true,
-                            onClick = { navController.navigateSingleTop(Route.TopLevel.Settings) },
-                            icon = { Icon(Icons.Default.Settings, contentDescription = null) },
-                            label = { Text("Settings") }
+                            selected = currentDestination?.hasRoute<Route.TopLevel.Profile>() == true,
+                            onClick = { navController.navigateSingleTop(Route.TopLevel.Profile) },
+                            icon = { Icon(Icons.Default.Person, contentDescription = null) },
+                            label = { Text("Profile") }
                         )
                     }
                 }
             }
 
         }
-    ) { innerPadding ->
+    ) { globalPadding ->
         NavHost(
             navController = navController,
             startDestination = Route.TopLevel.Home,
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(
-                    top = innerPadding.calculateTopPadding(),
-                    start = innerPadding.calculateStartPadding(LayoutDirection.Ltr),
-                    end = innerPadding.calculateEndPadding(LayoutDirection.Ltr)
-                ),
+            modifier = Modifier.fillMaxSize(),
             enterTransition = { slideInHorizontally(initialOffsetX = { it }) },
             exitTransition = { slideOutHorizontally(targetOffsetX = { -it }) },
             popEnterTransition = { slideInHorizontally(initialOffsetX = { -it }) },
             popExitTransition = { slideOutHorizontally(targetOffsetX = { it }) }
         ) {
             composable<Route.TopLevel.Home> { HomeScreen(
-                contentPadding = PaddingValues(bottom = 88.dp),
+                contentPadding = globalPadding,
                 onItemClick = { id ->
-                navController.navigate(Route.RateItemDetail(id.toString(), ""))
+                    navController.navigate(Route.RateItemDetail(id.toString(), ""))
                 })
             }
             composable<Route.TopLevel.Browse> { Text("Browse") }
-            composable<Route.TopLevel.Settings> { Text("Settings") }
+            composable<Route.TopLevel.Profile> { Text("Profile") }
 
             composable<Route.RateItemDetail> { backStackEntry ->
                 val detail = backStackEntry.toRoute<Route.RateItemDetail>()
-                Text("detail #${detail.itemId}")
+                RateItemDetail(
+                    detail.itemId,
+                    onBackClick = {
+                        navController.popBackStack()
+                    }
+                )
             }
         }
     }
