@@ -1,18 +1,18 @@
 package com.example.rateio.features.rating
 
+import androidx.compose.material3.FilledIconToggleButton
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.outlined.Favorite
 import androidx.compose.material3.ElevatedButton
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -27,21 +27,23 @@ import androidx.compose.material3.TooltipDefaults
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberTooltipState
-import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.unit.dp
+import androidx.wear.compose.material3.IconToggleButtonShapes
 
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RateItemDetail(itemId: String, onBackClick: () -> Unit) {
     var count by remember { mutableIntStateOf(0) }
+    var favourite by remember { mutableStateOf(false) }
 
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
     Scaffold(
@@ -66,11 +68,15 @@ fun RateItemDetail(itemId: String, onBackClick: () -> Unit) {
                         tooltip = { PlainTooltip { Text("Add to favorites") } },
                         state = rememberTooltipState(),
                     ) {
-                        IconButton(onClick = { }) {
-                            Icon(
-                                imageVector = Icons.Filled.Favorite,
-                                contentDescription = "Add to favorites",
-                            )
+                        FilledIconToggleButton(
+                            checked = favourite,
+                            onCheckedChange = { favourite = it }
+                        ) {
+                            if (favourite) {
+                                Icon(Icons.Filled.Favorite, contentDescription = "Add to favorites")
+                            } else {
+                                Icon(Icons.Outlined.Favorite, contentDescription = "Add to favorites")
+                            }
                         }
                     }
                 },
@@ -85,6 +91,8 @@ fun RateItemDetail(itemId: String, onBackClick: () -> Unit) {
                 horizontalArrangement = Arrangement.SpaceAround,
                 modifier = Modifier.fillMaxWidth(),
             ) {
+                Text("Count: $count")
+
                 ElevatedButton(
                     onClick = {}
                 ) {
