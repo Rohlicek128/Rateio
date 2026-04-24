@@ -45,6 +45,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
 import com.example.rateio.features.home.HomeScreen
 import com.example.rateio.features.rating.RateItemDetail
+import com.example.rateio.features.settings.SettingsScreen
 
 
 @Composable
@@ -119,7 +120,7 @@ fun AppNavigation(navController: NavHostController = rememberNavController()) {
                 })
             }
             composable<Route.TopLevel.Browse> { Text("Browse") }
-            composable<Route.TopLevel.Profile> { Text("Profile") }
+            composable<Route.TopLevel.Profile> { SettingsScreen(contentPadding = globalPadding) }
 
             composable<Route.RateItemDetail> { backStackEntry ->
                 val detail = backStackEntry.toRoute<Route.RateItemDetail>()

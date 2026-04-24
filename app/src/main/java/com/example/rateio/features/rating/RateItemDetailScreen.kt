@@ -1,20 +1,18 @@
 package com.example.rateio.features.rating
 
-import androidx.compose.material3.FilledIconToggleButton
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.outlined.Favorite
 import androidx.compose.material3.ElevatedButton
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilledTonalIconToggleButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -36,7 +34,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.unit.dp
-import androidx.wear.compose.material3.IconToggleButtonShapes
+import coil3.compose.AsyncImage
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -68,7 +66,7 @@ fun RateItemDetail(itemId: String, onBackClick: () -> Unit) {
                         tooltip = { PlainTooltip { Text("Add to favorites") } },
                         state = rememberTooltipState(),
                     ) {
-                        FilledIconToggleButton(
+                        FilledTonalIconToggleButton(
                             checked = favourite,
                             onCheckedChange = { favourite = it }
                         ) {
@@ -91,12 +89,17 @@ fun RateItemDetail(itemId: String, onBackClick: () -> Unit) {
                 horizontalArrangement = Arrangement.SpaceAround,
                 modifier = Modifier.fillMaxWidth(),
             ) {
+                AsyncImage(
+                    model = "https://image.tmdb.org/t/p/w342/yihdXomYb5kTeSivtFndMy5iDmf.jpg",
+                    contentDescription = "Translated description of what the image contains"
+                )
+
                 Text("Count: $count")
 
                 ElevatedButton(
-                    onClick = {}
+                    onClick = { count++ }
                 ) {
-                    Text("Elevated Button #2")
+                    Text("Elevated Button")
                 }
             }
             LazyColumn(
