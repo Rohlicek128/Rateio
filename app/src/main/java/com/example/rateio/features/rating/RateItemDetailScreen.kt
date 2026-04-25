@@ -3,18 +3,25 @@ package com.example.rateio.features.rating
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.outlined.Favorite
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ElevatedButton
+import androidx.compose.material3.ElevatedToggleButton
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalIconToggleButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.PlainTooltip
 import androidx.compose.material3.Scaffold
@@ -33,8 +40,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
+import coil3.request.ImageRequest
+import coil3.request.crossfade
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -68,7 +79,8 @@ fun RateItemDetail(itemId: String, onBackClick: () -> Unit) {
                     ) {
                         FilledTonalIconToggleButton(
                             checked = favourite,
-                            onCheckedChange = { favourite = it }
+                            onCheckedChange = { favourite = it },
+                            shapes = IconButtonDefaults.toggleableShapes()
                         ) {
                             if (favourite) {
                                 Icon(Icons.Filled.Favorite, contentDescription = "Add to favorites")
@@ -87,24 +99,47 @@ fun RateItemDetail(itemId: String, onBackClick: () -> Unit) {
         ) {
             Row(
                 horizontalArrangement = Arrangement.SpaceAround,
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth()
             ) {
-                AsyncImage(
-                    model = "https://image.tmdb.org/t/p/w342/yihdXomYb5kTeSivtFndMy5iDmf.jpg",
-                    contentDescription = "Translated description of what the image contains"
-                )
-
-                Text("Count: $count")
+                Card(
+                    onClick = { count++ },
+                    shape = MaterialTheme.shapes.large,
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+                ) {
+                    AsyncImage(
+                        model = ImageRequest.Builder(LocalContext.current)
+                            .data("https://image.tmdb.org/t/p/w780/yihdXomYb5kTeSivtFndMy5iDmf.jpg")
+                            .crossfade(true)
+                            .build(),
+                        contentDescription = "Poster",
+                        modifier = Modifier.height(200.dp)
+                    )
+                }
 
                 ElevatedButton(
-                    onClick = { count++ }
+                    onClick = { count++ },
+                    shapes = ButtonDefaults.shapes()
                 ) {
                     Text("Elevated Button")
                 }
+
+                ElevatedToggleButton(
+                    checked = favourite,
+                    onCheckedChange = { favourite = it },
+                ) {
+                    Text("Favourite")
+                }
             }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Text("Count: $count")
+
+            Spacer(modifier = Modifier.height(8.dp))
+
             LazyColumn(
-                contentPadding = innerPadding,
-                verticalArrangement = Arrangement.spacedBy(8.dp),
+                contentPadding = innerPadding
             ) {
                 val list = (0..75).map { it.toString() }
                 items(count = list.size) {
