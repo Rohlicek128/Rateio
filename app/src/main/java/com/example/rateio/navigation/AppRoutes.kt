@@ -10,8 +10,7 @@ sealed interface Route {
         @Serializable data object Profile : TopLevel()
     }
 
-    @Serializable data class RateItemDetail(
-        val itemId: String,
-        val itemType: String
-    ) : Route
+    @Serializable data class RateItemDetail(val itemId: Long) : Route
+
+    @Serializable data class CategoryDetail(val categoryId: Long) : Route
 }

@@ -17,7 +17,6 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ElevatedButton
 import androidx.compose.material3.ElevatedToggleButton
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalIconToggleButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -40,7 +39,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
@@ -48,9 +46,8 @@ import coil3.request.ImageRequest
 import coil3.request.crossfade
 
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun RateItemDetail(itemId: String, onBackClick: () -> Unit) {
+fun RateItemDetailScreen(itemId: Long, onBackClick: () -> Unit, onChildClick: (Long) -> Unit) {
     var count by remember { mutableIntStateOf(0) }
     var favourite by remember { mutableStateOf(false) }
 
@@ -113,15 +110,15 @@ fun RateItemDetail(itemId: String, onBackClick: () -> Unit) {
                             .crossfade(true)
                             .build(),
                         contentDescription = "Poster",
-                        modifier = Modifier.height(200.dp)
+                        modifier = Modifier.height(250.dp)
                     )
                 }
 
                 ElevatedButton(
-                    onClick = { count++ },
+                    onClick = { onChildClick(count.toLong()) },
                     shapes = ButtonDefaults.shapes()
                 ) {
-                    Text("Elevated Button")
+                    Text("Child Item")
                 }
 
                 ElevatedToggleButton(
