@@ -15,6 +15,10 @@ navigationRuntimeKtx = "2.9.8"
 navigationCompose = "2.9.8"
 composeMaterial3 = "1.6.1"
 room3CommonJvm = "3.0.0-alpha03"
+retrofit = "2.11.0"
+okhttp = "4.12.0"
+runtime = "1.11.0"
+uiUnit = "1.11.0"
 
 [libraries]
 androidx-compose-material3 = { module = "androidx.compose.material3:material3", version.ref = "material3" }
@@ -40,6 +44,11 @@ androidx-compose-material-icons-extended = { group = "androidx.compose.material"
 kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinxSerializationJson" }
 compose-material3 = { group = "androidx.wear.compose", name = "compose-material3", version.ref = "composeMaterial3" }
 androidx-room3-common-jvm = { group = "androidx.room3", name = "room3-common-jvm", version.ref = "room3CommonJvm" }
+retrofit = { group = "com.squareup.retrofit2", name = "retrofit", version.ref = "retrofit" }
+retrofit-gson = { group = "com.squareup.retrofit2", name = "converter-gson", version.ref = "retrofit" }
+okhttp-logging = { group = "com.squareup.okhttp3", name = "logging-interceptor", version.ref = "okhttp" }
+androidx-compose-runtime = { group = "androidx.compose.runtime", name = "runtime", version.ref = "runtime" }
+androidx-compose-ui-unit = { group = "androidx.compose.ui", name = "ui-unit", version.ref = "uiUnit" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

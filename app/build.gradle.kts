@@ -1,3 +1,11 @@
+import java.util.Properties
+
+val localProperties = Properties().apply {
+    val file = rootProject.file("local.properties")
+    if (file.exists()) file.inputStream().use { load(it) }
+}
+
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
@@ -24,7 +32,20 @@ android {
     }
 
     buildTypes {
+        debug {
+            buildConfigField(
+                "String",
+                "TMDB_API_KEY",
+                "\"${localProperties["TMDB_API_KEY"]}\""
+            )
+        }
         release {
+            buildConfigField(
+                "String",
+                "TMDB_API_KEY",
+                "\"${localProperties["TMDB_API_KEY"]}\""
+            )
+
             isMinifyEnabled = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
@@ -38,6 +59,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 }
 
@@ -49,6 +71,8 @@ kotlin {
 }
 
 dependencies {
+    implementation(libs.androidx.compose.runtime)
+    implementation(libs.androidx.compose.ui.unit)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
@@ -74,6 +98,9 @@ dependencies {
 
     implementation(libs.coil.compose)
     implementation(libs.coil.network.okhttp)
+    implementation(libs.retrofit)
+    implementation(libs.retrofit.gson)
+    implementation(libs.okhttp.logging)
 
     implementation(libs.androidx.compose.material3)
 }

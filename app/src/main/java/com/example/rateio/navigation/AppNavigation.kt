@@ -35,6 +35,8 @@ import com.example.rateio.features.home.HomeScreen
 import com.example.rateio.features.rating.CategoryDetailScreen
 import com.example.rateio.features.rating.RateItemDetailScreen
 import com.example.rateio.features.settings.SettingsScreen
+import com.example.rateio.presentation.browse.BrowseScreen
+import com.example.rateio.presentation.rating.tmdb.TmdbShowDetailScreen
 
 
 @Composable
@@ -44,8 +46,9 @@ fun AppNavigation(navController: NavHostController = rememberNavController()) {
 
     Scaffold(
         bottomBar = {
-            val isDetailScreen = currentDestination?.hasRoute<Route.RateItemDetail>() == true ||
-                    currentDestination?.hasRoute<Route.CategoryDetail>() == true
+            val isDetailScreen = currentDestination?.hasRoute<Route.TopLevel.Home>() == false &&
+                    !currentDestination.hasRoute<Route.TopLevel.Browse>() &&
+                    !currentDestination.hasRoute<Route.TopLevel.Profile>()
             val isVisible = !isDetailScreen && currentDestination != null
 
             AnimatedVisibility(
@@ -109,7 +112,23 @@ fun AppNavigation(navController: NavHostController = rememberNavController()) {
                     onItemClick = { id -> navController.navigate(Route.CategoryDetail(id)) }
                 )
             }
-            composable<Route.TopLevel.Browse> { Text("Browse") }
+
+            composable<Route.TopLevel.Browse> {
+                BrowseScreen(
+                    contentPadding = globalPadding,
+                    onShowClick = { showId ->
+                        navController.navigate(Route.TmdbShowDetail(showId))
+                    }
+                )
+            }
+            composable<Route.TmdbShowDetail> { back ->
+                val route = back.toRoute<Route.TmdbShowDetail>()
+                TmdbShowDetailScreen(
+                    showId = route.showId,
+                    onBackClick = { navController.popBackStack() }
+                )
+            }
+
             composable<Route.TopLevel.Profile> { SettingsScreen(contentPadding = globalPadding) }
 
 
