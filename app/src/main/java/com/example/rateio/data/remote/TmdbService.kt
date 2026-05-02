@@ -25,4 +25,21 @@ interface TmdbService {
         @Header("accept") accept: String = "application/json",
         @Header("Authorization") bearer: String = "Bearer " + BuildConfig.TMDB_API_KEY,
     ): TmdbShowDetail
+
+
+    @GET("tv/{showId}/season/{seasonNumber}")
+    suspend fun getSeason(
+        @Path("showId")       showId: Int,
+        @Path("seasonNumber") seasonNumber: Int,
+        @Header("accept") accept: String = "application/json",
+        @Header("Authorization") bearer: String = "Bearer " + BuildConfig.TMDB_API_KEY,
+    ): TmdbSeasonDetail
+
+    @GET("tv/{id}")
+    suspend fun getShowWithSeasons(
+        @Path("id")           id: Int,
+        @Query("append_to_response") append: String,
+        @Header("accept") accept: String = "application/json",
+        @Header("Authorization") bearer: String = "Bearer " + BuildConfig.TMDB_API_KEY,
+    ): TmdbShowWithSeasons
 }

@@ -4,6 +4,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -12,6 +13,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -19,41 +21,49 @@ import java.util.Locale
 
 
 @Composable
-fun RateBox(rating: Float?, modifier: Modifier = Modifier, scale: Dp = 1.dp) {
-    var ratingTest: Float? = null
-    if (rating != null) {
-        if (rating > 0f) ratingTest = rating.plus(0.1f)
-    }
-
+fun RateBox(
+    rating: Float?,
+    modifier: Modifier = Modifier,
+    roundedCorners: Dp = 8.dp,
+    width: Dp = 10.dp,
+    minWidth: Dp = Dp.Unspecified,
+    height: Dp = 4.dp,
+    textStyle: TextStyle = MaterialTheme.typography.titleMedium,
+    onClick: (() -> Unit)? = null
+) {
+    val whiteText = Color(0xFFFFFFFF)
+    val blackText = Color(0xFF181818)
     val (backgroundColor, contentColor, label) = when {
-        ratingTest == null  -> Triple(MaterialTheme.colorScheme.surfaceVariant, MaterialTheme.colorScheme.onSurfaceVariant, null)
-        ratingTest >= 0.96f -> Triple(Color(0xFF1DA1F2), Color(0xFFFFFFFF), "Masterpiece")
-        ratingTest >= 0.90f -> Triple(Color(0xFF186A3B), Color(0xFFFFFFFF), "Awesome")
-        ratingTest >= 0.80f -> Triple(Color(0xFF28B463), Color(0xFF161616), "Great")
-        ratingTest >= 0.70f -> Triple(Color(0xFFF4D03F), Color(0xFF161616), "Good")
-        ratingTest >= 0.60f -> Triple(Color(0xFFF39C12), Color(0xFF161616), "Average")
-        ratingTest >= 0.41f -> Triple(Color(0xFFF39C12), Color(0xFF161616), "Average")
-        ratingTest >= 0.40f -> Triple(Color(0xFFE74C3C), Color(0xFFFFFFFF), "Bad")
-        else            -> Triple(Color(0xFF633974), Color(0xFFFFFFFF), "Garbage")
+        rating == null  -> Triple(MaterialTheme.colorScheme.surfaceVariant, MaterialTheme.colorScheme.onSurfaceVariant, null)
+        rating >= 0.96f -> Triple(Color(0xFF1DA1F2), whiteText, "Masterpiece")
+        rating >= 0.90f -> Triple(Color(0xFF186A3B), whiteText, "Awesome")
+        rating >= 0.80f -> Triple(Color(0xFF28B463), blackText, "Great")
+        rating >= 0.70f -> Triple(Color(0xFFF4D03F), blackText, "Good")
+        rating >= 0.60f -> Triple(Color(0xFFF39C12), blackText, "Average")
+        rating >= 0.41f -> Triple(Color(0xFFF39C12), blackText, "Average")
+        rating >= 0.40f -> Triple(Color(0xFFE74C3C), whiteText, "Bad")
+        else -> Triple(Color(0xFF633974), whiteText, "Garbage")
     }
 
-    val displayText = if (ratingTest != null) "%.1f".format(Locale.US, ratingTest * 10) else "?"
+    val displayText = if (rating != null) "%.1f".format(Locale.US, rating * 10) else "?"
 
     Surface(
         color = backgroundColor,
         contentColor = contentColor,
-        shape = RoundedCornerShape(8.dp + scale),
+        shape = RoundedCornerShape(roundedCorners),
         border = null,
-        modifier = modifier.clickable(onClick = {}),
+        modifier = if (onClick != null) modifier.clickable(onClick = onClick) else modifier,
     ) {
         Column(
-            modifier = Modifier.padding(horizontal = 10.dp + scale, vertical = 4.dp + (scale / 2)),
+            modifier = Modifier
+                .padding(horizontal = width, vertical = height)
+                .widthIn(min = minWidth),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center,
         ) {
             Text(
                 text = displayText,
-                style = MaterialTheme.typography.displayMedium,
+                style = textStyle,
                 fontWeight = FontWeight.Bold,
             )
         }

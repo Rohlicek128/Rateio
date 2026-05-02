@@ -26,24 +26,29 @@ fun AdaptiveAsyncImage(
     placeholderRatio: Float = 2f / 3f,
     minWidth: Dp = Dp.Unspecified,
     maxWidth: Dp = Dp.Unspecified,
+    minHeight: Dp = Dp.Unspecified,
     maxHeight: Dp = Dp.Unspecified,
 ) {
-    var isLoading by remember { mutableStateOf(true) }
+    var imageState by remember { mutableStateOf(AsyncImageState.Loading) }
 
     AsyncImage(
         model = model,
         contentDescription = contentDescription,
         modifier = modifier
             .widthIn(min = minWidth, max = maxWidth)
-            .heightIn(max = maxHeight)
+            .heightIn(min = minHeight, max = maxHeight)
             .then(
-                if (isLoading) Modifier.aspectRatio(placeholderRatio)
-                else Modifier
+                when (imageState) {
+                    AsyncImageState.Success -> Modifier
+                    else -> Modifier.aspectRatio(placeholderRatio)
+                }
             ),
         contentScale = ContentScale.Fit,
         placeholder = ColorPainter(MaterialTheme.colorScheme.surfaceVariant),
-        error = ColorPainter(MaterialTheme.colorScheme.errorContainer),
-        onSuccess = { isLoading = false },
-        onError   = { isLoading = false },
+        error = ColorPainter(MaterialTheme.colorScheme.surfaceVariant),
+        onSuccess = { imageState = AsyncImageState.Success  },
+        onError   = { imageState = AsyncImageState.Error  },
     )
 }
+
+private enum class AsyncImageState { Loading, Success, Error }

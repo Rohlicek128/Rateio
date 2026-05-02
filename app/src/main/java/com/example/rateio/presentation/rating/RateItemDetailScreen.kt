@@ -1,5 +1,6 @@
 package com.example.rateio.presentation.rating
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -14,6 +15,7 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
@@ -36,6 +38,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.painter.ColorPainter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
@@ -45,6 +49,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.em
 import androidx.compose.ui.zIndex
 import coil3.compose.AsyncImage
 import coil3.request.ImageRequest
@@ -59,6 +64,7 @@ fun RateItemDetailScreen(
     subtitle: String?,
     description: String?,
     coverImageUrl: String?,
+    backdropImageUrl: String?,
     rating: Float?,
     ratingLabel: String?,
     onBackClick: () -> Unit,
@@ -75,60 +81,14 @@ fun RateItemDetailScreen(
         ) {
             // Cover + title header
             item {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(56.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    PosterWithRating(
-                        imageUrl = coverImageUrl,
-                        rating = rating
-                    )
-
-                    Column(
-                        verticalArrangement = Arrangement.spacedBy(2.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Text(
-                            title,
-                            style = MaterialTheme.typography.displaySmall,
-                            fontWeight = FontWeight.ExtraBold,
-                            textAlign = TextAlign.Center
-                        )
-                        if (!subtitle.isNullOrBlank()) {
-                            Text(
-                                subtitle,
-                                style = MaterialTheme.typography.titleMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
-                    }
-                }
-
-                /*DetailHeader(
+                DetailHeader(
                     title = title,
                     subtitle = subtitle,
                     coverImageUrl = coverImageUrl,
-                )*/
-            }
-
-            // Rating row
-            /*item {
-                Row(
-                    modifier = modifier,
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.Center,
-                ) {
-                    RateBox(rating)
-                }
-                RatingRow(
-                    rating = rating,
-                    ratingLabel = ratingLabel,
-                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                    backdropImageUrl = backdropImageUrl,
+                    rating = rating
                 )
-            }*/
+            }
 
             // Description
             if (!description.isNullOrBlank()) {
@@ -143,7 +103,7 @@ fun RateItemDetailScreen(
             }
 
             // Divider before extra content
-            item { HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp)) }
+            item { HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp, horizontal = 16.dp)) }
 
             // Type-specific content injected here
             extraContent()
@@ -177,7 +137,7 @@ fun PosterWithRating(
     rating: Float?,
     modifier: Modifier = Modifier
 ) {
-    val rateBoxOverhang = 42.dp
+    val rateBoxOverhang = 38.dp
 
     Box(
         modifier = modifier
@@ -191,41 +151,92 @@ fun PosterWithRating(
         ) {
             AdaptiveAsyncImage(
                 model = imageUrl,
-                maxHeight = 500.dp
+                maxHeight = 450.dp
             )
         }
+        var ratingTest: Float? = null
+        if (rating != null) {
+            if (rating > 0f) ratingTest = rating.plus(0.1f)
+        }
         RateBox(
-            rating = rating,
+            rating = ratingTest,
             modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .offset(y = rateBoxOverhang),
-            scale = 10.dp
+            roundedCorners = 20.dp,
+            width = 24.dp,
+            minWidth = 42.dp,
+            height = 6.dp,
+            textStyle = MaterialTheme.typography.displayMedium,
+            onClick = { }
         )
     }
 }
 
 @Composable
-private fun DetailHeader(title: String, subtitle: String?, coverImageUrl: String?) {
-    Row(
+private fun DetailHeader(title: String, subtitle: String?, coverImageUrl: String?, backdropImageUrl: String?, rating: Float?) {
+    /*val backgroundColor = MaterialTheme.colorScheme.background
+
+    Box(
+        modifier = Modifier.fillMaxWidth().offset(y = (-56).dp),
+    ) {
+        AdaptiveAsyncImage(
+            model = backdropImageUrl,
+            placeholderRatio = 16f / 9f,
+            minHeight = 800.dp
+        )
+        Box(
+            modifier = Modifier
+                .matchParentSize()
+                .background(Color.Black.copy(alpha = 0.4f))
+        )
+        Box(
+            modifier = Modifier
+                .matchParentSize()
+                .background(
+                    Brush.verticalGradient(
+                        colors = listOf(
+                            Color.Transparent,
+                            backgroundColor.copy(alpha = 0.6f),
+                            backgroundColor,
+                        ),
+                        startY = 0f,
+                        endY = Float.POSITIVE_INFINITY,
+                    )
+                )
+        )
+
+    }*/
+
+    Column(
         modifier = Modifier
             .fillMaxWidth()
             .padding(16.dp),
-        horizontalArrangement = Arrangement.spacedBy(16.dp),
+        verticalArrangement = Arrangement.spacedBy(56.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        AsyncImage(
-            model = coverImageUrl,
-            contentDescription = null,
-            modifier = Modifier
-                .width(120.dp)
-                .aspectRatio(2f / 3f)
-                .clip(RoundedCornerShape(12.dp)),
-            contentScale = ContentScale.Crop,
+        PosterWithRating(
+            imageUrl = coverImageUrl,
+            rating = rating
         )
-        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-            Text(title, style = MaterialTheme.typography.headlineSmall)
+
+        Column(
+            verticalArrangement = Arrangement.spacedBy(2.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(
+                title,
+                style = MaterialTheme.typography.displaySmall,
+                lineHeight = 1.1.em,
+                fontWeight = FontWeight.ExtraBold,
+                textAlign = TextAlign.Center
+            )
             if (!subtitle.isNullOrBlank()) {
-                Text(subtitle, style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(
+                    subtitle,
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
         }
     }

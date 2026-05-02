@@ -1,7 +1,9 @@
 package com.example.rateio.features.rating
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -23,10 +25,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import coil3.request.ImageRequest
 import coil3.request.crossfade
+import com.example.rateio.presentation.components.IndexedItem
+import com.example.rateio.presentation.components.RateItemCard
 
 
 @Composable
@@ -53,31 +58,21 @@ fun CategoryDetailScreen(categoryId: Long, onBackClick: () -> Unit, onItemClick:
             modifier = Modifier.padding(innerPadding)
         ) {
             items(10) { id ->
-                Card(
-                    onClick = { onItemClick(id.toLong()) },
-                    shape = RoundedCornerShape(size = 16.dp),
-                    modifier = Modifier.fillMaxWidth().padding(8.dp)
-                ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceAround,
-                        modifier = Modifier.fillMaxWidth(),
-                    ) {
-                        AsyncImage(
-                            model = ImageRequest.Builder(LocalContext.current)
-                                .data("https://image.tmdb.org/t/p/w342/yihdXomYb5kTeSivtFndMy5iDmf.jpg")
-                                .crossfade(true)
-                                .build(),
-                            contentDescription = "Image",
-                            modifier = Modifier
-                                .height(100.dp)
-                                .clip(RoundedCornerShape(16.dp))
-                                .padding(8.dp)
+                IndexedItem(
+                    modifier = Modifier.padding(PaddingValues(horizontal = 14.dp)),
+                    index = id + 1,
+                    item = {
+                        RateItemCard(
+                            title = "Project Hail Mary",
+                            subtitle = "2026  |  2h 37m",
+                            coverImagePath = "https://image.tmdb.org/t/p/w342/yihdXomYb5kTeSivtFndMy5iDmf.jpg",
+                            rating = 0.96f,
+                            onClick = { onItemClick(id.toLong()) },
+                            padding = PaddingValues(vertical = 4.dp),
+                            //placeholderRatio = 1f
                         )
-
-                        Text("Project Hail Mary #$id", modifier = Modifier.padding(12.dp), style = MaterialTheme.typography.titleLarge)
                     }
-                }
+                )
             }
         }
 

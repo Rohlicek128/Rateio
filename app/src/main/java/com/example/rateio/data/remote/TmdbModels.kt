@@ -14,6 +14,7 @@ data class TmdbShow(
     @SerializedName("poster_path")   val posterPath: String?,
     @SerializedName("first_air_date") val firstAirDate: String?,
     @SerializedName("vote_average")  val voteAverage: Float?,
+    @SerializedName("origin_country") val originCountry: List<String>,
 )
 
 data class TmdbShowDetail(
@@ -41,6 +42,7 @@ data class TmdbSeason(
     @SerializedName("episode_count") val episodeCount: Int,
     @SerializedName("air_date")      val airDate: String?,
     @SerializedName("poster_path")   val posterPath: String?,
+    @SerializedName("vote_average")   val voteAverage: Float?,
 )
 
 data class TmdbCredits(
@@ -51,4 +53,28 @@ data class TmdbCastMember(
     @SerializedName("name")         val name: String,
     @SerializedName("character")    val character: String,
     @SerializedName("profile_path") val profilePath: String?,
+)
+
+
+data class TmdbSeasonDetail(
+    @SerializedName("id")             val id: Int,
+    @SerializedName("season_number")  val seasonNumber: Int,
+    @SerializedName("episodes")       val episodes: List<TmdbEpisodeSummary>,
+)
+
+data class TmdbEpisodeSummary(
+    @SerializedName("id")             val id: Int,
+    @SerializedName("name")           val name: String,
+    @SerializedName("episode_number") val episodeNumber: Int,
+    @SerializedName("season_number")  val seasonNumber: Int,
+    @SerializedName("vote_average")   val voteAverage: Float?,
+    @SerializedName("still_path")     val stillPath: String?,
+    @SerializedName("air_date")       val airDate: String?,
+    @SerializedName("overview")       val overview: String?,
+)
+
+data class TmdbShowWithSeasons(
+    @SerializedName("id")      val id: Int,
+    @SerializedName("name")    val name: String,
+    @SerializedName("seasons") val seasonSummaries: List<TmdbSeason>,
 )

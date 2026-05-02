@@ -143,10 +143,22 @@ fun AppNavigation(navController: NavHostController = rememberNavController()) {
 
             composable<Route.RateItemDetail> { backStackEntry ->
                 val detail = backStackEntry.toRoute<Route.RateItemDetail>()
-                RateItemDetailScreen(
+                /*RateItemDetailScreen(
                     itemId = detail.itemId,
                     onBackClick = { navController.popBackStack() },
                     onChildClick = { childId -> navController.navigate(Route.RateItemDetail(childId)) }
+                )*/
+
+                com.example.rateio.presentation.rating.RateItemDetailScreen(
+                    title = "Project Hail Mary",
+                    subtitle = "2026",
+                    description = "Science teacher Ryland Grace wakes up on a spaceship light years from home with no recollection of who he is or how he got there. As his memory returns, he begins to uncover his mission: solve the riddle of the mysterious substance causing the sun to die out. He must call on his scientific knowledge and unorthodox ideas to save everything on Earth from extinction.",
+                    coverImageUrl = "https://image.tmdb.org/t/p/w780/yihdXomYb5kTeSivtFndMy5iDmf.jpg",
+                    backdropImageUrl = "https://image.tmdb.org/t/p/w780/yihdXomYb5kTeSivtFndMy5iDmf.jpg",
+                    rating = 0.87f,
+                    ratingLabel = "",
+                    onBackClick = { navController.popBackStack() },
+                    extraContent = { }
                 )
             }
         }
