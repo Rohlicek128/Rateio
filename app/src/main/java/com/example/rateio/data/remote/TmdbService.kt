@@ -13,6 +13,7 @@ interface TmdbService {
         @Query("query") query: String,
         @Query("language") language: String = "en-US",
         @Query("page") page: Int = 1,
+        //@Query("append_to_response") append: String = "external_ids",
         @Header("accept") accept: String = "application/json",
         @Header("Authorization") bearer: String = "Bearer " + BuildConfig.TMDB_API_KEY,
     ): TmdbSearchResponse
@@ -21,7 +22,7 @@ interface TmdbService {
     suspend fun getShow(
         @Path("id") id: Int,
         @Query("language") language: String = "en-US",
-        @Query("append_to_response") append: String = "credits",
+        @Query("append_to_response") append: String = "credits,external_ids",
         @Header("accept") accept: String = "application/json",
         @Header("Authorization") bearer: String = "Bearer " + BuildConfig.TMDB_API_KEY,
     ): TmdbShowDetail
@@ -31,15 +32,38 @@ interface TmdbService {
     suspend fun getSeason(
         @Path("showId")       showId: Int,
         @Path("seasonNumber") seasonNumber: Int,
+        @Query("language") language: String = "en-US",
         @Header("accept") accept: String = "application/json",
         @Header("Authorization") bearer: String = "Bearer " + BuildConfig.TMDB_API_KEY,
     ): TmdbSeasonDetail
 
-    @GET("tv/{id}")
-    suspend fun getShowWithSeasons(
-        @Path("id")           id: Int,
-        @Query("append_to_response") append: String,
+
+    @GET("tv/{showId}/season/{seasonNumber}/episode/{episodeNumber}")
+    suspend fun getEpisode(
+        @Path("showId")       showId: Int,
+        @Path("seasonNumber") seasonNumber: Int,
+        @Path("episodeNumber") episodeNumber: Int,
+        @Query("language") language: String = "en-US",
+        @Query("append_to_response") append: String = "credits,external_ids",
         @Header("accept") accept: String = "application/json",
         @Header("Authorization") bearer: String = "Bearer " + BuildConfig.TMDB_API_KEY,
-    ): TmdbShowWithSeasons
+    ): TmdbEpisodeDetail
+
+
+    @GET("tv/{showId}/images")
+    suspend fun getShowImages(
+        @Path("showId") showId: Int,
+        @Query("include_image_language") language: String = "en-US,null",
+        @Header("accept") accept: String = "application/json",
+        @Header("Authorization") bearer: String = "Bearer " + BuildConfig.TMDB_API_KEY,
+    ): TmdbShowImageResponse
+
+    @GET("tv/{showId}/season/{seasonNumber}/episode/{episodeNumber}/images")
+    suspend fun getEpisodeImages(
+        @Path("showId")       showId: Int,
+        @Path("seasonNumber") seasonNumber: Int,
+        @Path("episodeNumber") episodeNumber: Int,
+        @Header("accept") accept: String = "application/json",
+        @Header("Authorization") bearer: String = "Bearer " + BuildConfig.TMDB_API_KEY,
+    ): TmdbEpisodeImageResponse
 }

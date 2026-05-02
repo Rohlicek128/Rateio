@@ -29,7 +29,6 @@ class BrowseViewModel : ViewModel() {
     fun onQueryChange(query: String) {
         _state.update { it.copy(query = query, error = null) }
 
-        // Cancel any in-flight search
         searchJob?.cancel()
 
         if (query.isBlank()) {
@@ -43,7 +42,7 @@ class BrowseViewModel : ViewModel() {
             _state.update { it.copy(isLoading = true) }
 
             try {
-                val response = TmdbClient.service.searchShows(query)
+                val response = TmdbClient.tmdb.searchShows(query)
                 _state.update { it.copy(results = response.results, isLoading = false) }
             } catch (e: Exception) {
                 _state.update { it.copy(error = e.message, isLoading = false) }

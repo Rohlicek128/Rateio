@@ -31,12 +31,17 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
+import com.example.rateio.data.remote.imdb.ImdbRatingFetcher
 import com.example.rateio.features.home.HomeScreen
 import com.example.rateio.features.rating.CategoryDetailScreen
 import com.example.rateio.features.rating.RateItemDetailScreen
 import com.example.rateio.features.settings.SettingsScreen
 import com.example.rateio.presentation.browse.BrowseScreen
+import com.example.rateio.presentation.rating.tmdb.TmdbEpisodeDetailScreen
 import com.example.rateio.presentation.rating.tmdb.TmdbShowDetailScreen
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 
 
 @Composable
@@ -113,6 +118,8 @@ fun AppNavigation(navController: NavHostController = rememberNavController()) {
                 )
             }
 
+            composable<Route.TopLevel.Profile> { SettingsScreen(contentPadding = globalPadding) }
+
             composable<Route.TopLevel.Browse> {
                 BrowseScreen(
                     contentPadding = globalPadding,
@@ -125,11 +132,21 @@ fun AppNavigation(navController: NavHostController = rememberNavController()) {
                 val route = back.toRoute<Route.TmdbShowDetail>()
                 TmdbShowDetailScreen(
                     showId = route.showId,
+                    onBackClick = { navController.popBackStack() },
+                    onEpisodeClick = {showId, seasonNumber, episodeNumber ->
+                        navController.navigate(Route.TmdbEpisodeDetail(showId, seasonNumber, episodeNumber))
+                    }
+                )
+            }
+            composable<Route.TmdbEpisodeDetail> { back ->
+                val route = back.toRoute<Route.TmdbEpisodeDetail>()
+                TmdbEpisodeDetailScreen(
+                    showId = route.showId,
+                    season = route.season,
+                    episode = route.episode,
                     onBackClick = { navController.popBackStack() }
                 )
             }
-
-            composable<Route.TopLevel.Profile> { SettingsScreen(contentPadding = globalPadding) }
 
 
             composable<Route.CategoryDetail> { back ->
@@ -148,6 +165,11 @@ fun AppNavigation(navController: NavHostController = rememberNavController()) {
                     onBackClick = { navController.popBackStack() },
                     onChildClick = { childId -> navController.navigate(Route.RateItemDetail(childId)) }
                 )*/
+                val imdbFetcher = ImdbRatingFetcher()
+                var rating: Float? = null
+                runBlocking {
+                    rating = imdbFetcher.fetch("tt12042730")
+                }
 
                 com.example.rateio.presentation.rating.RateItemDetailScreen(
                     title = "Project Hail Mary",
@@ -155,7 +177,7 @@ fun AppNavigation(navController: NavHostController = rememberNavController()) {
                     description = "Science teacher Ryland Grace wakes up on a spaceship light years from home with no recollection of who he is or how he got there. As his memory returns, he begins to uncover his mission: solve the riddle of the mysterious substance causing the sun to die out. He must call on his scientific knowledge and unorthodox ideas to save everything on Earth from extinction.",
                     coverImageUrl = "https://image.tmdb.org/t/p/w780/yihdXomYb5kTeSivtFndMy5iDmf.jpg",
                     backdropImageUrl = "https://image.tmdb.org/t/p/w780/yihdXomYb5kTeSivtFndMy5iDmf.jpg",
-                    rating = 0.87f,
+                    rating = rating,
                     ratingLabel = "",
                     onBackClick = { navController.popBackStack() },
                     extraContent = { }

@@ -32,3 +32,21 @@ val Typography = Typography(
     )
     */
 )
+
+val GoogleSansTypography = Typography(
+    displayLarge   = TextStyle(fontFamily = GoogleSans, fontWeight = FontWeight.Normal),
+    displayMedium  = TextStyle(fontFamily = GoogleSans, fontWeight = FontWeight.Normal),
+    displaySmall   = TextStyle(fontFamily = GoogleSans, fontWeight = FontWeight.Normal),
+    headlineLarge  = TextStyle(fontFamily = GoogleSans, fontWeight = FontWeight.Normal),
+    headlineMedium = TextStyle(fontFamily = GoogleSans, fontWeight = FontWeight.Normal),
+    headlineSmall  = TextStyle(fontFamily = GoogleSans, fontWeight = FontWeight.Normal),
+    titleLarge     = TextStyle(fontFamily = GoogleSans, fontWeight = FontWeight.Medium),
+    titleMedium    = TextStyle(fontFamily = GoogleSans, fontWeight = FontWeight.Medium),
+    titleSmall     = TextStyle(fontFamily = GoogleSans, fontWeight = FontWeight.Medium),
+    bodyLarge      = TextStyle(fontFamily = GoogleSans, fontWeight = FontWeight.Normal),
+    bodyMedium     = TextStyle(fontFamily = GoogleSans, fontWeight = FontWeight.Normal),
+    bodySmall      = TextStyle(fontFamily = GoogleSans, fontWeight = FontWeight.Normal),
+    labelLarge     = TextStyle(fontFamily = GoogleSans, fontWeight = FontWeight.Medium),
+    labelMedium    = TextStyle(fontFamily = GoogleSans, fontWeight = FontWeight.Normal),
+    labelSmall     = TextStyle(fontFamily = GoogleSans, fontWeight = FontWeight.Normal),
+)

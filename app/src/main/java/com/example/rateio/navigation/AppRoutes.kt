@@ -13,6 +13,7 @@ sealed interface Route {
     @Serializable data class RateItemDetail(val itemId: Long) : Route
 
     @Serializable data class TmdbShowDetail(val showId: Int) : Route
+    @Serializable data class TmdbEpisodeDetail(val showId: Int, val season: Int, val episode: Int) : Route
 
     @Serializable data class CategoryDetail(val categoryId: Long) : Route
 }

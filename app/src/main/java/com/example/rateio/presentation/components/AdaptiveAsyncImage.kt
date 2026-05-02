@@ -51,4 +51,4 @@ fun AdaptiveAsyncImage(
     )
 }
 
-private enum class AsyncImageState { Loading, Success, Error }
+enum class AsyncImageState { Loading, Success, Error }

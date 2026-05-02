@@ -1,55 +1,34 @@
 package com.example.rateio.presentation.rating.tmdb
 
-import android.widget.Space
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.automirrored.filled.WrapText
 import androidx.compose.material.icons.automirrored.outlined.List
 import androidx.compose.material.icons.automirrored.outlined.WrapText
-import androidx.compose.material.icons.filled.Coffee
 import androidx.compose.material.icons.filled.GridOn
-import androidx.compose.material.icons.filled.List
-import androidx.compose.material.icons.filled.Restaurant
 import androidx.compose.material.icons.filled.Timeline
-import androidx.compose.material.icons.filled.Work
-import androidx.compose.material.icons.filled.WrapText
-import androidx.compose.material.icons.outlined.Coffee
 import androidx.compose.material.icons.outlined.GridOn
-import androidx.compose.material.icons.outlined.List
-import androidx.compose.material.icons.outlined.Restaurant
 import androidx.compose.material.icons.outlined.Timeline
-import androidx.compose.material.icons.outlined.Work
-import androidx.compose.material.icons.outlined.WrapText
 import androidx.compose.material3.ButtonGroupDefaults
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.CircularWavyProgressIndicator
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedToggleButton
 import androidx.compose.material3.SuggestionChip
 import androidx.compose.material3.Text
-import androidx.compose.material3.ToggleButton
 import androidx.compose.material3.ToggleButtonDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -59,23 +38,17 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import coil3.compose.AsyncImage
-import coil3.request.ImageRequest
-import coil3.request.crossfade
-import com.example.rateio.data.remote.TmdbCastMember
-import com.example.rateio.data.remote.TmdbSeason
-import com.example.rateio.presentation.components.AdaptiveAsyncImage
+import com.example.rateio.presentation.components.AdaptiveImageCarousel
+import com.example.rateio.presentation.components.CastCard
 import com.example.rateio.presentation.components.RateItemCard
+import com.example.rateio.presentation.components.SectionHeader
 import com.example.rateio.presentation.rating.RateItemDetailScreen
 
 
@@ -83,7 +56,7 @@ import com.example.rateio.presentation.rating.RateItemDetailScreen
 fun TmdbShowDetailScreen(
     showId: Int,
     onBackClick: () -> Unit,
-    onSeasonClick: (seasonId: Int, showId: Int) -> Unit = { _, _ -> },
+    onEpisodeClick: (showId: Int, seasonNumber: Int, episodeNumber: Int) -> Unit,
 ) {
     val viewModel: TmdbShowDetailViewModel = viewModel(
         factory = TmdbShowDetailViewModel.factory(showId)
@@ -103,6 +76,16 @@ fun TmdbShowDetailScreen(
         }
         state.show != null -> {
             val show = state.show!!
+            val seasons = show.seasons.filter { it.seasonNumber > 0 }
+            val gridViewModel: TmdbEpisodesViewModel = viewModel(
+                factory = TmdbEpisodesViewModel.factory(
+                    showId = showId,
+                    seasonNumbers = seasons.map { it.seasonNumber },
+                )
+            )
+            val gridState by gridViewModel.state.collectAsState()
+
+
             var selectedMode by remember { mutableIntStateOf(0) }
 
             RateItemDetailScreen(
@@ -118,7 +101,7 @@ fun TmdbShowDetailScreen(
                 backdropImageUrl = show.backdropPath?.let {
                     "https://image.tmdb.org/t/p/original$it"
                 },
-                rating = show.voteAverage?.div(10f),
+                rating = state.imdbRating,
                 ratingLabel = show.voteAverage?.let { "%.1f/10 on TMDb".format(it) },
                 onBackClick = onBackClick,
                 extraContent = {
@@ -142,59 +125,134 @@ fun TmdbShowDetailScreen(
                                 contentPadding = PaddingValues(horizontal = 16.dp),
                                 horizontalArrangement = Arrangement.spacedBy(12.dp),
                             ) {
-                                items(cast.take(10), key = { it.name }) { member ->
+                                items(cast.take(10), key = { it.creditId }) { member ->
                                     CastCard(member)
                                 }
                             }
                         }
                     }
 
-                    // Seasons
-                    val seasons = show.seasons.filter { it.seasonNumber > 0 }
-                    if (seasons.isNotEmpty()) {
-                        item { SectionHeader("Seasons") }
-                        item { DisplaySelector(selectedMode, onSelectionChanged = { selectedMode = it }) }
+                    //Images
+                    state.images?.posters?.takeIf { it.isNotEmpty() }?.let { images ->
+                        item { SectionHeader("Posters") }
+                        item {
+                            AdaptiveImageCarousel(
+                                baseUrl = "https://image.tmdb.org/t/p/w500",
+                                images.sortedBy { -it.voteCount },
+                                itemWidth = 110.dp,
+                                itemHeight = 180.dp,
+                                shape = MaterialTheme.shapes.large,
+                            )
+                        }
+                    }
+                    state.images?.backdrops?.takeIf { it.isNotEmpty() }?.let { images ->
+                        item { SectionHeader("Backdrops") }
+                        item {
+                            AdaptiveImageCarousel(
+                                baseUrl = "https://image.tmdb.org/t/p/w780",
+                                images.sortedBy { -it.voteCount },
+                                itemWidth = 240.dp,
+                                shape = MaterialTheme.shapes.large,
+                            )
+                        }
+                    }
 
-                        when (selectedMode) {
-                            0 -> {
-                                items(seasons, key = { it.id }) { season ->
-                                    var ratingTest: Float? = null
-                                    if (season.voteAverage != null) {
-                                        if (season.voteAverage > 0f) ratingTest = season.voteAverage.div(10f).plus(0.1f)
-                                    }
-                                    RateItemCard(
-                                        title = "Season ${season.seasonNumber}",
-                                        subtitle = "${(season.airDate ?: "N/A").take(4)}  |  ${season.episodeCount} episodes",
-                                        coverImagePath = "https://image.tmdb.org/t/p/w185${season.posterPath}",
-                                        rating = ratingTest,
-                                        onClick = { onSeasonClick(season.id, showId) }
-                                    )
+                    item { Spacer(modifier = Modifier.height(16.dp)) }
+
+                    // Seasons
+                    item { SectionHeader("Seasons / Episodes") }
+                    item { DisplaySelector(selectedMode, onSelectionChanged = { selectedMode = it }) }
+
+                    when (selectedMode) {
+                        0 -> {
+                            /*items(seasons, key = { it.id }) { season ->
+                                var ratingTest: Float? = null
+                                if (season.voteAverage != null) {
+                                    if (season.voteAverage > 0f) ratingTest = season.voteAverage.div(10f).plus(0.1f)
                                 }
-                            }
-                            else -> {
-                                item {
-                                    Text("Not implemented", modifier = Modifier.padding(horizontal = 16.dp))
-                                    Spacer(modifier = Modifier.padding(vertical = 400.dp))
+                                RateItemCard(
+                                    title = "Season ${season.seasonNumber}",
+                                    subtitle = "${(season.airDate ?: "N/A").take(4)}  |  ${season.episodeCount} episodes",
+                                    coverImagePath = "https://image.tmdb.org/t/p/w185${season.posterPath}",
+                                    rating = ratingTest,
+                                    onClick = { onSeasonClick(season.id, showId) }
+                                )
+                            }*/
+
+                            when {
+                                gridState.isLoading -> item {
+                                    Box(Modifier.fillMaxWidth().padding(32.dp), Alignment.Center) {
+                                        CircularWavyProgressIndicator()
+                                    }
+                                }
+                                gridState.seasonEpisodes.isNotEmpty() -> {
+                                    gridState.seasonEpisodes
+                                        .entries
+                                        .sortedBy { it.key }
+                                        .forEach { (seasonNumber, episodes) ->
+                                            item { SectionHeader("Seasons $seasonNumber") }
+
+                                            items(episodes.sortedBy { it.episodeNumber }) { episode ->
+                                                var rating: Float? = null
+                                                if (episode.voteAverage != null) {
+                                                    if (episode.voteAverage > 0f) rating = episode.voteAverage.div(10f)
+                                                }
+                                                RateItemCard(
+                                                    title = episode.name,
+                                                    subtitle = "Episode ${episode.episodeNumber}  |  ${if (episode.runtime > 0) "${episode.runtime}m" else "N/A"}",
+                                                    coverImagePath = "https://image.tmdb.org/t/p/w300${episode.stillPath}",
+                                                    rating = rating,
+                                                    placeholderRatio = 16f / 9f,
+                                                    padding = PaddingValues(horizontal = 16.dp, vertical = 6.dp),
+                                                    onClick = { onEpisodeClick(
+                                                            show.id,
+                                                            episode.seasonNumber,
+                                                            episode.episodeNumber
+                                                        ) },
+                                                )
+                                            }
+                                        }
                                 }
                             }
                         }
-
+                        2 -> {
+                            when {
+                                gridState.isLoading -> item {
+                                    Box(Modifier.fillMaxWidth().padding(32.dp), Alignment.Center) {
+                                        CircularWavyProgressIndicator()
+                                    }
+                                }
+                                gridState.seasonEpisodes.isNotEmpty() -> item {
+                                    EpisodeGrid(
+                                        seasonEpisodes = gridState.seasonEpisodes,
+                                        onEpisodeClick = { season, episode ->
+                                            run {
+                                                onEpisodeClick(
+                                                    show.id,
+                                                    season,
+                                                    episode
+                                                )
+                                            }
+                                        },
+                                        modifier = Modifier.padding(bottom = 16.dp),
+                                    )
+                                }
+                            }
+                        }
+                        else -> {
+                            item {
+                                Text("Not implemented", modifier = Modifier.padding(horizontal = 16.dp))
+                                Spacer(modifier = Modifier.padding(vertical = 400.dp))
+                            }
+                        }
                     }
+
                 }
             )
         }
     }
 }
 
-
-@Composable
-private fun SectionHeader(title: String) {
-    Text(
-        text = title,
-        style = MaterialTheme.typography.titleLarge,
-        modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 4.dp),
-    )
-}
 
 @Composable
 private fun GenreChips(genres: List<String>, modifier: Modifier = Modifier) {
@@ -208,39 +266,6 @@ private fun GenreChips(genres: List<String>, modifier: Modifier = Modifier) {
                 label = { Text(genre) },
             )
         }
-    }
-}
-
-@Composable
-private fun CastCard(member: TmdbCastMember) {
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier.width(80.dp),
-    ) {
-        AsyncImage(
-            model = member.profilePath?.let { "https://image.tmdb.org/t/p/w185$it" },
-            contentDescription = null,
-            modifier = Modifier
-                .size(80.dp)
-                .clip(RoundedCornerShape(16.dp)),
-            contentScale = ContentScale.Crop,
-        )
-        Spacer(Modifier.height(4.dp))
-        Text(
-            text = member.name,
-            style = MaterialTheme.typography.labelSmall,
-            textAlign = TextAlign.Center,
-            maxLines = 2,
-            overflow = TextOverflow.Ellipsis,
-        )
-        Text(
-            text = member.character,
-            style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            textAlign = TextAlign.Center,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-        )
     }
 }
 
@@ -276,32 +301,11 @@ private fun DisplaySelector(selectedIndex: Int, onSelectionChanged: (Int) -> Uni
                 Text(
                     label,
                     style = MaterialTheme.typography.labelMedium,
+                    fontWeight = FontWeight.Bold,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
             }
         }
     }
-}
-
-@Composable
-private fun SeasonRow(season: TmdbSeason, onClick: () -> Unit) {
-    ListItem(
-        headlineContent = { Text("Season ${season.seasonNumber}") },
-        supportingContent = { Text("${season.episodeCount} episodes") },
-        leadingContent = {
-            Card(
-                shape = MaterialTheme.shapes.small,
-                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
-            ) {
-                AsyncImage(
-                    model = season.posterPath?.let { "https://image.tmdb.org/t/p/w185$it" },
-                    contentDescription = "Poster",
-                    modifier = Modifier.height(80.dp)
-                )
-            }
-        },
-        modifier = Modifier.clickable(onClick = onClick),
-    )
-    HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
 }

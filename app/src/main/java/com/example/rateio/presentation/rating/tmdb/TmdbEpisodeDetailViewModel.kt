@@ -5,8 +5,8 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.example.rateio.data.remote.TmdbClient
-import com.example.rateio.data.remote.TmdbShowDetail
-import com.example.rateio.data.remote.TmdbShowImageResponse
+import com.example.rateio.data.remote.TmdbEpisodeDetail
+import com.example.rateio.data.remote.TmdbEpisodeImageResponse
 import com.example.rateio.data.remote.imdb.ImdbRatingFetcher
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -15,17 +15,17 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 
-data class TmdbShowDetailState(
-    val show: TmdbShowDetail? = null,
+data class TmdbEpisodeDetailState(
+    val episode: TmdbEpisodeDetail? = null,
     val imdbRating: Float? = null,
-    val images: TmdbShowImageResponse? = null,
+    val images: TmdbEpisodeImageResponse? = null,
     val isLoading: Boolean = false,
     val error: String? = null,
 )
 
-class TmdbShowDetailViewModel(showId: Int) : ViewModel() {
-    private val _state = MutableStateFlow(TmdbShowDetailState())
-    val state: StateFlow<TmdbShowDetailState> = _state.asStateFlow()
+class TmdbEpisodeDetailViewModel(showId: Int, seasonNumber: Int, episodeNumber: Int) : ViewModel() {
+    private val _state = MutableStateFlow(TmdbEpisodeDetailState())
+    val state: StateFlow<TmdbEpisodeDetailState> = _state.asStateFlow()
 
     private val imdbFetcher = ImdbRatingFetcher()
 
@@ -33,16 +33,16 @@ class TmdbShowDetailViewModel(showId: Int) : ViewModel() {
         viewModelScope.launch {
             _state.update { it.copy(isLoading = true) }
             try {
-                val show = TmdbClient.tmdb.getShow(showId)
-                _state.update { it.copy(show = show, isLoading = false) }
+                val episode = TmdbClient.tmdb.getEpisode(showId, seasonNumber, episodeNumber)
+                _state.update { it.copy(episode = episode, isLoading = false) }
 
                 launch {
-                    val rating = imdbFetcher.fetch(show.externalIds?.imdbId)
+                    val rating = imdbFetcher.fetch(episode.externalIds?.imdbId)
                     _state.update { it.copy(imdbRating = rating) }
                 }
 
                 launch {
-                    val images = TmdbClient.tmdb.getShowImages(showId)
+                    val images = TmdbClient.tmdb.getEpisodeImages(showId, seasonNumber, episodeNumber)
                     _state.update { it.copy(images = images) }
                 }
             } catch (e: Exception) {
@@ -52,8 +52,8 @@ class TmdbShowDetailViewModel(showId: Int) : ViewModel() {
     }
 
     companion object {
-        fun factory(showId: Int) = viewModelFactory {
-            initializer { TmdbShowDetailViewModel(showId) }
+        fun factory(showId: Int, seasonNumber: Int, episodeNumber: Int) = viewModelFactory {
+            initializer { TmdbEpisodeDetailViewModel(showId, seasonNumber, episodeNumber) }
         }
     }
 }
