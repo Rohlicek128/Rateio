@@ -8,10 +8,10 @@ import kotlinx.coroutines.Dispatchers
 
 
 class ImdbRatingFetcher {
-    suspend fun fetch(imdbId: String?): Float? {
+    suspend fun fetch(imdbId: String?): ImdbRating? {
         imdbId ?: return null
         return runCatching {
-            TmdbClient.imdb.getTitle(imdbId).rating.normalizedRating
+            TmdbClient.imdb.getTitle(imdbId).rating
         }.getOrNull()
     }
     

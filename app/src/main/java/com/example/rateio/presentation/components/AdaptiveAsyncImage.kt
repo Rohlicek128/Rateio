@@ -13,9 +13,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.painter.ColorPainter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.min
 import coil3.compose.AsyncImage
+import coil3.compose.AsyncImagePainter
 
 
 @Composable
@@ -23,11 +22,13 @@ fun AdaptiveAsyncImage(
     model: String?,
     modifier: Modifier = Modifier,
     contentDescription: String? = null,
+    contentScale: ContentScale = ContentScale.Fit,
     placeholderRatio: Float = 2f / 3f,
     minWidth: Dp = Dp.Unspecified,
     maxWidth: Dp = Dp.Unspecified,
     minHeight: Dp = Dp.Unspecified,
     maxHeight: Dp = Dp.Unspecified,
+    onSuccess: ((AsyncImagePainter.State.Success) -> Unit)? = null,
 ) {
     var imageState by remember { mutableStateOf(AsyncImageState.Loading) }
 
@@ -43,11 +44,14 @@ fun AdaptiveAsyncImage(
                     else -> Modifier.aspectRatio(placeholderRatio)
                 }
             ),
-        contentScale = ContentScale.Fit,
+        contentScale = contentScale,
         placeholder = ColorPainter(MaterialTheme.colorScheme.surfaceVariant),
         error = ColorPainter(MaterialTheme.colorScheme.surfaceVariant),
-        onSuccess = { imageState = AsyncImageState.Success  },
-        onError   = { imageState = AsyncImageState.Error  },
+        onSuccess = {
+            imageState = AsyncImageState.Success
+            onSuccess?.invoke(it)
+        },
+        onError = { imageState = AsyncImageState.Error },
     )
 }
 

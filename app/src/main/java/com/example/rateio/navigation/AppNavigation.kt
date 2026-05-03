@@ -32,6 +32,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
+import com.example.rateio.data.remote.imdb.ImdbRating
 import com.example.rateio.data.remote.imdb.ImdbRatingFetcher
 import com.example.rateio.features.home.HomeScreen
 import com.example.rateio.features.rating.CategoryDetailScreen
@@ -132,7 +133,9 @@ fun AppNavigation(navController: NavHostController = rememberNavController()) {
                     showId = route.showId,
                     onBackClick = { navController.popBackStack() },
                     onEpisodeClick = {showId, seasonNumber, episodeNumber ->
-                        navController.navigate(Route.TmdbEpisodeDetail(showId, seasonNumber, episodeNumber))
+                        navController.navigate(Route.TmdbEpisodeDetail(showId, seasonNumber, episodeNumber)) {
+                            popUpTo<Route.TmdbShowDetail>()
+                        }
                     }
                 )
             }
@@ -142,7 +145,17 @@ fun AppNavigation(navController: NavHostController = rememberNavController()) {
                     showId = route.showId,
                     season = route.season,
                     episode = route.episode,
-                    onBackClick = { navController.popBackStack() }
+                    onBackClick = { navController.popBackStack() },
+                    onNextClick = { nextSeason, nextEpisode ->
+                        navController.navigate(Route.TmdbEpisodeDetail(route.showId, nextSeason, nextEpisode)) {
+                            popUpTo<Route.TmdbShowDetail>()
+                        }
+                    },
+                    onPreviousClick = { prevSeason, prevEpisode ->
+                        navController.navigate(Route.TmdbEpisodeDetail(route.showId, prevSeason, prevEpisode)) {
+                            popUpTo<Route.TmdbShowDetail>()
+                        }
+                    },
                 )
             }
 
@@ -164,7 +177,7 @@ fun AppNavigation(navController: NavHostController = rememberNavController()) {
                     onChildClick = { childId -> navController.navigate(Route.RateItemDetail(childId)) }
                 )*/
                 val imdbFetcher = ImdbRatingFetcher()
-                var rating: Float? = null
+                var rating: ImdbRating? = null
                 runBlocking {
                     rating = imdbFetcher.fetch("tt12042730")
                 }
@@ -175,7 +188,8 @@ fun AppNavigation(navController: NavHostController = rememberNavController()) {
                     description = "Science teacher Ryland Grace wakes up on a spaceship light years from home with no recollection of who he is or how he got there. As his memory returns, he begins to uncover his mission: solve the riddle of the mysterious substance causing the sun to die out. He must call on his scientific knowledge and unorthodox ideas to save everything on Earth from extinction.",
                     coverImageUrl = "https://image.tmdb.org/t/p/w780/yihdXomYb5kTeSivtFndMy5iDmf.jpg",
                     backdropImageUrl = "https://image.tmdb.org/t/p/w780/yihdXomYb5kTeSivtFndMy5iDmf.jpg",
-                    rating = rating,
+                    rating = rating?.normalizedRating,
+                    ratingVotes = rating?.voteCount,
                     ratingLabel = "",
                     onBackClick = { navController.popBackStack() },
                     extraContent = { }

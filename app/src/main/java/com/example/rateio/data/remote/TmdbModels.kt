@@ -18,18 +18,28 @@ data class TmdbShow(
 )
 
 data class TmdbShowDetail(
-    @SerializedName("id")            val id: Int,
-    @SerializedName("name")          val name: String,
-    @SerializedName("overview")      val overview: String?,
-    @SerializedName("poster_path")   val posterPath: String?,
-    @SerializedName("backdrop_path")   val backdropPath: String?,
+    @SerializedName("id") val id: Int,
+    @SerializedName("name") val name: String,
+    @SerializedName("overview") val overview: String?,
+    @SerializedName("poster_path") val posterPath: String?,
+    @SerializedName("backdrop_path") val backdropPath: String?,
+
     @SerializedName("first_air_date") val firstAirDate: String?,
-    @SerializedName("vote_average")  val voteAverage: Float?,
-    @SerializedName("status")        val status: String?,
-    @SerializedName("genres")        val genres: List<TmdbGenre>,
-    @SerializedName("seasons")       val seasons: List<TmdbSeason>,
-    @SerializedName("credits")       val credits: TmdbCredits?,
-    @SerializedName("external_ids")  val externalIds: TmdbExternalIds?,
+    @SerializedName("last_air_date") val lastAirDate: String?,
+    @SerializedName("last_episode_to_air") val lastEpisodeToAir: TmdbEpisodeSummary?,
+    @SerializedName("next_episode_to_air") val nextEpisodeToAir: TmdbEpisodeSummary?,
+
+    @SerializedName("episode_run_time") val episodeRuntime: List<Int>,
+    @SerializedName("number_of_episodes") val numberOfEpisodes: Int,
+    @SerializedName("number_of_seasons") val numberOfSeasons: Int,
+
+    @SerializedName("vote_average") val voteAverage: Float?,
+    @SerializedName("status") val status: String?,
+    @SerializedName("genres") val genres: List<TmdbGenre>,
+    @SerializedName("seasons") val seasons: List<TmdbSeason>,
+    @SerializedName("created_by") val createdBy: List<TmdbCreator>,
+    @SerializedName("credits") val credits: TmdbCredits?,
+    @SerializedName("external_ids") val externalIds: TmdbExternalIds?,
 )
 
 data class TmdbExternalIds(
@@ -52,13 +62,31 @@ data class TmdbSeason(
 
 data class TmdbCredits(
     @SerializedName("cast") val cast: List<TmdbCastMember>,
+    @SerializedName("guest_stars") val guest: List<TmdbCastMember>,
+    @SerializedName("crew") val crew: List<TmdbCrewMember>,
 )
 
 data class TmdbCastMember(
+    @SerializedName("id") val id: Int,
+    @SerializedName("credit_id") val creditId: String,
+    @SerializedName("name") val name: String,
+    @SerializedName("character") val character: String,
+    @SerializedName("profile_path") val profilePath: String?,
+)
+
+data class TmdbCrewMember(
+    @SerializedName("id") val id: Int,
+    @SerializedName("credit_id") val creditId: String,
+    @SerializedName("department") val department: String,
+    @SerializedName("job") val job: String,
+    @SerializedName("name") val name: String,
+    @SerializedName("profile_path") val profilePath: String?,
+)
+
+data class TmdbCreator(
     @SerializedName("id")           val id: Int,
     @SerializedName("credit_id")    val creditId: String,
     @SerializedName("name")         val name: String,
-    @SerializedName("character")    val character: String,
     @SerializedName("profile_path") val profilePath: String?,
 )
 

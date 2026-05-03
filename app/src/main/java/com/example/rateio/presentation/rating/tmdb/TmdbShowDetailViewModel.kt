@@ -7,6 +7,7 @@ import androidx.lifecycle.viewmodel.viewModelFactory
 import com.example.rateio.data.remote.TmdbClient
 import com.example.rateio.data.remote.TmdbShowDetail
 import com.example.rateio.data.remote.TmdbShowImageResponse
+import com.example.rateio.data.remote.imdb.ImdbRating
 import com.example.rateio.data.remote.imdb.ImdbRatingFetcher
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -17,7 +18,7 @@ import kotlinx.coroutines.launch
 
 data class TmdbShowDetailState(
     val show: TmdbShowDetail? = null,
-    val imdbRating: Float? = null,
+    val imdbRating: ImdbRating? = null,
     val images: TmdbShowImageResponse? = null,
     val isLoading: Boolean = false,
     val error: String? = null,

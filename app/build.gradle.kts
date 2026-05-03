@@ -104,4 +104,6 @@ dependencies {
     implementation(libs.okhttp.logging)
 
     implementation(libs.androidx.compose.material3)
+
+    implementation(libs.palette)
 }

@@ -3,13 +3,17 @@ package com.example.rateio.presentation.components
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.CircularWavyProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.WavyProgressIndicatorDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -34,7 +38,9 @@ fun RateBox(
     height: Dp = 4.dp,
     textStyle: TextStyle = MaterialTheme.typography.titleMedium,
     fontWeight: FontWeight = FontWeight.Bold,
-    onClick: (() -> Unit)? = null
+    loadingSize: Dp = 28.dp,
+    isLoading: Boolean = false,
+    onClick: (() -> Unit)? = null,
 ) {
     val (backgroundColor, contentColor, label) = getColorSchemeImdbEpisodes(rating)
 
@@ -54,15 +60,25 @@ fun RateBox(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center,
         ) {
-            Text(
-                text = displayText,
-                style = textStyle,
-                fontWeight = fontWeight,
-                maxLines = 1,
-                modifier = Modifier.wrapContentWidth(unbounded = true),
-                overflow = TextOverflow.Visible,
-                softWrap = false,
-            )
+            if (isLoading) {
+                CircularWavyProgressIndicator(
+                    modifier = Modifier.size(loadingSize),
+                    color = MaterialTheme.colorScheme.secondaryFixedDim,
+                    trackColor = MaterialTheme.colorScheme.surfaceBright,
+                    wavelength = 12.dp,
+                )
+            }
+            else {
+                Text(
+                    text = displayText,
+                    style = textStyle,
+                    fontWeight = fontWeight,
+                    maxLines = 1,
+                    modifier = Modifier.wrapContentWidth(unbounded = true),
+                    overflow = TextOverflow.Visible,
+                    softWrap = false,
+                )
+            }
         }
     }
 }

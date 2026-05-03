@@ -7,6 +7,7 @@ import androidx.lifecycle.viewmodel.viewModelFactory
 import com.example.rateio.data.remote.TmdbClient
 import com.example.rateio.data.remote.TmdbEpisodeDetail
 import com.example.rateio.data.remote.TmdbEpisodeImageResponse
+import com.example.rateio.data.remote.imdb.ImdbRating
 import com.example.rateio.data.remote.imdb.ImdbRatingFetcher
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -17,7 +18,9 @@ import kotlinx.coroutines.launch
 
 data class TmdbEpisodeDetailState(
     val episode: TmdbEpisodeDetail? = null,
-    val imdbRating: Float? = null,
+    val previousEpisode: Pair<Int, Int>? = null,
+    val nextEpisode: Pair<Int, Int>? = null,
+    val imdbRating: ImdbRating? = null,
     val images: TmdbEpisodeImageResponse? = null,
     val isLoading: Boolean = false,
     val error: String? = null,
@@ -34,7 +37,37 @@ class TmdbEpisodeDetailViewModel(showId: Int, seasonNumber: Int, episodeNumber: 
             _state.update { it.copy(isLoading = true) }
             try {
                 val episode = TmdbClient.tmdb.getEpisode(showId, seasonNumber, episodeNumber)
-                _state.update { it.copy(episode = episode, isLoading = false) }
+                val seasonDetail = TmdbClient.tmdb.getSeason(showId, seasonNumber)
+                val allEpisodes = seasonDetail.episodes.sortedBy { it.episodeNumber }
+                val currentIndex = allEpisodes.indexOfFirst { it.episodeNumber == episodeNumber }
+
+                _state.update { it ->
+                    it.copy(
+                        episode = episode,
+                        isLoading = false,
+                        previousEpisode = when {
+                            currentIndex > 0 -> seasonNumber to allEpisodes[currentIndex - 1].episodeNumber
+                            seasonNumber > 1 -> {
+                                val prevSeason = TmdbClient.tmdb.getSeason(showId, seasonNumber - 1)
+                                val lastEp = prevSeason.episodes.maxByOrNull { it.episodeNumber }
+                                prevSeason.seasonNumber to (lastEp?.episodeNumber ?: 1)
+                            }
+                            else -> null
+                        },
+                        nextEpisode = when {
+                            currentIndex < allEpisodes.size - 1 -> seasonNumber to allEpisodes[currentIndex + 1].episodeNumber
+                            else -> {
+                                var nextSeasonDetail = runCatching {
+                                    TmdbClient.tmdb.getSeason(showId, seasonNumber + 1)
+                                }.getOrNull()
+                                nextSeasonDetail?.episodes?.size?.let { if (it <= 0) nextSeasonDetail = null }
+                                nextSeasonDetail?.let { s ->
+                                    s.seasonNumber to (s.episodes.minByOrNull { it.episodeNumber }?.episodeNumber ?: 1)
+                                }
+                            }
+                        }
+                    )
+                }
 
                 launch {
                     val rating = imdbFetcher.fetch(episode.externalIds?.imdbId)
