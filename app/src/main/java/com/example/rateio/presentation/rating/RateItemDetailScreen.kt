@@ -25,6 +25,11 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -34,6 +39,7 @@ import androidx.compose.ui.unit.em
 import androidx.compose.ui.zIndex
 import com.example.rateio.presentation.components.AdaptiveAsyncImage
 import com.example.rateio.presentation.components.RateBox
+import com.example.rateio.presentation.components.RatingBottomSheet
 
 
 @Composable
@@ -120,7 +126,10 @@ fun PosterWithRating(
     modifier: Modifier = Modifier,
     placeholderRatio: Float = 2f / 3f,
 ) {
+    var showRatingSheet by remember { mutableStateOf(false) }
     val rateBoxOverhang = 38.dp
+
+    var ratingTest: Float? = null
 
     Box(
         modifier = modifier
@@ -138,7 +147,7 @@ fun PosterWithRating(
                 maxHeight = 450.dp
             )
         }
-        var ratingTest: Float? = null
+
         if (rating != null) {
             if (rating > 0f) ratingTest = rating
         }
@@ -152,7 +161,17 @@ fun PosterWithRating(
             minWidth = 42.dp,
             height = 6.dp,
             textStyle = MaterialTheme.typography.displayMedium,
-            onClick = { }
+            onClick = { showRatingSheet = true }
+        )
+    }
+
+    if (showRatingSheet) {
+        RatingBottomSheet(
+            rating = ratingTest ?: 0f,
+            onDismiss = { showRatingSheet = false },
+            onValueChange = { rating ->
+                ratingTest = rating
+            }
         )
     }
 }
@@ -230,35 +249,6 @@ private fun DetailHeader(
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
-        }
-    }
-}
-
-@Composable
-private fun RatingRow(rating: Float?, ratingLabel: String?, modifier: Modifier = Modifier) {
-    Row(
-        modifier = modifier,
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
-    ) {
-        if (rating != null) {
-            // Show as x/10 for readability
-            Text(
-                text = "%.1f".format(rating * 10),
-                style = MaterialTheme.typography.displaySmall,
-                color = MaterialTheme.colorScheme.primary,
-            )
-            Text(
-                text = ratingLabel ?: "/10",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        } else {
-            Text(
-                text = "Not yet rated",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
         }
     }
 }

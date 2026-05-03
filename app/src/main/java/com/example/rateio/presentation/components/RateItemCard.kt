@@ -58,17 +58,19 @@ fun RateItemCard(
             ) }
         },
         leadingContent = {
-            Card(
-                modifier = Modifier.offset(x = offset),
-                shape = MaterialTheme.shapes.medium,
-            ) {
-                AdaptiveAsyncImage(
-                    model = coverImagePath,
-                    contentDescription = "Cover image",
-                    maxWidth = 120.dp,
-                    maxHeight = 120.dp,
-                    placeholderRatio = placeholderRatio
-                )
+            if (coverImagePath != null) {
+                Card(
+                    modifier = Modifier.offset(x = offset),
+                    shape = MaterialTheme.shapes.medium,
+                ) {
+                    AdaptiveAsyncImage(
+                        model = coverImagePath,
+                        contentDescription = "Cover image",
+                        maxWidth = 120.dp,
+                        maxHeight = 120.dp,
+                        placeholderRatio = placeholderRatio
+                    )
+                }
             }
         },
         trailingContent = {

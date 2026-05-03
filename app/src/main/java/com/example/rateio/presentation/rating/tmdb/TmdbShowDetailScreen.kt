@@ -47,6 +47,8 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.rateio.presentation.components.AdaptiveImageCarousel
 import com.example.rateio.presentation.components.CastCard
+import com.example.rateio.presentation.components.EpisodeGrid
+import com.example.rateio.presentation.components.EpisodeWrapped
 import com.example.rateio.presentation.components.RateItemCard
 import com.example.rateio.presentation.components.SectionHeader
 import com.example.rateio.presentation.rating.RateItemDetailScreen
@@ -77,13 +79,14 @@ fun TmdbShowDetailScreen(
         state.show != null -> {
             val show = state.show!!
             val seasons = show.seasons.filter { it.seasonNumber > 0 }
-            val gridViewModel: TmdbEpisodesViewModel = viewModel(
+            val episodesViewModel: TmdbEpisodesViewModel = viewModel(
                 factory = TmdbEpisodesViewModel.factory(
                     showId = showId,
+                    imdbId = show.externalIds?.imdbId,
                     seasonNumbers = seasons.map { it.seasonNumber },
                 )
             )
-            val gridState by gridViewModel.state.collectAsState()
+            val episodesState by episodesViewModel.state.collectAsState()
 
 
             var selectedMode by remember { mutableIntStateOf(0) }
@@ -160,90 +163,102 @@ fun TmdbShowDetailScreen(
                     item { Spacer(modifier = Modifier.height(16.dp)) }
 
                     // Seasons
-                    item { SectionHeader("Seasons / Episodes") }
+                    item { SectionHeader("Episodes") }
                     item { DisplaySelector(selectedMode, onSelectionChanged = { selectedMode = it }) }
 
-                    when (selectedMode) {
-                        0 -> {
-                            /*items(seasons, key = { it.id }) { season ->
-                                var ratingTest: Float? = null
-                                if (season.voteAverage != null) {
-                                    if (season.voteAverage > 0f) ratingTest = season.voteAverage.div(10f).plus(0.1f)
-                                }
-                                RateItemCard(
-                                    title = "Season ${season.seasonNumber}",
-                                    subtitle = "${(season.airDate ?: "N/A").take(4)}  |  ${season.episodeCount} episodes",
-                                    coverImagePath = "https://image.tmdb.org/t/p/w185${season.posterPath}",
-                                    rating = ratingTest,
-                                    onClick = { onSeasonClick(season.id, showId) }
-                                )
-                            }*/
+                    when {
+                        episodesState.isLoadingEpisodes -> item {
+                            Box(Modifier.fillMaxWidth().padding(32.dp), Alignment.Center) {
+                                CircularWavyProgressIndicator()
+                            }
+                        }
+                        episodesState.seasonEpisodes.isNotEmpty() -> {
+                            when (selectedMode) {
+                                0 -> {
+                                    /*items(seasons, key = { it.id }) { season ->
+                                        var ratingTest: Float? = null
+                                        if (season.voteAverage != null) {
+                                            if (season.voteAverage > 0f) ratingTest = season.voteAverage.div(10f).plus(0.1f)
+                                        }
+                                        RateItemCard(
+                                            title = "Season ${season.seasonNumber}",
+                                            subtitle = "${(season.airDate ?: "N/A").take(4)}  |  ${season.episodeCount} episodes",
+                                            coverImagePath = "https://image.tmdb.org/t/p/w185${season.posterPath}",
+                                            rating = ratingTest,
+                                            onClick = { onSeasonClick(season.id, showId) }
+                                        )
+                                    }*/
 
-                            when {
-                                gridState.isLoading -> item {
-                                    Box(Modifier.fillMaxWidth().padding(32.dp), Alignment.Center) {
-                                        CircularWavyProgressIndicator()
-                                    }
-                                }
-                                gridState.seasonEpisodes.isNotEmpty() -> {
-                                    gridState.seasonEpisodes
+                                    episodesState.seasonEpisodes
                                         .entries
                                         .sortedBy { it.key }
                                         .forEach { (seasonNumber, episodes) ->
                                             item { SectionHeader("Seasons $seasonNumber") }
 
-                                            items(episodes.sortedBy { it.episodeNumber }) { episode ->
-                                                var rating: Float? = null
-                                                if (episode.voteAverage != null) {
-                                                    if (episode.voteAverage > 0f) rating = episode.voteAverage.div(10f)
-                                                }
+                                            items(
+                                                episodes.sortedBy { it.episodeNumber },
+                                                key = { it.id },
+                                            ) { episode ->
                                                 RateItemCard(
                                                     title = episode.name,
                                                     subtitle = "Episode ${episode.episodeNumber}  |  ${if (episode.runtime > 0) "${episode.runtime}m" else "N/A"}",
                                                     coverImagePath = "https://image.tmdb.org/t/p/w300${episode.stillPath}",
-                                                    rating = rating,
+                                                    rating = episodesState.imdbRatings[seasonNumber]?.get(episode.episodeNumber),
                                                     placeholderRatio = 16f / 9f,
                                                     padding = PaddingValues(horizontal = 16.dp, vertical = 6.dp),
                                                     onClick = { onEpisodeClick(
-                                                            show.id,
-                                                            episode.seasonNumber,
-                                                            episode.episodeNumber
-                                                        ) },
+                                                        show.id,
+                                                        episode.seasonNumber,
+                                                        episode.episodeNumber
+                                                    ) },
                                                 )
                                             }
                                         }
                                 }
-                            }
-                        }
-                        2 -> {
-                            when {
-                                gridState.isLoading -> item {
-                                    Box(Modifier.fillMaxWidth().padding(32.dp), Alignment.Center) {
-                                        CircularWavyProgressIndicator()
+                                1 -> {
+                                    item {
+                                        EpisodeGrid(
+                                            seasonEpisodes = episodesState.seasonEpisodes,
+                                            imdbRatings = episodesState.imdbRatings,
+                                            onEpisodeClick = { season, episode ->
+                                                run {
+                                                    onEpisodeClick(
+                                                        show.id,
+                                                        season,
+                                                        episode
+                                                    )
+                                                }
+                                            },
+                                            modifier = Modifier.padding(bottom = 16.dp),
+                                        )
                                     }
                                 }
-                                gridState.seasonEpisodes.isNotEmpty() -> item {
-                                    EpisodeGrid(
-                                        seasonEpisodes = gridState.seasonEpisodes,
-                                        onEpisodeClick = { season, episode ->
-                                            run {
-                                                onEpisodeClick(
-                                                    show.id,
-                                                    season,
-                                                    episode
-                                                )
-                                            }
-                                        },
-                                        modifier = Modifier.padding(bottom = 16.dp),
-                                    )
+                                2 -> {
+                                    item {
+                                        EpisodeWrapped(
+                                            seasonEpisodes = episodesState.seasonEpisodes,
+                                            imdbRatings = episodesState.imdbRatings,
+                                            onEpisodeClick = { season, episode ->
+                                                run {
+                                                    onEpisodeClick(
+                                                        show.id,
+                                                        season,
+                                                        episode
+                                                    )
+                                                }
+                                            },
+                                            modifier = Modifier.padding(bottom = 16.dp),
+                                        )
+                                    }
+                                }
+                                else -> {
+                                    item {
+                                        Text("Not implemented", modifier = Modifier.padding(horizontal = 16.dp))
+                                        Spacer(modifier = Modifier.padding(vertical = 400.dp))
+                                    }
                                 }
                             }
-                        }
-                        else -> {
-                            item {
-                                Text("Not implemented", modifier = Modifier.padding(horizontal = 16.dp))
-                                Spacer(modifier = Modifier.padding(vertical = 400.dp))
-                            }
+
                         }
                     }
 

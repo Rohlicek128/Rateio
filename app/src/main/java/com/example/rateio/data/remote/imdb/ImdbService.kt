@@ -1,9 +1,9 @@
 package com.example.rateio.data.remote.imdb
 
-import com.example.rateio.BuildConfig
 import retrofit2.http.GET
 import retrofit2.http.Header
 import retrofit2.http.Path
+import retrofit2.http.Query
 
 
 interface ImdbService {
@@ -12,4 +12,12 @@ interface ImdbService {
         @Path("imdbId") imdbId: String,
         @Header("accept") accept: String = "application/json",
     ): ImdbTitleDetails
+
+    @GET("titles/{titleId}/episodes")
+    suspend fun getEpisodes(
+        @Path("titleId") titleId: String,
+        @Query("season") season: String? = null,
+        @Query("pageSize") pageSize: Int = 50,
+        @Query("pageToken") pageToken: String? = null,
+    ): ImdbEpisodesResponse
 }

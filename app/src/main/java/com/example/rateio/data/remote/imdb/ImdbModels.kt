@@ -9,10 +9,26 @@ data class ImdbTitleDetails(
     @SerializedName("rating") val rating: ImdbRating,
 )
 
+
+data class ImdbEpisodesResponse(
+    @SerializedName("episodes") val episodes: List<ImdbEpisode>?,
+    @SerializedName("totalCount") val totalCount: Int,
+    @SerializedName("nextPageToken") val nextPageToken: String?,
+)
+
+data class ImdbEpisode(
+    @SerializedName("id") val id: String,
+    @SerializedName("season") val season: String,
+    @SerializedName("episodeNumber") val episodeNumber: Int,
+    @SerializedName("rating") val rating: ImdbRating?,
+) {
+    val seasonNumber: Int get() = season.trim().toInt()
+}
+
+
 data class ImdbRating(
     @SerializedName("aggregateRating") val aggregateRating: Float?,
     @SerializedName("voteCount") val voteCount: Int?,
 ) {
-    val normalizedRating: Float?
-        get() = aggregateRating?.div(10f)
+    val normalizedRating: Float? get() = aggregateRating?.div(10f)
 }

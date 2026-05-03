@@ -22,6 +22,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.NavGraph.Companion.findStartDestination
@@ -34,13 +35,10 @@ import androidx.navigation.toRoute
 import com.example.rateio.data.remote.imdb.ImdbRatingFetcher
 import com.example.rateio.features.home.HomeScreen
 import com.example.rateio.features.rating.CategoryDetailScreen
-import com.example.rateio.features.rating.RateItemDetailScreen
 import com.example.rateio.features.settings.SettingsScreen
 import com.example.rateio.presentation.browse.BrowseScreen
 import com.example.rateio.presentation.rating.tmdb.TmdbEpisodeDetailScreen
 import com.example.rateio.presentation.rating.tmdb.TmdbShowDetailScreen
-import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 
 
@@ -80,21 +78,21 @@ fun AppNavigation(navController: NavHostController = rememberNavController()) {
                             selected = currentDestination?.hasRoute<Route.TopLevel.Home>() == true,
                             onClick = { navController.navigateSingleTop(Route.TopLevel.Home) },
                             icon = { Icon(Icons.Default.Home, contentDescription = null) },
-                            label = { Text("Ratings") }
+                            label = { Text("Ratings", fontWeight = FontWeight.Bold) }
                         )
                         // Browse
                         NavigationBarItem(
                             selected = currentDestination?.hasRoute<Route.TopLevel.Browse>() == true,
                             onClick = { navController.navigateSingleTop(Route.TopLevel.Browse) },
                             icon = { Icon(Icons.Default.Search, contentDescription = null) },
-                            label = { Text("Browse") }
+                            label = { Text("Browse", fontWeight = FontWeight.Bold) }
                         )
                         // Settings
                         NavigationBarItem(
                             selected = currentDestination?.hasRoute<Route.TopLevel.Profile>() == true,
                             onClick = { navController.navigateSingleTop(Route.TopLevel.Profile) },
                             icon = { Icon(Icons.Default.Person, contentDescription = null) },
-                            label = { Text("Profile") }
+                            label = { Text("Profile", fontWeight = FontWeight.Bold) }
                         )
                     }
                 }

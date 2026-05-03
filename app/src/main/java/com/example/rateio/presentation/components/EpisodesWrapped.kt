@@ -1,31 +1,24 @@
-package com.example.rateio.presentation.rating.tmdb
+package com.example.rateio.presentation.components
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.rateio.data.remote.TmdbEpisodeSummary
-import com.example.rateio.presentation.components.RateBox
 
 
 @Composable
-fun EpisodeGrid(
+fun EpisodeWrapped(
     seasonEpisodes: Map<Int, List<TmdbEpisodeSummary>>,
+    imdbRatings: Map<Int, Map<Int, Float?>>,
     onEpisodeClick: (season: Int, episode: Int) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -37,6 +30,7 @@ fun EpisodeGrid(
                 SeasonSection(
                     seasonNumber = seasonNumber,
                     episodes = episodes,
+                    ratings = imdbRatings[seasonNumber] ?: emptyMap(),
                     onEpisodeClick = onEpisodeClick,
                 )
             }
@@ -47,6 +41,7 @@ fun EpisodeGrid(
 private fun SeasonSection(
     seasonNumber: Int,
     episodes: List<TmdbEpisodeSummary>,
+    ratings: Map<Int, Float?>,
     onEpisodeClick: (season: Int, episode: Int) -> Unit,
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(7.dp)) {
@@ -71,9 +66,7 @@ private fun SeasonSection(
                     val index = row * columns + col
                     if (index < episodes.size) {
                         RateBox(
-                            rating = episodes[index].voteAverage?.let {
-                                if (it > 0f) episodes[index].voteAverage?.div(10f) else null
-                            },
+                            rating = ratings[episodes[index].episodeNumber],
                             roundedCorners = 8.dp,
                             minWidth = 44.dp,
                             maxWidth = 44.dp,

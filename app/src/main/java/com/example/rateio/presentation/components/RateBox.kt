@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -15,10 +16,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import com.example.rateio.ui.theme.GoogleSans
 import java.util.Locale
 import kotlin.math.roundToInt
 
@@ -59,6 +59,9 @@ fun RateBox(
                 style = textStyle,
                 fontWeight = fontWeight,
                 maxLines = 1,
+                modifier = Modifier.wrapContentWidth(unbounded = true),
+                overflow = TextOverflow.Visible,
+                softWrap = false,
             )
         }
     }
@@ -93,6 +96,22 @@ private fun getColorSchemeImdbMovies(rating: Float?): Triple<Color, Color, Strin
         rating >= 0.65f -> Triple(Color(0xFFF4D03F), blackText, "Good")
         rating >= 0.55f -> Triple(Color(0xFFF39C12), blackText, "Average")
         rating >= 0.40f -> Triple(Color(0xFFE74C3C), whiteText, "Bad")
+        else -> Triple(Color(0xFF633974), whiteText, "Garbage")
+    }
+}
+
+@Composable
+private fun getColorSchemeDecadic(rating: Float?): Triple<Color, Color, String> {
+    val whiteText = Color(0xFFFFFFFF)
+    val blackText = Color(0xFF181818)
+    return when {
+        rating == null -> Triple(MaterialTheme.colorScheme.surfaceVariant, MaterialTheme.colorScheme.onSurfaceVariant, "N/A")
+        rating >= 0.9f -> Triple(Color(0xFF1DA1F2), whiteText, "Masterpiece")
+        rating >= 0.8f -> Triple(Color(0xFF186A3B), whiteText, "Awesome")
+        rating >= 0.7f -> Triple(Color(0xFF28B463), blackText, "Great")
+        rating >= 0.6f -> Triple(Color(0xFFF4D03F), blackText, "Good")
+        rating >= 0.5f -> Triple(Color(0xFFF39C12), blackText, "Average")
+        rating >= 0.4f -> Triple(Color(0xFFE74C3C), whiteText, "Bad")
         else -> Triple(Color(0xFF633974), whiteText, "Garbage")
     }
 }
