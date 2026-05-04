@@ -84,12 +84,12 @@ fun RateBox(
 }
 
 
-@Composable
-private fun getColorSchemeImdbEpisodes(rating: Float?): Triple<Color, Color, String> {
+
+fun getColorSchemeImdbEpisodes(rating: Float?): Triple<Color, Color, String> {
     val whiteText = Color(0xFFFFFFFF)
     val blackText = Color(0xFF181818)
     return when {
-        rating == null  -> Triple(MaterialTheme.colorScheme.surfaceVariant, MaterialTheme.colorScheme.onSurfaceVariant, "N/A")
+        rating == null -> Triple(Color(0xFF4A4A4A), Color(0xFFD2D2D2), "N/A")
         rating >= 0.96f -> Triple(Color(0xFF1DA1F2), whiteText, "Masterpiece")
         rating >= 0.90f -> Triple(Color(0xFF186A3B), whiteText, "Awesome")
         rating >= 0.80f -> Triple(Color(0xFF28B463), blackText, "Great")
@@ -100,12 +100,12 @@ private fun getColorSchemeImdbEpisodes(rating: Float?): Triple<Color, Color, Str
     }
 }
 
-@Composable
-private fun getColorSchemeImdbMovies(rating: Float?): Triple<Color, Color, String> {
+
+fun getColorSchemeImdbMovies(rating: Float?): Triple<Color, Color, String> {
     val whiteText = Color(0xFFFFFFFF)
     val blackText = Color(0xFF181818)
     return when {
-        rating == null  -> Triple(MaterialTheme.colorScheme.surfaceVariant, MaterialTheme.colorScheme.onSurfaceVariant, "N/A")
+        rating == null -> Triple(Color(0xFF5F5F5F), Color(0xFFBABABA), "N/A")
         rating >= 0.80f -> Triple(Color(0xFF1DA1F2), whiteText, "Masterpiece")
         rating >= 0.75f -> Triple(Color(0xFF186A3B), whiteText, "Awesome")
         rating >= 0.70f -> Triple(Color(0xFF28B463), blackText, "Great")
@@ -116,12 +116,11 @@ private fun getColorSchemeImdbMovies(rating: Float?): Triple<Color, Color, Strin
     }
 }
 
-@Composable
-private fun getColorSchemeDecadic(rating: Float?): Triple<Color, Color, String> {
+fun getColorSchemeDecadic(rating: Float?): Triple<Color, Color, String> {
     val whiteText = Color(0xFFFFFFFF)
     val blackText = Color(0xFF181818)
     return when {
-        rating == null -> Triple(MaterialTheme.colorScheme.surfaceVariant, MaterialTheme.colorScheme.onSurfaceVariant, "N/A")
+        rating == null -> Triple(Color(0xFF5F5F5F), Color(0xFFBABABA), "N/A")
         rating >= 0.9f -> Triple(Color(0xFF1DA1F2), whiteText, "Masterpiece")
         rating >= 0.8f -> Triple(Color(0xFF186A3B), whiteText, "Awesome")
         rating >= 0.7f -> Triple(Color(0xFF28B463), blackText, "Great")

@@ -1,6 +1,7 @@
 package com.example.rateio.utils
 
 import java.time.LocalDate
+import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
 import java.util.Locale
@@ -12,7 +13,14 @@ fun parseDate(dateString: String?): LocalDate? {
 }
 
 fun daysUntil(targetDate: LocalDate): Long {
-    return ChronoUnit.DAYS.between(LocalDate.now(), targetDate).coerceAtLeast(0)
+    return ChronoUnit.DAYS.between(
+        LocalDate.now(),
+        targetDate).coerceAtLeast(0)
+}
+fun hoursUntil(targetDate: LocalDate): Long {
+    return ChronoUnit.HOURS.between(
+        LocalDateTime.now(),
+        targetDate.atStartOfDay()).coerceAtLeast(0)
 }
 
 fun formatDate(dateString: String?, locale: Locale = Locale.ENGLISH): String {

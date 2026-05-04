@@ -29,6 +29,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -249,6 +250,7 @@ private fun PosterWithRating(
     val rateBoxOverhang = 48.dp
 
     var ratingTest: Float? = null
+    var ratingPer by remember { mutableFloatStateOf(rating ?: 0f) }
 
     val scope = rememberCoroutineScope()
     var glowColor by remember { mutableStateOf(Color.Transparent) }
@@ -324,6 +326,7 @@ private fun PosterWithRating(
         if (rating != null) {
             if (rating > 0f) ratingTest = rating
         }
+
         Column(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
@@ -339,7 +342,10 @@ private fun PosterWithRating(
                 height = 6.dp,
                 textStyle = MaterialTheme.typography.displayMedium,
                 loadingSize = 38.dp,
-                onClick = { showRatingSheet = true }
+                onClick = {
+                    showRatingSheet = true
+                    ratingPer = ratingTest ?: 0f
+                }
             )
 
             if (ratingVotes != null && ratingVotes > 0) {
@@ -356,10 +362,11 @@ private fun PosterWithRating(
 
     if (showRatingSheet) {
         RatingBottomSheet(
-            rating = ratingTest ?: 0f,
+            rating = ratingPer,
             onDismiss = { showRatingSheet = false },
             onValueChange = { rating ->
-                ratingTest = rating
+                ratingPer = rating
+                //ratingTest = rating
             }
         )
     }

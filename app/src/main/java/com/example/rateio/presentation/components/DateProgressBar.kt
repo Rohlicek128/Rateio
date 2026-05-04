@@ -13,20 +13,24 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.example.rateio.utils.daysUntil
 import com.example.rateio.utils.formatDate
+import com.example.rateio.utils.hoursUntil
 import com.example.rateio.utils.parseDate
 import java.time.LocalDate
+import java.time.LocalDateTime
 import java.time.temporal.ChronoUnit
+import kotlin.math.floor
 
 
-fun dateProgress(startDate: LocalDate, endDate: LocalDate, currentDate: LocalDate): Float {
-    if (currentDate >= endDate) return 1f
+fun dateProgress(startDate: LocalDate, endDate: LocalDate, currentDateTime: LocalDateTime = LocalDateTime.now()): Float {
+    val startDateTime = startDate.atStartOfDay()
+    val endDateTime = endDate.atStartOfDay()
+    if (currentDateTime >= endDateTime) return 1f
 
-    val totalDays = ChronoUnit.DAYS.between(startDate, endDate).toFloat()
-    val elapsedDays = ChronoUnit.DAYS.between(startDate, currentDate).toFloat()
+    val totalHours = ChronoUnit.HOURS.between(startDateTime, endDateTime).toFloat()
+    val elapsedHours = ChronoUnit.HOURS.between(startDateTime, currentDateTime).toFloat()
 
-    return (elapsedDays / totalDays).coerceIn(0f, 1f)
+    return (elapsedHours / totalHours).coerceIn(0f, 1f)
 }
 
 @Composable
@@ -42,11 +46,14 @@ fun DateProgressBar(
     if (endDate == null) return
 
     val isDone = todayDate >= endDate
-    val daysLeft = daysUntil(endDate)
+
+    var hoursLeft = hoursUntil(endDate)
+    val daysLeft = floor(hoursLeft.toFloat() / 24f).toLong()
+    hoursLeft = (hoursLeft % 24f).toLong()
 
     val progress = remember(endDate, startDate) {
         if (startDate != null) {
-            dateProgress(startDate, endDate, todayDate)
+            dateProgress(startDate, endDate)
         } else {
             if (isDone) 1f else 0f
         }
@@ -65,8 +72,8 @@ fun DateProgressBar(
             Text(
                 text = when {
                     todayDate > endDate -> "Aired"
-                    todayDate == endDate -> "Airing"
-                    else -> "Airs in $daysLeft days"
+                    todayDate == endDate -> "Airs Today"
+                    else -> "Airs in ${if (daysLeft > 0L) "$daysLeft day${if (daysLeft != 1L) "s" else ""}," else "" } $hoursLeft hours"
                 },
                 style = MaterialTheme.typography.labelMedium,
                 fontWeight = FontWeight.Bold
@@ -80,7 +87,9 @@ fun DateProgressBar(
 
         LinearWavyProgressIndicator(
             progress = { progress },
-            modifier = Modifier.fillMaxWidth().height(8.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(8.dp),
             waveSpeed = 10.dp,
             wavelength = 22.dp,
         )
