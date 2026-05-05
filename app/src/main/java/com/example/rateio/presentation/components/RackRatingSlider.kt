@@ -26,12 +26,13 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.example.rateio.presentation.rating.display.getRatingColor
 import kotlin.math.roundToInt
 
 
 @Composable
 fun RackRatingSlider(
-    value: Float,
+    rating: Float,
     onValueChange: (Float) -> Unit,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
@@ -39,17 +40,19 @@ fun RackRatingSlider(
     activeColor: Color = MaterialTheme.colorScheme.primary,
     inactiveColor: Color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.35f),
     tickSpacing: Dp = 10.dp,
+    majorTickFrequency: Int = 5,
     minorTickHeightFraction: Float = 0.38f,
     majorTickHeightFraction: Float = 0.62f,
     minorTickWidth: Dp = 1.5.dp,
     majorTickWidth: Dp = 2.5.dp,
     indicatorWidth: Dp = 2.dp,
+    hardPart: Float = 0.96f,
     fadeWidthFraction: Float = 0.18f,
 ) {
     val haptic = LocalHapticFeedback.current
 
     // Clamp and snap the incoming value to the nearest step
-    val clampedValue = value.coerceIn(0f, 1f)
+    val clampedValue = rating.coerceIn(0f, 1f)
     val currentStep = (clampedValue * stepCount).roundToInt()
 
     // Track which step we were on before this drag gesture started so we can
@@ -84,7 +87,7 @@ fun RackRatingSlider(
                             //lastHapticStep.intValue = (value.coerceIn(0f, 1f) * stepCount).roundToInt()
                         },
                         onDragEnd = {
-                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                            //haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                             dragOffset = 0f
                         },
                         onDragCancel = {
@@ -114,11 +117,19 @@ fun RackRatingSlider(
 
                                 // Haptic: step boundary
                                 if (newStep != lastHapticStep.intValue) {
-                                    if (newStep != 0 && newStep != stepCount) {
-                                        haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                                    if (newStep != stepCount) {
+                                        if (newStep >= stepCount * hardPart) {
+                                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                        }
+                                        else if (newStep % majorTickFrequency == 0) {
+                                            haptic.performHapticFeedback(HapticFeedbackType.SegmentTick)
+                                        }
+                                        else if (newStep != 0) {
+                                            haptic.performHapticFeedback(HapticFeedbackType.SegmentFrequentTick)
+                                        }
                                     }
+
                                     lastHapticStep.intValue = newStep
-                                    // Consume the steps we just applied
                                     dragOffset -= stepDelta * tickSpacingPx
                                     onValueChange(newValue)
                                 }
@@ -165,14 +176,14 @@ fun RackRatingSlider(
                 val screenX = centerX + (i * pxPerTick - rackOffsetPx)
                 if (screenX < -pxPerTick || screenX > canvasWidth + pxPerTick) continue
 
-                val isMajor = (i % 5 == 0)
+                val isMajor = (i % majorTickFrequency == 0)
                 val tickH = if (isMajor) majorH else minorH
                 val tickW = if (isMajor) majorW else minorW
 
                 val isPassed = i <= animatedStep.toInt()
                 //var baseColor = if (isPassed) activeColor else inactiveColor
                 //if (isMajor) baseColor = getColorSchemeImdbEpisodesNC(i / 100f).first
-                val baseColor = getColorSchemeImdbEpisodes(i / 100f).first
+                val baseColor = getRatingColor(i / stepCount.toFloat()).backgroundColor
 
                 // Fade alpha near edges
                 val distFromEdge = minOf(screenX, canvasWidth - screenX)

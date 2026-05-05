@@ -73,7 +73,7 @@ fun DateProgressBar(
                 text = when {
                     todayDate > endDate -> "Aired"
                     todayDate == endDate -> "Airs Today"
-                    else -> "Airs in ${if (daysLeft > 0L) "$daysLeft day${if (daysLeft != 1L) "s" else ""}," else "" } $hoursLeft hours"
+                    else -> "Airs in ${if (daysLeft > 0L) "$daysLeft day${if (daysLeft != 1L) "s" else ""}, " else ""}$hoursLeft hour${if (hoursLeft != 1L) "s" else ""}"
                 },
                 style = MaterialTheme.typography.labelMedium,
                 fontWeight = FontWeight.Bold

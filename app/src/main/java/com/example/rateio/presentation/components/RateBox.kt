@@ -3,7 +3,6 @@ package com.example.rateio.presentation.components
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
@@ -13,7 +12,6 @@ import androidx.compose.material3.CircularWavyProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.WavyProgressIndicatorDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -23,7 +21,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import java.util.Locale
+import com.example.rateio.presentation.rating.display.getRatingColor
+import com.example.rateio.presentation.rating.display.getRoundedRating
+import com.example.rateio.presentation.rating.display.getTransformedRating
 import kotlin.math.roundToInt
 
 
@@ -42,13 +42,12 @@ fun RateBox(
     isLoading: Boolean = false,
     onClick: (() -> Unit)? = null,
 ) {
-    val (backgroundColor, contentColor, label) = getColorSchemeImdbEpisodes(rating)
-
-    val displayText = if (rating != null) "%.1f".format(Locale.US, (rating * 100f).roundToInt() / 10f) else "?"
+    val colors = getRatingColor(getRoundedRating(rating))
+    val display = getTransformedRating(rating)
 
     Surface(
-        color = backgroundColor,
-        contentColor = contentColor,
+        color = colors.backgroundColor,
+        contentColor = colors.foregroundColor,
         shape = RoundedCornerShape(roundedCorners),
         border = null,
         modifier = if (onClick != null) modifier.clickable(onClick = onClick) else modifier,
@@ -70,7 +69,7 @@ fun RateBox(
             }
             else {
                 Text(
-                    text = displayText,
+                    text = display,
                     style = textStyle,
                     fontWeight = fontWeight,
                     maxLines = 1,
@@ -80,53 +79,5 @@ fun RateBox(
                 )
             }
         }
-    }
-}
-
-
-
-fun getColorSchemeImdbEpisodes(rating: Float?): Triple<Color, Color, String> {
-    val whiteText = Color(0xFFFFFFFF)
-    val blackText = Color(0xFF181818)
-    return when {
-        rating == null -> Triple(Color(0xFF4A4A4A), Color(0xFFD2D2D2), "N/A")
-        rating >= 0.96f -> Triple(Color(0xFF1DA1F2), whiteText, "Masterpiece")
-        rating >= 0.90f -> Triple(Color(0xFF186A3B), whiteText, "Awesome")
-        rating >= 0.80f -> Triple(Color(0xFF28B463), blackText, "Great")
-        rating >= 0.70f -> Triple(Color(0xFFF4D03F), blackText, "Good")
-        rating >= 0.60f -> Triple(Color(0xFFF39C12), blackText, "Average")
-        rating >= 0.41f -> Triple(Color(0xFFE74C3C), whiteText, "Bad")
-        else -> Triple(Color(0xFF633974), whiteText, "Garbage")
-    }
-}
-
-
-fun getColorSchemeImdbMovies(rating: Float?): Triple<Color, Color, String> {
-    val whiteText = Color(0xFFFFFFFF)
-    val blackText = Color(0xFF181818)
-    return when {
-        rating == null -> Triple(Color(0xFF5F5F5F), Color(0xFFBABABA), "N/A")
-        rating >= 0.80f -> Triple(Color(0xFF1DA1F2), whiteText, "Masterpiece")
-        rating >= 0.75f -> Triple(Color(0xFF186A3B), whiteText, "Awesome")
-        rating >= 0.70f -> Triple(Color(0xFF28B463), blackText, "Great")
-        rating >= 0.65f -> Triple(Color(0xFFF4D03F), blackText, "Good")
-        rating >= 0.55f -> Triple(Color(0xFFF39C12), blackText, "Average")
-        rating >= 0.40f -> Triple(Color(0xFFE74C3C), whiteText, "Bad")
-        else -> Triple(Color(0xFF633974), whiteText, "Garbage")
-    }
-}
-
-fun getColorSchemeDecadic(rating: Float?): Triple<Color, Color, String> {
-    val whiteText = Color(0xFFFFFFFF)
-    val blackText = Color(0xFF181818)
-    return when {
-        rating == null -> Triple(Color(0xFF5F5F5F), Color(0xFFBABABA), "N/A")
-        rating >= 0.9f -> Triple(Color(0xFF1DA1F2), whiteText, "Masterpiece")
-        rating >= 0.8f -> Triple(Color(0xFF186A3B), whiteText, "Awesome")
-        rating >= 0.7f -> Triple(Color(0xFF28B463), blackText, "Great")
-        rating >= 0.6f -> Triple(Color(0xFFF4D03F), blackText, "Good")
-        rating >= 0.5f -> Triple(Color(0xFFF39C12), blackText, "Average")
-        rating >= 0.4f -> Triple(Color(0xFFE74C3C), whiteText, "Bad")
-        else -> Triple(Color(0xFF633974), whiteText, "Garbage")
     }
 }

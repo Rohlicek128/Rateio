@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
@@ -22,16 +21,12 @@ import androidx.compose.material.icons.filled.GridOn
 import androidx.compose.material.icons.filled.Timeline
 import androidx.compose.material.icons.outlined.GridOn
 import androidx.compose.material.icons.outlined.Timeline
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.ButtonGroupDefaults
 import androidx.compose.material3.CircularWavyProgressIndicator
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedToggleButton
 import androidx.compose.material3.SuggestionChip
 import androidx.compose.material3.Text
 import androidx.compose.material3.ToggleButtonDefaults
-import androidx.compose.material3.ToggleButtonShapes
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -41,12 +36,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.semantics.role
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.rateio.presentation.components.AdaptiveImageCarousel
@@ -57,6 +47,7 @@ import com.example.rateio.presentation.components.EpisodeGrid
 import com.example.rateio.presentation.components.EpisodeWrapped
 import com.example.rateio.presentation.components.RateItemCard
 import com.example.rateio.presentation.components.SectionHeader
+import com.example.rateio.presentation.components.rating.EpisodeRatingGraph
 import com.example.rateio.presentation.rating.RateItemDetailScreen
 import com.example.rateio.utils.formatDate
 import kotlin.collections.listOf
@@ -98,7 +89,7 @@ fun TmdbShowDetailScreen(
 
 
             var selectedMode by remember { mutableIntStateOf(0) }
-            var selectedGrid by remember { mutableIntStateOf(0) }
+            var selectedRatings by remember { mutableIntStateOf(0) }
             var invertedGrid by remember { mutableStateOf(false) }
 
             RateItemDetailScreen(
@@ -185,7 +176,7 @@ fun TmdbShowDetailScreen(
                     }
 
                     // Cast
-                    if (show.credits != null && (show.credits.cast.isNotEmpty() || show.credits.guest.isNotEmpty())) {
+                    if (show.credits != null && show.credits.cast.isNotEmpty()) {
                         item { SectionHeader("Cast") }
                         item {
                             LazyRow(
@@ -199,17 +190,6 @@ fun TmdbShowDetailScreen(
                                             name = member.name,
                                             position = member.character,
                                             profilePath = member.profilePath?.let { "https://image.tmdb.org/t/p/w185$it" },
-                                        )
-                                    }
-                                }
-                                show.credits?.guest?.takeIf { it.isNotEmpty() }?.let { guest ->
-                                    items(guest.take(10), key = { it.creditId }) { member ->
-                                        PersonCard(
-                                            name = member.name,
-                                            position = member.character,
-                                            profilePath = member.profilePath?.let { "https://image.tmdb.org/t/p/w185$it" },
-                                            width = 80.dp,
-                                            height = 80.dp,
                                         )
                                     }
                                 }
@@ -246,6 +226,16 @@ fun TmdbShowDetailScreen(
 
                     // Episodes
                     item { SectionHeader("Episodes") }
+                    item {
+                        DisplaySelector(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 8.dp),
+                            selectedIndex = selectedRatings,
+                            onSelectionChanged = { selectedRatings = it },
+                            options = listOf("IMDb", "TMDb", "Yours"),
+                        )
+                    }
                     item {
                         DisplaySelector(
                             modifier = Modifier
@@ -319,12 +309,6 @@ fun TmdbShowDetailScreen(
                                                 .padding(horizontal = 8.dp),
                                             horizontalArrangement = Arrangement.SpaceBetween,
                                         ) {
-                                            DisplaySelector(
-                                                selectedIndex = selectedGrid,
-                                                onSelectionChanged = { selectedGrid = it },
-                                                options = listOf("IMDb", "TMDb", "Yours"),
-                                            )
-
                                             OutlinedToggleButton(
                                                 checked = invertedGrid,
                                                 onCheckedChange = { invertedGrid = it },
@@ -370,6 +354,20 @@ fun TmdbShowDetailScreen(
                                                 }
                                             },
                                             modifier = Modifier.padding(bottom = 16.dp),
+                                        )
+                                    }
+                                }
+                                3 -> {
+                                    item {
+                                        EpisodeRatingGraph(
+                                            episodes = episodesState.seasonEpisodes,
+                                            imdbRatings = episodesState.imdbRatings,
+                                            onEpisodeClick = { season, episode ->
+                                                onEpisodeClick(showId, season, episode)
+                                            },
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .padding(bottom = 16.dp),
                                         )
                                     }
                                 }

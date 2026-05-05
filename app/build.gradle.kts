@@ -73,6 +73,7 @@ kotlin {
 dependencies {
     implementation(libs.androidx.compose.foundation.layout)
     implementation(libs.androidx.compose.runtime)
+    implementation(libs.androidx.compose.ui.geometry)
     implementation(libs.androidx.compose.ui.unit)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
