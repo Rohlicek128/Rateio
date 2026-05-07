@@ -41,7 +41,7 @@ fun RatingBottomSheet(
     onValueChange: (Float?) -> Unit,
 ) {
     val haptic = LocalHapticFeedback.current
-    var sliderPosition by rememberSaveable { mutableStateOf(rating) }
+    var sliderPosition by rememberSaveable { mutableFloatStateOf(rating ?: 0.7f) }
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
@@ -67,7 +67,7 @@ fun RatingBottomSheet(
 
             val rtf = getCurrentRatingTransformations()
             RackRatingSlider(
-                rating = sliderPosition ?: 0.7f,
+                rating = sliderPosition,
                 onValueChange = {
                     sliderPosition = it
                 },
@@ -77,7 +77,9 @@ fun RatingBottomSheet(
                 indicatorWidth = 4.5.dp,
                 majorTickWidth = 4.dp,
                 minorTickWidth = 3.dp,
-                tickSpacing = 10.dp,
+                minorTickHeightFraction = 0.5f,
+                majorTickHeightFraction = 0.65f,
+                tickSpacing = 11.dp,
                 stepCount = rtf.stepCount.toInt(),
                 majorTickFrequency = rtf.majorTickFrequency,
                 hardPart = rtf.legendaryPart,

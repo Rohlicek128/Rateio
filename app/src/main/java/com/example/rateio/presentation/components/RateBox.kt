@@ -16,6 +16,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -42,6 +44,8 @@ fun RateBox(
     isLoading: Boolean = false,
     onClick: (() -> Unit)? = null,
 ) {
+    val haptic = LocalHapticFeedback.current
+
     val colors = getRatingColor(getRoundedRating(rating))
     val display = getTransformedRating(rating)
 
@@ -50,7 +54,10 @@ fun RateBox(
         contentColor = colors.foregroundColor,
         shape = RoundedCornerShape(roundedCorners),
         border = null,
-        modifier = if (onClick != null) modifier.clickable(onClick = onClick) else modifier,
+        modifier = if (onClick != null) modifier.clickable(onClick = {
+            haptic.performHapticFeedback(HapticFeedbackType.Confirm)
+            onClick()
+        }) else modifier,
     ) {
         Column(
             modifier = Modifier

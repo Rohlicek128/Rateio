@@ -3,7 +3,7 @@ package com.example.rateio.data.remote
 import com.google.gson.annotations.SerializedName
 
 
-data class TmdbSearchResponse(
+data class TmdbShowSearchResponse(
     @SerializedName("results") val results: List<TmdbShow>
 )
 
@@ -125,7 +125,7 @@ data class TmdbEpisodeDetail(
 )
 
 
-data class TmdbShowImageResponse(
+data class TmdbImageResponse(
     @SerializedName("id") val id: Int,
     @SerializedName("backdrops") val backdrops: List<TmdbImage>,
     @SerializedName("posters") val posters: List<TmdbImage>,
@@ -140,4 +140,44 @@ data class TmdbImage(
     @SerializedName("file_path") val filePath: String,
     @SerializedName("aspect_ratio") val aspectRatio: Float,
     @SerializedName("vote_count") val voteCount: Int,
+)
+
+
+
+data class TmdbMovieSearchResponse(
+    @SerializedName("results") val results: List<TmdbMovie>
+)
+
+data class TmdbMovie(
+    @SerializedName("id") val id: Int,
+    @SerializedName("title") val title: String,
+    @SerializedName("overview") val overview: String?,
+    @SerializedName("poster_path") val posterPath: String?,
+    @SerializedName("backdrop_path") val backdropPath: String?,
+    @SerializedName("release_date") val releaseDate: String?,
+    @SerializedName("vote_average") val voteAverage: Float?,
+    @SerializedName("original_language") val originalLanguage: String?,
+)
+
+data class TmdbMovieDetail(
+    @SerializedName("id") val id: Int,
+    @SerializedName("imdb_id") val imdbId: String?,
+
+    @SerializedName("title") val title: String,
+    @SerializedName("overview") val overview: String?,
+    @SerializedName("poster_path") val posterPath: String?,
+    @SerializedName("backdrop_path") val backdropPath: String?,
+    @SerializedName("vote_average") val voteAverage: Float?,
+    @SerializedName("genres") val genres: List<TmdbGenre>,
+    @SerializedName("runtime") val runtime: Int,
+
+    @SerializedName("release_date") val releaseDate: String?,
+    @SerializedName("status") val status: String?,
+    @SerializedName("original_language") val originalLanguage: String?,
+    @SerializedName("origin_country") val originCountry: List<String>,
+
+    @SerializedName("revenue") val revenue: Long,
+    @SerializedName("budget") val budget: Int,
+
+    @SerializedName("credits") val credits: TmdbCredits?,
 )

@@ -42,9 +42,9 @@ fun getRoundedRating(rating: Float?): Float? {
 fun getCurrentRatingTransformations(): RatingTransformations {
     val tfThousand = RatingTransformations(
         stepCount = 1000u,
-        divider = 10f,
-        decimalPlaces = 1u,
-        majorTickFrequency = 100,
+        divider = 100f,
+        decimalPlaces = 2u,
+        majorTickFrequency = 10,
     )
     val tfHunTen = RatingTransformations(
         stepCount = 100u,

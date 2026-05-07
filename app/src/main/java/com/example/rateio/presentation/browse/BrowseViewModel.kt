@@ -3,6 +3,7 @@ package com.example.rateio.presentation.browse
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.rateio.data.remote.TmdbClient
+import com.example.rateio.data.remote.TmdbMovie
 import com.example.rateio.data.remote.TmdbShow
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -16,6 +17,7 @@ import kotlinx.coroutines.launch
 data class BrowseState(
     val query: String = "",
     val results: List<TmdbShow> = emptyList(),
+    //val results: List<TmdbMovie> = emptyList(),
     val isLoading: Boolean = false,
     val error: String? = null,
 )
@@ -43,6 +45,7 @@ class BrowseViewModel : ViewModel() {
 
             try {
                 val response = TmdbClient.tmdb.searchShows(query)
+                //val response = TmdbClient.tmdb.searchMovies(query)
                 _state.update { it.copy(results = response.results, isLoading = false) }
             } catch (e: Exception) {
                 _state.update { it.copy(error = e.message, isLoading = false) }

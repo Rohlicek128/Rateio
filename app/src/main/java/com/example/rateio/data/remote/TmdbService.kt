@@ -8,6 +8,7 @@ import retrofit2.http.Query
 
 
 interface TmdbService {
+    // Shows
     @GET("search/tv")
     suspend fun searchShows(
         @Query("query") query: String,
@@ -16,7 +17,7 @@ interface TmdbService {
         //@Query("append_to_response") append: String = "external_ids",
         @Header("accept") accept: String = "application/json",
         @Header("Authorization") bearer: String = "Bearer " + BuildConfig.TMDB_API_KEY,
-    ): TmdbSearchResponse
+    ): TmdbShowSearchResponse
 
     @GET("tv/{id}")
     suspend fun getShow(
@@ -56,7 +57,7 @@ interface TmdbService {
         @Query("include_image_language") language: String = "en-US,null",
         @Header("accept") accept: String = "application/json",
         @Header("Authorization") bearer: String = "Bearer " + BuildConfig.TMDB_API_KEY,
-    ): TmdbShowImageResponse
+    ): TmdbImageResponse
 
     @GET("tv/{showId}/season/{seasonNumber}/episode/{episodeNumber}/images")
     suspend fun getEpisodeImages(
@@ -66,4 +67,34 @@ interface TmdbService {
         @Header("accept") accept: String = "application/json",
         @Header("Authorization") bearer: String = "Bearer " + BuildConfig.TMDB_API_KEY,
     ): TmdbEpisodeImageResponse
+
+
+
+    // Movies
+    @GET("search/movie")
+    suspend fun searchMovies(
+        @Query("query") query: String,
+        @Query("language") language: String = "en-US",
+        @Query("page") page: Int = 1,
+        //@Query("append_to_response") append: String = "external_ids",
+        @Header("accept") accept: String = "application/json",
+        @Header("Authorization") bearer: String = "Bearer " + BuildConfig.TMDB_API_KEY,
+    ): TmdbMovieSearchResponse
+
+    @GET("movie/{id}")
+    suspend fun getMovie(
+        @Path("id") id: Int,
+        @Query("language") language: String = "en-US",
+        @Query("append_to_response") append: String = "credits",
+        @Header("accept") accept: String = "application/json",
+        @Header("Authorization") bearer: String = "Bearer " + BuildConfig.TMDB_API_KEY,
+    ): TmdbMovieDetail
+
+    @GET("movie/{id}/images")
+    suspend fun getMovieImages(
+        @Path("id") id: Int,
+        @Query("include_image_language") language: String = "en-US,null",
+        @Header("accept") accept: String = "application/json",
+        @Header("Authorization") bearer: String = "Bearer " + BuildConfig.TMDB_API_KEY,
+    ): TmdbImageResponse
 }

@@ -13,6 +13,8 @@ import androidx.compose.material3.ToggleButtonDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
@@ -29,6 +31,8 @@ fun DisplaySelector(
     unCheckedIcons: List<ImageVector> = emptyList(),
     checkedIcons: List<ImageVector> = emptyList(),
 ) {
+    val haptic = LocalHapticFeedback.current
+
     Row (
         modifier = modifier,
         horizontalArrangement = Arrangement.spacedBy(ButtonGroupDefaults.ConnectedSpaceBetween),
@@ -36,7 +40,10 @@ fun DisplaySelector(
         options.forEachIndexed { index, label ->
             OutlinedToggleButton(
                 checked = selectedIndex == index,
-                onCheckedChange = { onSelectionChanged(index) },
+                onCheckedChange = {
+                    haptic.performHapticFeedback(HapticFeedbackType.ToggleOn)
+                    onSelectionChanged(index)
+                },
                 modifier = Modifier.semantics { role = Role.RadioButton },
                 shapes =
                     when (index) {

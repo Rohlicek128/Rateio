@@ -27,7 +27,6 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -53,7 +52,6 @@ import com.example.rateio.utils.formatCompact
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import java.util.Locale
 
 
 @Composable
@@ -248,8 +246,7 @@ private fun PosterWithRating(
     var showRatingSheet by remember { mutableStateOf(false) }
     val rateBoxOverhang = 48.dp
 
-    var ratingTest: Float? = null
-    var ratingPer by remember { mutableFloatStateOf(rating ?: 0f) }
+    var ratingPer by remember { mutableStateOf(rating) }
 
     val scope = rememberCoroutineScope()
     var glowColor by remember { mutableStateOf(Color.Transparent) }
@@ -322,10 +319,6 @@ private fun PosterWithRating(
         }
 
 
-        if (rating != null) {
-            if (rating > 0f) ratingTest = rating
-        }
-
         Column(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
@@ -334,7 +327,7 @@ private fun PosterWithRating(
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             RateBox(
-                rating = ratingTest,
+                rating = rating,
                 roundedCorners = 18.dp,
                 width = 24.dp,
                 minWidth = 42.dp,
@@ -343,7 +336,6 @@ private fun PosterWithRating(
                 loadingSize = 38.dp,
                 onClick = {
                     showRatingSheet = true
-                    ratingPer = ratingTest ?: 0f
                 }
             )
 
@@ -364,8 +356,7 @@ private fun PosterWithRating(
             rating = ratingPer,
             onDismiss = { showRatingSheet = false },
             onValueChange = { rating ->
-                ratingPer = rating ?: 0f
-                //ratingTest = rating
+                ratingPer = rating
             }
         )
     }

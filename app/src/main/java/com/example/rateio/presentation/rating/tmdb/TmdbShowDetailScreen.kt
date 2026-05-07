@@ -45,6 +45,7 @@ import com.example.rateio.presentation.components.DateProgressBar
 import com.example.rateio.presentation.components.DisplaySelector
 import com.example.rateio.presentation.components.EpisodeGrid
 import com.example.rateio.presentation.components.EpisodeWrapped
+import com.example.rateio.presentation.components.GenreChips
 import com.example.rateio.presentation.components.RateItemCard
 import com.example.rateio.presentation.components.SectionHeader
 import com.example.rateio.presentation.components.rating.EpisodeRatingGraph
@@ -300,6 +301,31 @@ fun TmdbShowDetailScreen(
                                                 )
                                             }
                                         }
+
+                                    /*items(
+                                        episodesState.seasonEpisodes
+                                            .values.flatten()
+                                            .sortedBy { -(episodesState.imdbRatings[it.seasonNumber]?.get(it.episodeNumber) ?: -1f) },
+                                        key = { it.id },
+                                    ) { episode ->
+                                        val rating = episodesState.imdbRatings[episode.seasonNumber]?.get(episode.episodeNumber)
+                                        RateItemCard(
+                                            title = episode.name,
+                                            subtitle = "S${episode.seasonNumber}E${episode.episodeNumber}  |  ${if (episode.runtime > 0) "${episode.runtime}m" else "N/A"}",
+                                            coverImagePath = "https://image.tmdb.org/t/p/w300${episode.stillPath}",
+                                            rating = if (!episodesState.isLoadingRatings && rating == null && episodesState.imdbRatings[episode.seasonNumber]?.isEmpty() == true)
+                                                episode.voteAverage?.div(10f) else rating,
+                                            isLoading = episodesState.isLoadingRatings && rating == null,
+                                            placeholderRatio = 16f / 9f,
+                                            padding = PaddingValues(horizontal = 16.dp, vertical = 6.dp),
+                                            onClick = { onEpisodeClick(
+                                                show.id,
+                                                episode.seasonNumber,
+                                                episode.episodeNumber
+                                            ) },
+                                        )
+                                    }*/
+
                                 }
                                 1 -> {
                                     item {
@@ -383,25 +409,6 @@ fun TmdbShowDetailScreen(
                     }
 
                 }
-            )
-        }
-    }
-}
-
-
-@Composable
-private fun GenreChips(
-    genres: List<String>,
-    modifier: Modifier = Modifier,
-) {
-    FlowRow(
-        modifier = modifier,
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-    ) {
-        genres.forEach { genre ->
-            SuggestionChip(
-                onClick = {},
-                label = { Text(genre) },
             )
         }
     }

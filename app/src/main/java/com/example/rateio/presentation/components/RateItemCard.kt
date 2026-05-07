@@ -14,10 +14,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
+import androidx.core.view.HapticFeedbackConstantsCompat
 
 
 @Composable
@@ -31,6 +34,7 @@ fun RateItemCard(
     padding: PaddingValues = PaddingValues(horizontal = 20.dp, vertical = 6.dp),
     isLoading: Boolean = false,
 ) {
+    val haptic = LocalHapticFeedback.current
     val offset = (-6).dp
 
     ListItem(
@@ -82,7 +86,10 @@ fun RateItemCard(
         modifier = Modifier
             .padding(padding)
             .clip(MaterialTheme.shapes.largeIncreased)
-            .clickable(onClick = onClick),
+            .clickable(onClick = {
+                haptic.performHapticFeedback(HapticFeedbackType.Confirm)
+                onClick()
+            }),
         tonalElevation = 1.dp
     )
 }

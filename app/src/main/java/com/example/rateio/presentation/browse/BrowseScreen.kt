@@ -79,6 +79,20 @@ fun BrowseScreen(
                             onClick = { onShowClick(show.id) }
                         )
                     }
+
+                    /*items(state.results, key = { it.id }) { movie ->
+                        var ratingTest: Float? = null
+                        if (movie.voteAverage != null) {
+                            if (movie.voteAverage > 0f) ratingTest = movie.voteAverage.div(10f)
+                        }
+                        RateItemCard(
+                            title = movie.title,
+                            subtitle = "${movie.releaseDate?.take(4)}  ·  ${movie.originalLanguage?.uppercase() ?: "N/A"}",
+                            coverImagePath = "https://image.tmdb.org/t/p/w185${movie.posterPath}",
+                            rating = ratingTest,
+                            onClick = { onShowClick(movie.id) }
+                        )
+                    }*/
                 }
             }
         }
@@ -93,7 +107,7 @@ private fun SearchBar(query: String, onQueryChange: (String) -> Unit) {
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 8.dp),
-        placeholder = { Text("Search shows...") },
+        placeholder = { Text("Search movies...") },
         leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
         singleLine = true,
     )

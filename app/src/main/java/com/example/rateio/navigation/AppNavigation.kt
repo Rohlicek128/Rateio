@@ -39,6 +39,7 @@ import com.example.rateio.features.rating.CategoryDetailScreen
 import com.example.rateio.features.settings.SettingsScreen
 import com.example.rateio.presentation.browse.BrowseScreen
 import com.example.rateio.presentation.rating.tmdb.TmdbEpisodeDetailScreen
+import com.example.rateio.presentation.rating.tmdb.TmdbMovieDetailScreen
 import com.example.rateio.presentation.rating.tmdb.TmdbShowDetailScreen
 import kotlinx.coroutines.runBlocking
 
@@ -156,6 +157,14 @@ fun AppNavigation(navController: NavHostController = rememberNavController()) {
                             popUpTo<Route.TmdbShowDetail>()
                         }
                     },
+                )
+            }
+
+            composable<Route.TmdbMovieDetail> { back ->
+                val route = back.toRoute<Route.TmdbMovieDetail>()
+                TmdbMovieDetailScreen(
+                    movieId = route.movieId,
+                    onBackClick = { navController.popBackStack() },
                 )
             }
 
