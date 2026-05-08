@@ -20,17 +20,17 @@ data class RatingTransformations(
     val legendaryPart: Float = 0.96f
 )
 
-fun getTransformedRating(rating: Float?): String {
+fun getTransformedRating(rating: Float?, decimalOffset: UInt = 0u): String {
     val rtf = getCurrentRatingTransformations()
     if (rating == null) return rtf.nullString
+    val decimalOffsetPow = 10f.pow(decimalOffset.toInt())
 
-
-    val steppedRating = round(rating * rtf.stepCount.toInt())
-    val transformed = (steppedRating + rtf.offset) / rtf.divider
-    val decimalPow = 10f.pow(rtf.decimalPlaces.toInt())
+    val steppedRating = round(rating * rtf.stepCount.toInt() * decimalOffsetPow)
+    val transformed = (steppedRating + rtf.offset * decimalOffsetPow) / (rtf.divider * decimalOffsetPow)
+    val decimalPow = 10f.pow((rtf.decimalPlaces + decimalOffset).toInt())
     val rounded = round(transformed * decimalPow) / decimalPow
 
-    return rtf.leadingString + ("%.${rtf.decimalPlaces}f").format(rtf.locale, rounded) + rtf.trailingString
+    return rtf.leadingString + ("%.${rtf.decimalPlaces + decimalOffset}f").format(rtf.locale, rounded) + rtf.trailingString
 }
 
 fun getRoundedRating(rating: Float?): Float? {
@@ -40,35 +40,38 @@ fun getRoundedRating(rating: Float?): Float? {
 }
 
 fun getCurrentRatingTransformations(): RatingTransformations {
-    val tfThousand = RatingTransformations(
+    return RatingTransformationsConstants.TF_IMDB
+}
+
+object RatingTransformationsConstants {
+    val TF_IMDB_PRECISE = RatingTransformations(
         stepCount = 1000u,
         divider = 100f,
         decimalPlaces = 2u,
         majorTickFrequency = 10,
     )
-    val tfHunTen = RatingTransformations(
+    val TF_IMDB = RatingTransformations(
         stepCount = 100u,
         divider = 10f,
         decimalPlaces = 1u,
         majorTickFrequency = 5,
-        legendaryPart = 0.96f
+        legendaryPart = 0.90f
     )
-    val tfPercentage = RatingTransformations(
+    val TF_PERCENTAGE = RatingTransformations(
         stepCount = 100u,
         trailingString = "%",
         majorTickFrequency = 10,
     )
-    val tfStars = RatingTransformations(
+    val TF_STARS = RatingTransformations(
         stepCount = 8u,
         offset = 2f,
         divider = 2f,
         decimalPlaces = 1u,
         majorTickFrequency = 2,
     )
-    val tfTen = RatingTransformations(
+    val TF_TEN = RatingTransformations(
         stepCount = 9u,
         offset = 1f,
         majorTickFrequency = 1,
     )
-    return tfHunTen
 }

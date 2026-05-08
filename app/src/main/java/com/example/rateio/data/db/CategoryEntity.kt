@@ -1,14 +1,13 @@
 package com.example.rateio.data.db
 
-import androidx.room3.Entity
-import androidx.room3.PrimaryKey
+import androidx.room.Entity
+import androidx.room.PrimaryKey
 
 
 @Entity(tableName = "categories")
 data class CategoryEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val type: String,
     val name: String,
-    val iconEmoji: String?,
-    val apiSource: String,
-    val isCustom: Boolean
+    val sortOrder: Int,
 )

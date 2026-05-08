@@ -1,8 +1,15 @@
 package com.example.rateio.model
 
+enum class CategoryType {
+    TMDB_SHOWS,
+    TMDB_MOVIES,
+    STEAM_GAMES,
+    CUSTOM,
+}
+
 data class Category(
     val id: Long = 0,
+    val type: CategoryType,
     val name: String,
-    val iconEmoji: String? = null,
-    val isCustom: Boolean = true
+    val sortOrder: Int = 0,
 )

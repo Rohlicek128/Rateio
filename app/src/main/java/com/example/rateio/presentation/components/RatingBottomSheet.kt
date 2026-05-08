@@ -1,36 +1,30 @@
 package com.example.rateio.presentation.components
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.ElevatedButton
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.example.rateio.presentation.rating.display.RatingTransformationsConstants
 import com.example.rateio.presentation.rating.display.getCurrentRatingTransformations
 
 
@@ -41,7 +35,7 @@ fun RatingBottomSheet(
     onValueChange: (Float?) -> Unit,
 ) {
     val haptic = LocalHapticFeedback.current
-    var sliderPosition by rememberSaveable { mutableFloatStateOf(rating ?: 0.7f) }
+    var rackPosition by rememberSaveable { mutableFloatStateOf(rating ?: 0.7f) }
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
@@ -56,20 +50,22 @@ fun RatingBottomSheet(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             RateBox(
-                rating = sliderPosition,
+                rating = rackPosition,
                 roundedCorners = 18.dp,
                 width = 24.dp,
                 minWidth = 42.dp,
                 height = 6.dp,
                 textStyle = MaterialTheme.typography.displayMedium,
+                fontWeight = FontWeight.Bold,
                 loadingSize = 38.dp,
+                decimalOffset = 1u,
             )
 
             val rtf = getCurrentRatingTransformations()
             RackRatingSlider(
-                rating = sliderPosition,
+                rating = rackPosition,
                 onValueChange = {
-                    sliderPosition = it
+                    rackPosition = it
                 },
                 modifier = Modifier
                     .fillMaxWidth()
@@ -85,20 +81,33 @@ fun RatingBottomSheet(
                 hardPart = rtf.legendaryPart,
             )
 
-            Spacer(modifier = Modifier.height(64.dp))
+            Spacer(modifier = Modifier.height(8.dp))
 
-            /*Column(modifier = Modifier.padding(horizontal = 16.dp)) {
-                Text(text = "%.1f".format(sliderPosition * 10))
-                Slider(value = sliderPosition, onValueChange = {
-                    sliderPosition = it
-                    onValueChange(it)
-                })
-            }*/
+            RackRatingSlider(
+                rating = rackPosition,
+                onValueChange = {
+                    rackPosition = it
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(56.dp),
+                indicatorWidth = 4.5.dp,
+                majorTickWidth = 3.5.dp,
+                minorTickWidth = 2.5.dp,
+                minorTickHeightFraction = 0.4f,
+                majorTickHeightFraction = 0.55f,
+                tickSpacing = 8.dp,
+                stepCount = rtf.stepCount.toInt() * 10,
+                majorTickFrequency = rtf.majorTickFrequency * 5,
+                hardPart = rtf.legendaryPart,
+            )
+
+            Spacer(modifier = Modifier.height(64.dp))
 
             FilledTonalButton(
                 onClick = {
                     haptic.performHapticFeedback(HapticFeedbackType.Confirm)
-                    onValueChange(sliderPosition)
+                    onValueChange(rackPosition)
                     onDismiss()
                 },
                 modifier = Modifier.width(250.dp),

@@ -68,11 +68,12 @@ fun RateItemDetailScreen(
     ratingLabel: String? = "N/A",
     ratingVotes: Int? = null,
     extraContent: LazyListScope.() -> Unit = {},
-    placeholderRatio: Float = 2f / 3f
+    placeholderRatio: Float = 2f / 3f,
+    onRatingSaved: ((Float?) -> Unit)? = null,
 ) {
     Scaffold { innerPadding ->
         LazyColumn(
-            modifier = Modifier.fillMaxSize(),
+            modifier = modifier.fillMaxSize(),
             contentPadding = PaddingValues(
                 top = 76.dp,
                 bottom = innerPadding.calculateBottomPadding(),
@@ -89,6 +90,7 @@ fun RateItemDetailScreen(
                     backdropImageUrl = backdropImageUrl,
                     rating = rating,
                     ratingVotes = ratingVotes,
+                    onRatingSaved = onRatingSaved,
                 )
             }
 
@@ -146,6 +148,7 @@ private fun DetailHeader(
     backdropImageUrl: String?,
     rating: Float?,
     ratingVotes: Int?,
+    onRatingSaved: ((Float?) -> Unit)? = null,
 ) {
     /*val backgroundColor = MaterialTheme.colorScheme.background
     val offset = (-62).dp
@@ -186,8 +189,6 @@ private fun DetailHeader(
         )
     }*/
 
-    //var favorite by remember { mutableStateOf(false) }
-
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -210,6 +211,7 @@ private fun DetailHeader(
             placeholderRatio = placeholderRatio,
             rating = rating,
             ratingVotes = ratingVotes,
+            onRatingSaved = onRatingSaved
         )
 
         Column(
@@ -242,6 +244,7 @@ private fun PosterWithRating(
     ratingVotes: Int?,
     modifier: Modifier = Modifier,
     placeholderRatio: Float = 2f / 3f,
+    onRatingSaved: ((Float?) -> Unit)? = null,
 ) {
     var showRatingSheet by remember { mutableStateOf(false) }
     val rateBoxOverhang = 48.dp
@@ -327,16 +330,17 @@ private fun PosterWithRating(
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             RateBox(
-                rating = rating,
+                rating = if (onRatingSaved == null) rating else ratingPer,
                 roundedCorners = 18.dp,
                 width = 24.dp,
                 minWidth = 42.dp,
                 height = 6.dp,
                 textStyle = MaterialTheme.typography.displayMedium,
+                fontWeight = FontWeight.Bold,
                 loadingSize = 38.dp,
                 onClick = {
                     showRatingSheet = true
-                }
+                }.takeIf { onRatingSaved != null }
             )
 
             if (ratingVotes != null && ratingVotes > 0) {
@@ -357,6 +361,7 @@ private fun PosterWithRating(
             onDismiss = { showRatingSheet = false },
             onValueChange = { rating ->
                 ratingPer = rating
+                onRatingSaved?.invoke(rating)
             }
         )
     }

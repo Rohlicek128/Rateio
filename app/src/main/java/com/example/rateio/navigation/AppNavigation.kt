@@ -32,12 +32,16 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
+import com.example.rateio.data.CategoryRegistry
 import com.example.rateio.data.remote.imdb.ImdbRating
 import com.example.rateio.data.remote.imdb.ImdbRatingFetcher
 import com.example.rateio.features.home.HomeScreen
-import com.example.rateio.features.rating.CategoryDetailScreen
 import com.example.rateio.features.settings.SettingsScreen
+import com.example.rateio.model.CategoryType
 import com.example.rateio.presentation.browse.BrowseScreen
+import com.example.rateio.presentation.category.LibraryCategoryScreen
+import com.example.rateio.presentation.rating.RateItemDetailScreen
+import com.example.rateio.presentation.rating.SavedRateItemScreen
 import com.example.rateio.presentation.rating.tmdb.TmdbEpisodeDetailScreen
 import com.example.rateio.presentation.rating.tmdb.TmdbMovieDetailScreen
 import com.example.rateio.presentation.rating.tmdb.TmdbShowDetailScreen
@@ -123,8 +127,14 @@ fun AppNavigation(navController: NavHostController = rememberNavController()) {
             composable<Route.TopLevel.Browse> {
                 BrowseScreen(
                     contentPadding = globalPadding,
-                    onShowClick = { showId ->
-                        navController.navigate(Route.TmdbShowDetail(showId))
+                    onItemClick = { externalId, type ->
+                        when (type) {
+                            CategoryType.TMDB_SHOWS  ->
+                                navController.navigate(Route.TmdbShowDetail(externalId.toInt()))
+                            CategoryType.TMDB_MOVIES ->
+                                navController.navigate(Route.TmdbMovieDetail(externalId.toInt()))
+                            else -> {}
+                        }
                     }
                 )
             }
@@ -171,29 +181,41 @@ fun AppNavigation(navController: NavHostController = rememberNavController()) {
 
             composable<Route.CategoryDetail> { back ->
                 val route = back.toRoute<Route.CategoryDetail>()
-                CategoryDetailScreen(
+                LibraryCategoryScreen(
                     categoryId = route.categoryId,
+                    onItemClick = { item ->
+                        /*when (item.categoryId.toInt()) {
+                            1 -> {
+                                navController.navigate(Route.TmdbShowDetail(item.externalId?.toInt() ?: 1396))
+                            }
+                            2 -> {
+                                navController.navigate(Route.TmdbMovieDetail(item.externalId?.toInt() ?: 550))
+                            }
+                            else -> {}
+                        }*/
+
+                        navController.navigate(Route.RateItemDetail(item.id))
+                    },
                     onBackClick = { navController.popBackStack() },
-                    onItemClick = { itemId -> navController.navigate(Route.RateItemDetail(itemId)) }
                 )
             }
 
             composable<Route.RateItemDetail> { backStackEntry ->
                 val detail = backStackEntry.toRoute<Route.RateItemDetail>()
-                /*RateItemDetailScreen(
+                SavedRateItemScreen(
                     itemId = detail.itemId,
                     onBackClick = { navController.popBackStack() },
-                    onChildClick = { childId -> navController.navigate(Route.RateItemDetail(childId)) }
-                )*/
-                val imdbFetcher = ImdbRatingFetcher()
+                )
+
+
+                /*val imdbFetcher = ImdbRatingFetcher()
                 var rating: ImdbRating? = null
                 runBlocking {
                     rating = imdbFetcher.fetch("tt12042730")
                 }
-
-                com.example.rateio.presentation.rating.RateItemDetailScreen(
+                RateItemDetailScreen(
                     title = "Project Hail Mary",
-                    subtitle = "2026",
+                    subtitle = "2026  |  ID: ${detail.itemId}",
                     description = "Science teacher Ryland Grace wakes up on a spaceship light years from home with no recollection of who he is or how he got there. As his memory returns, he begins to uncover his mission: solve the riddle of the mysterious substance causing the sun to die out. He must call on his scientific knowledge and unorthodox ideas to save everything on Earth from extinction.",
                     coverImageUrl = "https://image.tmdb.org/t/p/w780/yihdXomYb5kTeSivtFndMy5iDmf.jpg",
                     backdropImageUrl = "https://image.tmdb.org/t/p/w780/yihdXomYb5kTeSivtFndMy5iDmf.jpg",
@@ -202,7 +224,7 @@ fun AppNavigation(navController: NavHostController = rememberNavController()) {
                     ratingLabel = "",
                     onBackClick = { navController.popBackStack() },
                     extraContent = { }
-                )
+                )*/
             }
         }
     }

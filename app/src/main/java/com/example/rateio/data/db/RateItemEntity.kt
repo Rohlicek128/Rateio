@@ -1,9 +1,9 @@
 package com.example.rateio.data.db
 
-import androidx.room3.Entity
-import androidx.room3.ForeignKey
-import androidx.room3.Index
-import androidx.room3.PrimaryKey
+import androidx.room.Entity
+import androidx.room.ForeignKey
+import androidx.room.Index
+import androidx.room.PrimaryKey
 
 
 @Entity(
@@ -22,10 +22,7 @@ import androidx.room3.PrimaryKey
             onDelete = ForeignKey.CASCADE,
         ),
     ],
-    indices = [
-        Index("categoryId"),
-        Index("parentId"),
-    ]
+    indices = [Index("categoryId"), Index("parentId"), Index("externalId")],
 )
 data class RateItemEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
@@ -34,9 +31,13 @@ data class RateItemEntity(
     val title: String,
     val subtitle: String?,
     val coverImageUrl: String?,
+    val coverImageLowUrl: String?,
     val externalId: String?,
+    val externalSource: String?,
     val rating: Float?,
-    val metadata: String?,
+    val ratingWeight: Float,
+    val status: String,
+    val metadataJSON: String?,
     val createdAt: Long,
-    val updatedAt: Long
+    val updatedAt: Long,
 )

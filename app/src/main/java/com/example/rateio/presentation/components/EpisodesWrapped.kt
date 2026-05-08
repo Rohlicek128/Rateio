@@ -68,9 +68,9 @@ private fun SeasonSection(
                         RateBox(
                             rating = ratings[episodes[index].episodeNumber],
                             roundedCorners = 8.dp,
-                            minWidth = 44.dp,
-                            maxWidth = 44.dp,
-                            height = 6.dp,
+                            minWidth = 42.dp,
+                            maxWidth = 42.dp,
+                            height = 4.dp,
                             textStyle = MaterialTheme.typography.titleLarge,
                             fontWeight = FontWeight.Bold,
                             onClick = {

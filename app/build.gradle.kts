@@ -9,7 +9,7 @@ val localProperties = Properties().apply {
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
-
+    alias(libs.plugins.ksp)
     kotlin("plugin.serialization") version "2.0.0"
 }
 
@@ -86,7 +86,6 @@ dependencies {
     implementation(libs.androidx.navigation.runtime.ktx)
     implementation(libs.androidx.navigation.compose)
     implementation(libs.androidx.compose.material.icons.extended)
-    implementation(libs.androidx.room3.common.jvm)
     implementation(libs.compose.material3)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
@@ -107,4 +106,8 @@ dependencies {
     implementation(libs.androidx.compose.material3)
 
     implementation(libs.palette)
+
+    implementation(libs.androidx.room.runtime)
+    implementation(libs.androidx.room.ktx)
+    ksp(libs.androidx.room.compiler)
 }

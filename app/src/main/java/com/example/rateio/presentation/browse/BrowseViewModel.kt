@@ -2,9 +2,16 @@ package com.example.rateio.presentation.browse
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.rateio.data.CategoryRegistry
 import com.example.rateio.data.remote.TmdbClient
 import com.example.rateio.data.remote.TmdbMovie
 import com.example.rateio.data.remote.TmdbShow
+import com.example.rateio.data.remote.toRateItem
+import com.example.rateio.data.repository.CategoryRepository
+import com.example.rateio.data.repository.RateItemRepository
+import com.example.rateio.model.Category
+import com.example.rateio.model.CategoryType
+import com.example.rateio.model.RateItem
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -15,41 +22,58 @@ import kotlinx.coroutines.launch
 
 
 data class BrowseState(
+    val availableCategories: List<Category> = emptyList(),
+    val selectedCategory: Category? = null,
     val query: String = "",
-    val results: List<TmdbShow> = emptyList(),
-    //val results: List<TmdbMovie> = emptyList(),
+    val results: List<RateItem> = emptyList(),
     val isLoading: Boolean = false,
     val error: String? = null,
 )
 
 class BrowseViewModel : ViewModel() {
+
     private val _state = MutableStateFlow(BrowseState())
     val state: StateFlow<BrowseState> = _state.asStateFlow()
 
-    private var searchJob: Job? = null
+    init {
+        viewModelScope.launch {
+            // Only show API-backed categories in browse
+            val apiCategories = CategoryRegistry.all.filter {
+                it.type != CategoryType.CUSTOM
+            }
+            _state.update { it.copy(
+                availableCategories = apiCategories,
+                selectedCategory = apiCategories.firstOrNull(),
+            )}
+        }
+    }
+
+    fun onCategorySelected(category: Category) {
+        _state.update { it.copy(selectedCategory = category, results = emptyList(), query = "") }
+    }
 
     fun onQueryChange(query: String) {
-        _state.update { it.copy(query = query, error = null) }
-
+        _state.update { it.copy(query = query) }
         searchJob?.cancel()
-
-        if (query.isBlank()) {
-            _state.update { it.copy(results = emptyList(), isLoading = false) }
-            return
-        }
+        if (query.isBlank()) { _state.update { it.copy(results = emptyList()) }; return }
 
         searchJob = viewModelScope.launch {
             delay(300)
-
             _state.update { it.copy(isLoading = true) }
-
             try {
-                val response = TmdbClient.tmdb.searchShows(query)
-                //val response = TmdbClient.tmdb.searchMovies(query)
-                _state.update { it.copy(results = response.results, isLoading = false) }
+                val results = when (_state.value.selectedCategory?.type) {
+                    CategoryType.TMDB_SHOWS  -> TmdbClient.tmdb.searchShows(query)
+                        .results.map { it.toRateItem() }
+                    CategoryType.TMDB_MOVIES -> TmdbClient.tmdb.searchMovies(query)
+                        .results.map { it.toRateItem() }
+                    else -> emptyList()
+                }
+                _state.update { it.copy(results = results, isLoading = false) }
             } catch (e: Exception) {
                 _state.update { it.copy(error = e.message, isLoading = false) }
             }
         }
     }
+
+    private var searchJob: Job? = null
 }

@@ -229,7 +229,7 @@ fun EpisodeRatingGraph(
                     val y = yOf(rating)
                     val color = ratingColor(rating)
                     val isHovered = ep.globalIndex == hoveredIndex
-                    val radius = 3.5.dp.toPx()
+                    val radius = 4.dp.toPx()
 
                     // Glow ring on hover
                     if (isHovered) {

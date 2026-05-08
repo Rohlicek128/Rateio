@@ -1,23 +1,22 @@
 package com.example.rateio.presentation.browse
 
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.material3.CircularWavyProgressIndicator
 import androidx.compose.material3.ExpandedFullScreenSearchBar
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.ScrollableTabRow
 import androidx.compose.material3.SearchBar
 import androidx.compose.material3.SearchBarDefaults
+import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberSearchBarState
 import androidx.compose.runtime.Composable
@@ -25,77 +24,76 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.rateio.presentation.components.RateItemCard
-import kotlinx.coroutines.launch
+import com.example.rateio.model.CategoryType
+import com.example.rateio.presentation.category.CategoryItemListScreen
 
 
 @Composable
 fun BrowseScreen(
+    onItemClick: (externalId: String, type: CategoryType) -> Unit,
     contentPadding: PaddingValues,
-    onShowClick: (Int) -> Unit,
     viewModel: BrowseViewModel = viewModel(),
 ) {
     val state by viewModel.state.collectAsState()
+    val textFieldState = rememberTextFieldState()
+    val searchBarState = rememberSearchBarState()
 
-    Column(modifier = Modifier.fillMaxSize().padding(contentPadding)) {
+    LaunchedEffect(textFieldState.text) {
+        viewModel.onQueryChange(textFieldState.text.toString())
+    }
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(contentPadding),
+    ) {
+        ScrollableTabRow(
+            selectedTabIndex = state.availableCategories.indexOf(state.selectedCategory),
+        ) {
+            state.availableCategories.forEach { category ->
+                Tab(
+                    selected = state.selectedCategory == category,
+                    onClick = { viewModel.onCategorySelected(category) },
+                    text = { Text(category.name) },
+                )
+            }
+        }
 
         SearchBar(
             query = state.query,
             onQueryChange = viewModel::onQueryChange,
         )
 
-        when {
-            state.isLoading -> {
-                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    CircularWavyProgressIndicator()
-                }
-            }
-            state.error != null -> {
-                Text(
-                    text = "Error: ${state.error}",
-                    color = MaterialTheme.colorScheme.error,
-                    modifier = Modifier.padding(16.dp)
-                )
-            }
-            state.results.isEmpty() && state.query.isNotBlank() -> {
-                Text("No results", modifier = Modifier.padding(16.dp))
-            }
-            else -> {
-                LazyColumn {
-                    items(state.results, key = { it.id }) { show ->
-                        var ratingTest: Float? = null
-                        if (show.voteAverage != null) {
-                            if (show.voteAverage > 0f) ratingTest = show.voteAverage.div(10f).plus(0.1f)
-                        }
-                        RateItemCard(
-                            title = show.name,
-                            subtitle = "${show.firstAirDate?.take(4)}  ·  ${if (show.originCountry.isNotEmpty()) show.originCountry[0] else "N/A"}",
-                            coverImagePath = "https://image.tmdb.org/t/p/w185${show.posterPath}",
-                            rating = ratingTest,
-                            onClick = { onShowClick(show.id) }
-                        )
+        CategoryItemListScreen(
+            title = "",
+            items = state.results,
+            isLoading = state.isLoading,
+            onItemClick = { item ->
+                item.externalId?.let { id ->
+                    item.externalSource?.let { type ->
+                        onItemClick(id, type)
                     }
-
-                    /*items(state.results, key = { it.id }) { movie ->
-                        var ratingTest: Float? = null
-                        if (movie.voteAverage != null) {
-                            if (movie.voteAverage > 0f) ratingTest = movie.voteAverage.div(10f)
-                        }
-                        RateItemCard(
-                            title = movie.title,
-                            subtitle = "${movie.releaseDate?.take(4)}  ·  ${movie.originalLanguage?.uppercase() ?: "N/A"}",
-                            coverImagePath = "https://image.tmdb.org/t/p/w185${movie.posterPath}",
-                            rating = ratingTest,
-                            onClick = { onShowClick(movie.id) }
-                        )
-                    }*/
                 }
-            }
-        }
+            },
+            itemTrailingContent = { item ->
+                // Show a checkmark if already in the user's library
+                Icon(
+                    Icons.Default.Add,
+                    contentDescription = "View",
+                    tint = MaterialTheme.colorScheme.primary,
+                )
+            },
+            emptyContent = {
+                Text(
+                    if (state.query.isBlank()) "Search for something"
+                    else "No results for \"${state.query}\"",
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            },
+        )
     }
 }
 

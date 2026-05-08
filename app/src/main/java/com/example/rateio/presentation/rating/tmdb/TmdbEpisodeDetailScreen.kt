@@ -28,6 +28,8 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -176,6 +178,8 @@ private fun MoveButtons(
     onNextClick: (season: Int, episode: Int) -> Unit,
     onPreviousClick: (season: Int, episode: Int) -> Unit,
 ) {
+    val haptic = LocalHapticFeedback.current
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -185,6 +189,7 @@ private fun MoveButtons(
         OutlinedButton(
             enabled = previousEpisode != null,
             onClick = {
+                haptic.performHapticFeedback(HapticFeedbackType.Confirm)
                 val (prevSeason, prevEpisode) = previousEpisode!!
                 onPreviousClick(prevSeason, prevEpisode)
             },
@@ -210,6 +215,7 @@ private fun MoveButtons(
         OutlinedButton(
             enabled = nextEpisode != null,
             onClick = {
+                haptic.performHapticFeedback(HapticFeedbackType.Confirm)
                 val (nextSeason, nextEpisode) = nextEpisode!!
                 onNextClick(nextSeason, nextEpisode)
             },

@@ -23,9 +23,14 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import com.example.rateio.presentation.rating.display.RatingTransformations
+import com.example.rateio.presentation.rating.display.getCurrentRatingTransformations
 import com.example.rateio.presentation.rating.display.getRatingColor
 import com.example.rateio.presentation.rating.display.getRoundedRating
 import com.example.rateio.presentation.rating.display.getTransformedRating
+import com.example.rateio.ui.theme.GoogleSans
+import com.example.rateio.ui.theme.GoogleSansTypography
 import kotlin.math.roundToInt
 
 
@@ -41,13 +46,14 @@ fun RateBox(
     textStyle: TextStyle = MaterialTheme.typography.titleMedium,
     fontWeight: FontWeight = FontWeight.Bold,
     loadingSize: Dp = 28.dp,
+    decimalOffset: UInt = 0u,
     isLoading: Boolean = false,
     onClick: (() -> Unit)? = null,
 ) {
     val haptic = LocalHapticFeedback.current
 
     val colors = getRatingColor(getRoundedRating(rating))
-    val display = getTransformedRating(rating)
+    val display = getTransformedRating(rating, decimalOffset)
 
     Surface(
         color = colors.backgroundColor,
@@ -78,7 +84,8 @@ fun RateBox(
                 Text(
                     text = display,
                     style = textStyle,
-                    fontWeight = fontWeight,
+                    fontWeight = FontWeight.Black,
+                    fontFamily = GoogleSans,
                     maxLines = 1,
                     modifier = Modifier.wrapContentWidth(unbounded = true),
                     overflow = TextOverflow.Visible,

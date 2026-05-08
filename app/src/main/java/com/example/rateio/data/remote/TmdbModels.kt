@@ -1,5 +1,7 @@
 package com.example.rateio.data.remote
 
+import com.example.rateio.model.CategoryType
+import com.example.rateio.model.RateItem
 import com.google.gson.annotations.SerializedName
 
 
@@ -180,4 +182,49 @@ data class TmdbMovieDetail(
     @SerializedName("budget") val budget: Int,
 
     @SerializedName("credits") val credits: TmdbCredits?,
+)
+
+
+
+
+fun TmdbShow.toRateItem(categoryId: Long = 0) = RateItem(
+    id = 0,
+    categoryId = categoryId,
+    title = name,
+    subtitle = firstAirDate?.take(4),
+    coverImageUrl = posterPath?.let { "https://image.tmdb.org/t/p/original$it" },
+    coverImageLowUrl = posterPath?.let { "https://image.tmdb.org/t/p/w342$it" },
+    externalId = id.toString(),
+    externalSource = CategoryType.TMDB_SHOWS,
+)
+fun TmdbShowDetail.toRateItem(categoryId: Long = 0) = RateItem(
+    id = 0,
+    categoryId = categoryId,
+    title = name,
+    subtitle = firstAirDate?.take(4),
+    coverImageUrl = posterPath?.let { "https://image.tmdb.org/t/p/original$it" },
+    coverImageLowUrl = posterPath?.let { "https://image.tmdb.org/t/p/w342$it" },
+    externalId = id.toString(),
+    externalSource = CategoryType.TMDB_SHOWS,
+)
+
+fun TmdbMovie.toRateItem(categoryId: Long = 0) = RateItem(
+    id = 0,
+    categoryId = categoryId,
+    title = title,
+    subtitle = releaseDate?.take(4),
+    coverImageUrl = posterPath?.let { "https://image.tmdb.org/t/p/original$it" },
+    coverImageLowUrl = posterPath?.let { "https://image.tmdb.org/t/p/w342$it" },
+    externalId = id.toString(),
+    externalSource = CategoryType.TMDB_MOVIES,
+)
+fun TmdbMovieDetail.toRateItem(categoryId: Long = 0) = RateItem(
+    id = 0,
+    categoryId = categoryId,
+    title = title,
+    subtitle = releaseDate?.take(4),
+    coverImageUrl = posterPath?.let { "https://image.tmdb.org/t/p/original$it" },
+    coverImageLowUrl = posterPath?.let { "https://image.tmdb.org/t/p/w342$it" },
+    externalId = id.toString(),
+    externalSource = CategoryType.TMDB_MOVIES,
 )

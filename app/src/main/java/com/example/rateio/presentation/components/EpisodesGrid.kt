@@ -4,7 +4,11 @@ import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -23,10 +27,12 @@ fun EpisodeGrid(
     onEpisodeClick: (season: Int, episode: Int) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val scrollState = rememberScrollState()
+
     Row(
         modifier = modifier
             .padding(12.dp)
-            .horizontalScroll(rememberScrollState()),
+            .horizontalScroll(scrollState),
         horizontalArrangement = Arrangement.spacedBy(6.dp)
     ) {
         Column(
@@ -63,6 +69,38 @@ fun EpisodeGrid(
                     episodes = episodes,
                     ratings = imdbRatings[seasonNumber] ?: emptyMap(),
                     onEpisodeClick = onEpisodeClick,
+                )
+            }
+    }
+
+    Spacer(modifier = Modifier.height(4.dp))
+
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(12.dp)
+            .horizontalScroll(scrollState),
+        horizontalArrangement = Arrangement.spacedBy(6.dp)
+    ) {
+        Column(
+            verticalArrangement = Arrangement.spacedBy(20.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(
+                text = "Avg",
+                style = MaterialTheme.typography.titleSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.padding(horizontal = 10.dp),
+            )
+        }
+
+        seasonEpisodes
+            .entries
+            .sortedBy { it.key }
+            .forEach { (seasonNumber) ->
+                SeasonAverage(
+                    ratings = imdbRatings[seasonNumber] ?: emptyMap(),
                 )
             }
     }
@@ -106,4 +144,23 @@ private fun SeasonColumn(
                 )
             }
     }
+}
+
+@Composable
+private fun SeasonAverage(
+    ratings: Map<Int, Float?>,
+) {
+    val flatRatings = ratings.values.filterNotNull()
+
+    val width = 39.dp
+    val height = 4.dp
+    RateBox(
+        rating = if (flatRatings.isNotEmpty()) flatRatings.average().toFloat() else null,
+        roundedCorners = 7.dp,
+        minWidth = width,
+        maxWidth = width,
+        height = height,
+        textStyle = MaterialTheme.typography.titleLarge,
+        fontWeight = FontWeight.Bold,
+    )
 }
