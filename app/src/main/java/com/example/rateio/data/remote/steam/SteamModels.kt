@@ -1,14 +1,14 @@
 package com.example.rateio.data.remote.steam
 
-import com.example.rateio.data.remote.TmdbImage
 import com.example.rateio.model.CategoryType
 import com.example.rateio.model.RateItem
 import com.example.rateio.presentation.components.CarouselImage
+import com.example.rateio.utils.formatGrouped
 import com.google.gson.annotations.SerializedName
 
 
 data class SteamGameSummary(
-    @SerializedName("appid") val appid: String,
+    @SerializedName("appid") val appId: String,
     @SerializedName("name") val name: String,
     @SerializedName("icon") val icon: String?,
     @SerializedName("logo") val logo: String?,
@@ -24,15 +24,15 @@ data class SteamGameDetail(
     @SerializedName("type") val type: String?,
 
     @SerializedName("name") val name: String,
-    @SerializedName("release_date") val releaseDate: SteamReleaseDate,
+    @SerializedName("release_date") val releaseDate: SteamReleaseDate?,
     @SerializedName("short_description") val shortDescription: String?,
-    @SerializedName("genres") val genres: List<SteamGenres>,
+    @SerializedName("genres") val genres: List<SteamGenres>?,
 
-    @SerializedName("developers") val developers: List<String>,
-    @SerializedName("publishers") val publishers: List<String>,
+    @SerializedName("developers") val developers: List<String>?,
+    @SerializedName("publishers") val publishers: List<String>?,
 
     @SerializedName("header_image") val headerImage: String?,
-    @SerializedName("screenshots") val screenshots: List<SteamGameScreenshot>,
+    @SerializedName("screenshots") val screenshots: List<SteamGameScreenshot>?,
 
     @SerializedName("price_overview") val priceOverview: SteamGamePrice?,
 )
@@ -79,14 +79,40 @@ data class SteamReleaseDate(
 )
 
 
+data class SteamMostPlayed(
+    @SerializedName("response") val response: SteamMostPlayedResponse,
+)
+data class SteamMostPlayedResponse(
+    @SerializedName("rollup_date") val response: String,
+    @SerializedName("ranks") val ranks: List<SteamMostPlayedRank>,
+)
+data class SteamMostPlayedRank(
+    @SerializedName("rank") val rank: Int,
+    @SerializedName("last_week_rank") val lastWeekRank: Int,
+    @SerializedName("appid") val appId: Int,
+    @SerializedName("peak_in_game") val peakInGame: Int,
+)
+
+
 fun SteamGameSummary.toRateItem(categoryId: Long = 0) = RateItem(
     id = 0,
     categoryId = categoryId,
     title = name,
     subtitle = null,
-    coverImageUrl = "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/${appid}/library_600x900_2x.jpg",
-    coverImageLowUrl = "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/${appid}/library_600x900.jpg", //"https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/${appid}/capsule_616x353.jpg",
-    externalId = appid,
+    coverImageUrl = "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/${appId}/library_600x900_2x.jpg",
+    coverImageLowUrl = "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/${appId}/library_600x900.jpg", //"https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/${appid}/capsule_616x353.jpg",
+    externalId = appId,
+    externalSource = CategoryType.STEAM_GAMES,
+)
+
+fun SteamMostPlayedRank.toRateItem(categoryId: Long = 0) = RateItem(
+    id = 0,
+    categoryId = categoryId,
+    title = appId.toString(),
+    subtitle = "${formatGrouped(peakInGame)} players",
+    coverImageUrl = "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/${appId}/library_600x900_2x.jpg",
+    coverImageLowUrl = "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/${appId}/library_600x900.jpg",
+    externalId = appId.toString(),
     externalSource = CategoryType.STEAM_GAMES,
 )
 

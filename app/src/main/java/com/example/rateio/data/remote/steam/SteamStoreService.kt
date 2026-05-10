@@ -6,13 +6,7 @@ import retrofit2.http.Path
 import retrofit2.http.Query
 
 
-interface SteamService {
-    @GET("actions/SearchApps/{query}")
-    suspend fun searchGames(
-        @Path("query") query: String,
-        @Header("accept") accept: String = "application/json",
-    ): List<SteamGameSummary>
-
+interface SteamStoreService {
     @GET("api/appdetails")
     suspend fun getGames(
         @Query("appids") appids: String,

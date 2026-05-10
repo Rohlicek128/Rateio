@@ -27,6 +27,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.rateio.model.RateItem
 import com.example.rateio.presentation.components.RateItemCard
+import com.example.rateio.presentation.components.SectionHeader
 
 
 @Composable
@@ -44,6 +45,10 @@ fun CategoryItemListScreen(
     var displayCover by remember { mutableStateOf(true) }
 
     Column(modifier = modifier.fillMaxSize()) {
+        if (title.isNotBlank()) {
+            SectionHeader(title)
+        }
+
         headerContent?.invoke()
 
         when {

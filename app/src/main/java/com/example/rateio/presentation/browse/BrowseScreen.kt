@@ -52,10 +52,6 @@ fun BrowseScreen(
     val state by viewModel.state.collectAsState()
     val coroutineScope = rememberCoroutineScope()
 
-    //LaunchedEffect(textFieldState.text) {
-    //    viewModel.onQueryChange(textFieldState.text.toString())
-    //}
-
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -79,7 +75,6 @@ fun BrowseScreen(
         HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp))
 
         SearchBarExpandable(
-            //query = state.query,
             placeholder = "Search${" " + state.selectedCategory?.name?.lowercase()}...",
             onQueryChange = viewModel::onQueryChange,
         ) { collapse ->
@@ -112,6 +107,13 @@ fun BrowseScreen(
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 },
+            )
+        }
+
+        if (state.selectedCategory != null) {
+            DiscoverScreen(
+                category = state.selectedCategory!!,
+                onItemClick = onItemClick
             )
         }
 

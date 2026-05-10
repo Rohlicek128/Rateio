@@ -7,8 +7,9 @@ import retrofit2.converter.gson.GsonConverterFactory
 
 
 object SteamClient {
-    private const val STEAM_BASE_URL = "https://steamcommunity.com/"
+    private const val STEAM_COMMUNITY_URL = "https://steamcommunity.com/"
     private const val STEAM_STORE_URL = "https://store.steampowered.com/"
+    private const val STEAM_API_URL = "https://api.steampowered.com/"
 
     private val okHttpClient = OkHttpClient.Builder()
         .addInterceptor(HttpLoggingInterceptor().apply {
@@ -16,17 +17,24 @@ object SteamClient {
         })
         .build()
 
-    val steam: SteamService = Retrofit.Builder()
-        .baseUrl(STEAM_BASE_URL)
+    val steamCommunity: SteamCommunityService = Retrofit.Builder()
+        .baseUrl(STEAM_COMMUNITY_URL)
         .client(okHttpClient)
         .addConverterFactory(GsonConverterFactory.create())
         .build()
-        .create(SteamService::class.java)
+        .create(SteamCommunityService::class.java)
 
-    val steamStore: SteamService = Retrofit.Builder()
+    val steamStore: SteamStoreService = Retrofit.Builder()
         .baseUrl(STEAM_STORE_URL)
         .client(okHttpClient)
         .addConverterFactory(GsonConverterFactory.create())
         .build()
-        .create(SteamService::class.java)
+        .create(SteamStoreService::class.java)
+
+    val steamApi: SteamApiService = Retrofit.Builder()
+        .baseUrl(STEAM_API_URL)
+        .client(okHttpClient)
+        .addConverterFactory(GsonConverterFactory.create())
+        .build()
+        .create(SteamApiService::class.java)
 }

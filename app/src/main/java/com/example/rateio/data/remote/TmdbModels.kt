@@ -149,6 +149,7 @@ data class TmdbImage(
 
 
 data class TmdbMovieSearchResponse(
+    @SerializedName("page") val page: Int,
     @SerializedName("results") val results: List<TmdbMovie>
 )
 

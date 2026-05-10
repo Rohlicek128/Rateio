@@ -91,6 +91,17 @@ interface TmdbService {
         @Header("Authorization") bearer: String = "Bearer " + BuildConfig.TMDB_API_KEY,
     ): TmdbMovieSearchResponse
 
+    @GET("discover/movie")
+    suspend fun discoverMovies(
+        @Query("include_adult") includeAdult: Boolean = false,
+        @Query("include_video") includeVideo: Boolean = false,
+        @Query("language") language: String = "en-US",
+        @Query("page") page: Int = 1,
+        @Query("sort_by") sortBy: String = "popularity.desc",
+        @Header("accept") accept: String = "application/json",
+        @Header("Authorization") bearer: String = "Bearer " + BuildConfig.TMDB_API_KEY,
+    ): TmdbMovieSearchResponse
+
     @GET("movie/{id}")
     suspend fun getMovie(
         @Path("id") id: Int,

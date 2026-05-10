@@ -48,7 +48,7 @@ fun SteamGameDetailScreen(
             RateItemDetailScreen(
                 title = game.name,
                 subtitle = buildString {
-                    game.releaseDate.date.let { append(it) }
+                    game.releaseDate?.date.let { append(it) }
                     if (game.priceOverview != null && game.priceOverview.finalFormatted != null) {
                         append("  |  ${game.priceOverview.finalFormatted}")
                         if (game.priceOverview.discountPercent > 0) {
@@ -68,7 +68,7 @@ fun SteamGameDetailScreen(
                 onBackClick = onBackClick,
                 extraContent = {
                     // Genres
-                    if (game.genres.isNotEmpty()) {
+                    if (game.genres?.isNotEmpty() ?: false) {
                         item {
                             GenreChips(
                                 genres = game.genres.map { it.description },
@@ -79,7 +79,7 @@ fun SteamGameDetailScreen(
 
 
                     // Screenshots
-                    game.screenshots.takeIf { it.isNotEmpty() }?.let { screenshots ->
+                    game.screenshots?.takeIf { it.isNotEmpty() }?.let { screenshots ->
                         item { SectionHeader("Screenshots") }
                         item {
                             AdaptiveImageCarousel(

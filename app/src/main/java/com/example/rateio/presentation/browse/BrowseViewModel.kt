@@ -65,7 +65,7 @@ class BrowseViewModel : ViewModel() {
                         .results.map { it.toRateItem() }
                     CategoryType.TMDB_MOVIES -> TmdbClient.tmdb.searchMovies(query)
                         .results.map { it.toRateItem() }
-                    CategoryType.STEAM_GAMES -> SteamClient.steam.searchGames(query)
+                    CategoryType.STEAM_GAMES -> SteamClient.steamCommunity.searchGames(query)
                         .map { it.toRateItem() }
                     else -> emptyList()
                 }
@@ -86,7 +86,7 @@ class BrowseViewModel : ViewModel() {
 
                             _state.update { current ->
                                 val updated = current.results.toMutableList()
-                                updated[index] = updated[index].copy(rating = rating)
+                                if (index < updated.size) updated[index] = updated[index].copy(rating = rating)
                                 current.copy(results = updated)
                             }
                         }
