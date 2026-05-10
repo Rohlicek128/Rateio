@@ -1,6 +1,9 @@
 package com.example.rateio.presentation.components
 
 import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material3.MaterialTheme
@@ -43,10 +46,14 @@ fun AdaptiveAsyncImage(
                     AsyncImageState.Success -> Modifier
                     else -> Modifier.aspectRatio(placeholderRatio)
                 }
+            )
+            .then(
+                if (placeholderRatio < 1f) Modifier.fillMaxHeight()
+                else Modifier.fillMaxWidth()
             ),
         contentScale = contentScale,
         placeholder = ColorPainter(MaterialTheme.colorScheme.surfaceVariant),
-        error = ColorPainter(MaterialTheme.colorScheme.surfaceVariant),
+        error = ColorPainter(MaterialTheme.colorScheme.surfaceBright),
         onSuccess = {
             imageState = AsyncImageState.Success
             onSuccess?.invoke(it)

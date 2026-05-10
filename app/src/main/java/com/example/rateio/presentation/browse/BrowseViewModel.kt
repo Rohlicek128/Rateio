@@ -4,11 +4,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.rateio.data.CategoryRegistry
 import com.example.rateio.data.remote.TmdbClient
-import com.example.rateio.data.remote.TmdbMovie
-import com.example.rateio.data.remote.TmdbShow
+import com.example.rateio.data.remote.steam.SteamClient
+import com.example.rateio.data.remote.steam.toRateItem
 import com.example.rateio.data.remote.toRateItem
-import com.example.rateio.data.repository.CategoryRepository
-import com.example.rateio.data.repository.RateItemRepository
 import com.example.rateio.model.Category
 import com.example.rateio.model.CategoryType
 import com.example.rateio.model.RateItem
@@ -26,6 +24,7 @@ data class BrowseState(
     val selectedCategory: Category? = null,
     val query: String = "",
     val results: List<RateItem> = emptyList(),
+    val resultsRatings: List<Float?> = emptyList(),
     val isLoading: Boolean = false,
     val error: String? = null,
 )
@@ -66,9 +65,34 @@ class BrowseViewModel : ViewModel() {
                         .results.map { it.toRateItem() }
                     CategoryType.TMDB_MOVIES -> TmdbClient.tmdb.searchMovies(query)
                         .results.map { it.toRateItem() }
+                    CategoryType.STEAM_GAMES -> SteamClient.steam.searchGames(query)
+                        .map { it.toRateItem() }
                     else -> emptyList()
                 }
-                _state.update { it.copy(results = results, isLoading = false) }
+                _state.update { it.copy(
+                    results = results,
+                    resultsRatings = List(results.size) { null },
+                    isLoading = false,
+                )}
+
+
+                if (_state.value.selectedCategory?.type == CategoryType.STEAM_GAMES) {
+                    results.mapIndexed { index, item ->
+                        launch {
+                            val rating = runCatching {
+                                SteamClient.steamStore.getGameReviews(item.externalId ?: "")
+                                    .querySummary?.normalizedRating
+                            }.getOrNull()
+
+                            _state.update { current ->
+                                val updated = current.results.toMutableList()
+                                updated[index] = updated[index].copy(rating = rating)
+                                current.copy(results = updated)
+                            }
+                        }
+                    }
+                }
+
             } catch (e: Exception) {
                 _state.update { it.copy(error = e.message, isLoading = false) }
             }

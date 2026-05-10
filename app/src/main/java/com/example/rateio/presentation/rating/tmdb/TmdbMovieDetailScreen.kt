@@ -32,9 +32,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.rateio.data.CategoryRegistry
 import com.example.rateio.data.db.RateioDatabase
+import com.example.rateio.data.remote.steam.toCarouselImage
+import com.example.rateio.data.remote.toCarouselImage
 import com.example.rateio.data.repository.CategoryRepository
 import com.example.rateio.data.repository.RateItemRepository
+import com.example.rateio.model.CategoryType
 import com.example.rateio.presentation.components.AdaptiveImageCarousel
 import com.example.rateio.presentation.components.GenreChips
 import com.example.rateio.presentation.components.PersonCard
@@ -47,7 +51,6 @@ import com.example.rateio.utils.formatDate
 fun TmdbMovieDetailScreen(
     movieId: Int,
     onBackClick: () -> Unit,
-
 ) {
     val context = LocalContext.current
     val itemRepository = remember {
@@ -84,7 +87,7 @@ fun TmdbMovieDetailScreen(
                     append(formatDate(movie.releaseDate))
                     if (movie.status != null) append("  |  ${movie.status}  |  ${if (movie.runtime > 0) movie.runtime.toString() + "m" else "N/A"}")
                 }.ifBlank { null },
-                categoryName = "Movie",
+                categoryName = CategoryRegistry.forType(CategoryType.TMDB_MOVIES)?.name,
                 description = movie.overview,
                 coverImageUrl = movie.posterPath?.let {
                     "https://image.tmdb.org/t/p/original$it"
@@ -197,7 +200,7 @@ fun TmdbMovieDetailScreen(
                         item {
                             AdaptiveImageCarousel(
                                 baseUrl = "https://image.tmdb.org/t/p/w500",
-                                images.sortedBy { -it.voteCount },
+                                images.sortedBy { -it.voteCount }.map { it.toCarouselImage() },
                                 itemWidth = 110.dp,
                                 itemHeight = 180.dp,
                                 shape = MaterialTheme.shapes.large,
@@ -209,7 +212,7 @@ fun TmdbMovieDetailScreen(
                         item {
                             AdaptiveImageCarousel(
                                 baseUrl = "https://image.tmdb.org/t/p/w780",
-                                images.sortedBy { -it.voteCount },
+                                images.sortedBy { -it.voteCount }.map { it.toCarouselImage() },
                                 itemWidth = 240.dp,
                                 shape = MaterialTheme.shapes.large,
                             )

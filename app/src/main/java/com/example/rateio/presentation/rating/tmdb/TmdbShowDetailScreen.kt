@@ -50,9 +50,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.rateio.data.CategoryRegistry
 import com.example.rateio.data.db.RateioDatabase
+import com.example.rateio.data.remote.steam.toCarouselImage
+import com.example.rateio.data.remote.toCarouselImage
 import com.example.rateio.data.repository.CategoryRepository
 import com.example.rateio.data.repository.RateItemRepository
+import com.example.rateio.model.CategoryType
 import com.example.rateio.presentation.category.LibraryCategoryViewModel
 import com.example.rateio.presentation.components.AdaptiveImageCarousel
 import com.example.rateio.presentation.components.DateProgressBar
@@ -124,7 +128,7 @@ fun TmdbShowDetailScreen(
                     show.lastAirDate?.take(4)?.let { append(" - $it") }
                     if (show.status != null) append("  |  ${show.status}")
                 }.ifBlank { null },
-                categoryName = "Show",
+                categoryName = CategoryRegistry.forType(CategoryType.TMDB_SHOWS)?.name,
                 description = show.overview,
                 coverImageUrl = show.posterPath?.let {
                     "https://image.tmdb.org/t/p/original$it"
@@ -268,7 +272,7 @@ fun TmdbShowDetailScreen(
                         item {
                             AdaptiveImageCarousel(
                                 baseUrl = "https://image.tmdb.org/t/p/w500",
-                                images.sortedBy { -it.voteCount },
+                                images.sortedBy { -it.voteCount }.map { it.toCarouselImage() },
                                 itemWidth = 110.dp,
                                 itemHeight = 180.dp,
                                 shape = MaterialTheme.shapes.large,
@@ -280,7 +284,7 @@ fun TmdbShowDetailScreen(
                         item {
                             AdaptiveImageCarousel(
                                 baseUrl = "https://image.tmdb.org/t/p/w780",
-                                images.sortedBy { -it.voteCount },
+                                images.sortedBy { -it.voteCount }.map { it.toCarouselImage() },
                                 itemWidth = 240.dp,
                                 shape = MaterialTheme.shapes.large,
                             )

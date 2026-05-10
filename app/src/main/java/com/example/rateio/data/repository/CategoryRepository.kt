@@ -34,4 +34,7 @@ class CategoryRepository(private val dao: CategoryDao) {
 
     suspend fun getCategoryByType(type: CategoryType): Category? =
         dao.getByType(type.name)?.toDomain()
+
+    suspend fun getCategoryById(id: Long): Category? =
+        dao.getById(id)?.toDomain()
 }

@@ -14,6 +14,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.rateio.data.db.RateioDatabase
+import com.example.rateio.data.repository.CategoryRepository
 import com.example.rateio.data.repository.RateItemRepository
 
 
@@ -27,8 +28,12 @@ fun SavedRateItemScreen(
         val db = RateioDatabase.getDatabase(context)
         RateItemRepository(db.rateItemDao())
     }
+    val categoryRepository = remember {
+        val db = RateioDatabase.getDatabase(context)
+        CategoryRepository(db.categoryDao())
+    }
     val viewModel: SavedRateItemViewModel = viewModel(
-        factory = SavedRateItemViewModel.factory(itemId, itemRepository)
+        factory = SavedRateItemViewModel.factory(itemId, itemRepository, categoryRepository)
     )
     val state by viewModel.state.collectAsState()
 
@@ -46,11 +51,12 @@ fun SavedRateItemScreen(
         }
         state.item != null -> {
             val item = state.item!!
+            val category = state.category
 
             RateItemDetailScreen(
                 title = item.title,
                 subtitle = item.subtitle,
-                categoryName = "N/A",
+                categoryName = category?.name,
                 description = "${item.externalId}, ${item.externalSource}, ${item.updatedAt}, ${item.createdAt}",
                 coverImageUrl = item.coverImageUrl,
                 backdropImageUrl = null,

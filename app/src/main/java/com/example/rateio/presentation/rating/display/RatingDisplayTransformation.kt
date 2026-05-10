@@ -55,10 +55,17 @@ object RatingTransformationsConstants {
         divider = 10f,
         decimalPlaces = 1u,
         majorTickFrequency = 5,
-        legendaryPart = 0.90f
+        legendaryPart = 0.96f
     )
     val TF_PERCENTAGE = RatingTransformations(
         stepCount = 100u,
+        trailingString = "%",
+        majorTickFrequency = 10,
+    )
+    val TF_PERCENTAGE_PRECISE = RatingTransformations(
+        stepCount = 1000u,
+        divider = 10f,
+        decimalPlaces = 1u,
         trailingString = "%",
         majorTickFrequency = 10,
     )

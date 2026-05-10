@@ -6,26 +6,36 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Bookmark
+import androidx.compose.material.icons.outlined.BookmarkBorder
 import androidx.compose.material3.Card
 import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedToggleButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.ToggleButtonDefaults
+import androidx.compose.material3.pulltorefresh.PullToRefreshDefaults
+import androidx.compose.material3.pulltorefresh.pullToRefresh
+import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -37,9 +47,12 @@ import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Paint
 import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
 import androidx.compose.ui.zIndex
@@ -50,6 +63,7 @@ import com.example.rateio.presentation.components.RateBox
 import com.example.rateio.presentation.components.RatingBottomSheet
 import com.example.rateio.utils.formatCompact
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -71,9 +85,26 @@ fun RateItemDetailScreen(
     placeholderRatio: Float = 2f / 3f,
     onRatingSaved: ((Float?) -> Unit)? = null,
 ) {
+    var isRefreshing by remember { mutableStateOf(false) }
+    val state = rememberPullToRefreshState()
+    val coroutineScope = rememberCoroutineScope()
+    val onRefresh: () -> Unit = {
+        isRefreshing = true
+        coroutineScope.launch {
+            delay(2000)
+            isRefreshing = false
+        }
+    }
+
     Scaffold { innerPadding ->
         LazyColumn(
-            modifier = modifier.fillMaxSize(),
+            modifier = modifier
+                .fillMaxSize()
+                .pullToRefresh(
+                    state = state,
+                    isRefreshing = isRefreshing,
+                    onRefresh = onRefresh,
+                ),
             contentPadding = PaddingValues(
                 top = 76.dp,
                 bottom = innerPadding.calculateBottomPadding(),
@@ -94,8 +125,50 @@ fun RateItemDetailScreen(
                 )
             }
 
+            // Library
+            item {
+                var isSaved by remember { mutableStateOf(false) }
+                if (isSaved) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth(),
+                        horizontalArrangement = Arrangement.Center,
+                    ) {
+                        OutlinedToggleButton(
+                            checked = isSaved,
+                            onCheckedChange = { isSaved = !isSaved },
+                            shapes = ToggleButtonDefaults.shapes(),
+                        ) {
+                            if (isSaved) {
+                                Icon(
+                                    Icons.Filled.Bookmark,
+                                    contentDescription = "Remove from library",
+                                    modifier = Modifier.size(ToggleButtonDefaults.IconSize)
+                                )
+                            } else {
+                                Icon(
+                                    Icons.Outlined.BookmarkBorder,
+                                    contentDescription = "Add to library",
+                                    modifier = Modifier.size(ToggleButtonDefaults.IconSize)
+                                )
+                            }
+
+                            Spacer(Modifier.size(ToggleButtonDefaults.IconSpacing))
+
+                            Text(
+                                if (isSaved) "Remove from library" else "Add to library",
+                                style = MaterialTheme.typography.titleSmall,
+                                fontWeight = FontWeight.Bold,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                            )
+                        }
+                    }
+                }
+            }
+
             // Description
-            if (!description.isNullOrBlank()) {
+            if (!description.isNullOrBlank() && !isRefreshing) {
                 item {
                     Text(
                         text = description,
@@ -115,6 +188,19 @@ fun RateItemDetailScreen(
             item { Spacer(modifier = Modifier.height(200.dp)) }
         }
 
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.Center,
+        ) {
+            PullToRefreshDefaults.LoadingIndicator(
+                modifier = Modifier.zIndex(1f),
+                state = state,
+                isRefreshing = isRefreshing,
+                maxDistance = 145.dp
+            )
+        }
+
+
 
         FilledTonalIconButton(
             onClick = onBackClick,
@@ -131,9 +217,10 @@ fun RateItemDetailScreen(
         ) {
             Icon(
                 Icons.AutoMirrored.Filled.ArrowBack,
-                contentDescription = "Back"
+                contentDescription = "Back",
             )
         }
+
     }
 }
 
@@ -189,6 +276,18 @@ private fun DetailHeader(
         )
     }*/
 
+    if (!category.isNullOrBlank()) {
+        Text(
+            category.uppercase(),
+            style = MaterialTheme.typography.headlineSmall,
+            color = MaterialTheme.colorScheme.surfaceVariant,
+            fontWeight = FontWeight.ExtraBold,
+            maxLines = 1,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.fillMaxWidth().offset(y = 10.dp)
+        )
+    }
+
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -196,16 +295,6 @@ private fun DetailHeader(
         verticalArrangement = Arrangement.spacedBy(56.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        /*if (!category.isNullOrBlank()) {
-            Text(
-                category.uppercase(),
-                style = MaterialTheme.typography.headlineSmall,
-                color = MaterialTheme.colorScheme.surfaceVariant,
-                fontWeight = FontWeight.ExtraBold,
-                maxLines = 1,
-            )
-        }*/
-
         PosterWithRating(
             imageUrl = coverImageUrl,
             placeholderRatio = placeholderRatio,
@@ -247,7 +336,7 @@ private fun PosterWithRating(
     onRatingSaved: ((Float?) -> Unit)? = null,
 ) {
     var showRatingSheet by remember { mutableStateOf(false) }
-    val rateBoxOverhang = 48.dp
+    val rateBoxOverhang = 42.dp
 
     var ratingPer by remember { mutableStateOf(rating) }
 
@@ -301,6 +390,7 @@ private fun PosterWithRating(
                     model = imageUrl,
                     placeholderRatio = placeholderRatio,
                     maxHeight = 450.dp,
+                    //minWidth = 200.dp,
                     onSuccess = { state ->
                         scope.launch(Dispatchers.IO) {
                             val hardwareBitmap = state.result.image.toBitmap()
@@ -334,7 +424,7 @@ private fun PosterWithRating(
                 roundedCorners = 18.dp,
                 width = 24.dp,
                 minWidth = 42.dp,
-                height = 6.dp,
+                height = 4.dp,
                 textStyle = MaterialTheme.typography.displayMedium,
                 fontWeight = FontWeight.Bold,
                 loadingSize = 38.dp,

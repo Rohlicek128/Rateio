@@ -18,10 +18,15 @@ import coil3.compose.AsyncImage
 import com.example.rateio.data.remote.TmdbImage
 
 
+data class CarouselImage(
+    val filePath: String,
+    val aspectRatio: Float,
+)
+
 @Composable
 fun AdaptiveImageCarousel(
     baseUrl: String,
-    images:  List<TmdbImage>,
+    images:  List<CarouselImage>,
     modifier: Modifier = Modifier,
     shape: Shape = MaterialTheme.shapes.large,
     itemWidth: Dp = 300.dp,

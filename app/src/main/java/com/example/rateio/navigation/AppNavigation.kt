@@ -11,8 +11,11 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.LibraryAdd
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.RateReview
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.StarRate
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
@@ -42,6 +45,7 @@ import com.example.rateio.presentation.browse.BrowseScreen
 import com.example.rateio.presentation.category.LibraryCategoryScreen
 import com.example.rateio.presentation.rating.RateItemDetailScreen
 import com.example.rateio.presentation.rating.SavedRateItemScreen
+import com.example.rateio.presentation.rating.steam.SteamGameDetailScreen
 import com.example.rateio.presentation.rating.tmdb.TmdbEpisodeDetailScreen
 import com.example.rateio.presentation.rating.tmdb.TmdbMovieDetailScreen
 import com.example.rateio.presentation.rating.tmdb.TmdbShowDetailScreen
@@ -83,7 +87,7 @@ fun AppNavigation(navController: NavHostController = rememberNavController()) {
                         NavigationBarItem(
                             selected = currentDestination?.hasRoute<Route.TopLevel.Home>() == true,
                             onClick = { navController.navigateSingleTop(Route.TopLevel.Home) },
-                            icon = { Icon(Icons.Default.Home, contentDescription = null) },
+                            icon = { Icon(Icons.Default.LibraryAdd, contentDescription = null) },
                             label = { Text("Ratings", fontWeight = FontWeight.Bold) }
                         )
                         // Browse
@@ -133,6 +137,8 @@ fun AppNavigation(navController: NavHostController = rememberNavController()) {
                                 navController.navigate(Route.TmdbShowDetail(externalId.toInt()))
                             CategoryType.TMDB_MOVIES ->
                                 navController.navigate(Route.TmdbMovieDetail(externalId.toInt()))
+                            CategoryType.STEAM_GAMES ->
+                                navController.navigate(Route.SteamGameDetail(externalId))
                             else -> {}
                         }
                     }
@@ -174,6 +180,14 @@ fun AppNavigation(navController: NavHostController = rememberNavController()) {
                 val route = back.toRoute<Route.TmdbMovieDetail>()
                 TmdbMovieDetailScreen(
                     movieId = route.movieId,
+                    onBackClick = { navController.popBackStack() },
+                )
+            }
+
+            composable<Route.SteamGameDetail> { back ->
+                val route = back.toRoute<Route.SteamGameDetail>()
+                SteamGameDetailScreen(
+                    appId = route.appId,
                     onBackClick = { navController.popBackStack() },
                 )
             }

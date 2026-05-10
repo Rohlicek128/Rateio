@@ -34,6 +34,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.rateio.data.remote.steam.toCarouselImage
+import com.example.rateio.data.remote.toCarouselImage
 import com.example.rateio.presentation.components.AdaptiveImageCarousel
 import com.example.rateio.presentation.components.PersonCard
 import com.example.rateio.presentation.components.SectionHeader
@@ -72,7 +74,7 @@ fun TmdbEpisodeDetailScreen(
             RateItemDetailScreen(
                 title = episode.name,
                 subtitle = "Season ${episode.seasonNumber}, Episode ${episode.episodeNumber}  |  ${formatDate(episode.airDate)}  |  ${if (episode.runtime > 0) "${episode.runtime}m" else "N/A"}",
-                categoryName = "Episode",
+                categoryName = "Episodes",
                 description = episode.overview,
                 coverImageUrl = episode.stillPath?.let {
                     "https://image.tmdb.org/t/p/original$it"
@@ -158,7 +160,7 @@ fun TmdbEpisodeDetailScreen(
                         item {
                             AdaptiveImageCarousel(
                                 baseUrl = "https://image.tmdb.org/t/p/w300",
-                                images.sortedBy { -it.voteCount },
+                                images.sortedBy { -it.voteCount }.map { it.toCarouselImage() },
                                 itemWidth = 250.dp,
                                 shape = MaterialTheme.shapes.large,
                             )

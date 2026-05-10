@@ -2,11 +2,13 @@ package com.example.rateio.data.remote
 
 import com.example.rateio.model.CategoryType
 import com.example.rateio.model.RateItem
+import com.example.rateio.presentation.components.CarouselImage
 import com.google.gson.annotations.SerializedName
 
 
 data class TmdbShowSearchResponse(
-    @SerializedName("results") val results: List<TmdbShow>
+    @SerializedName("page") val page: Int,
+    @SerializedName("results") val results: List<TmdbShow>,
 )
 
 data class TmdbShow(
@@ -227,4 +229,9 @@ fun TmdbMovieDetail.toRateItem(categoryId: Long = 0) = RateItem(
     coverImageLowUrl = posterPath?.let { "https://image.tmdb.org/t/p/w342$it" },
     externalId = id.toString(),
     externalSource = CategoryType.TMDB_MOVIES,
+)
+
+fun TmdbImage.toCarouselImage() = CarouselImage(
+    filePath = filePath,
+    aspectRatio = aspectRatio,
 )

@@ -29,80 +29,80 @@ fun EpisodeGrid(
 ) {
     val scrollState = rememberScrollState()
 
-    Row(
+    Column(
         modifier = modifier
             .padding(12.dp)
             .horizontalScroll(scrollState),
-        horizontalArrangement = Arrangement.spacedBy(6.dp)
+        verticalArrangement = Arrangement.spacedBy(32.dp),
     ) {
-        Column(
-            verticalArrangement = Arrangement.spacedBy(20.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(6.dp),
         ) {
-            Text(
-                text = "  ",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(horizontal = 10.dp),
-            )
-            val longestSeason = seasonEpisodes.values.maxBy { it.size }
-            longestSeason
-                .sortedBy { it.episodeNumber }
-                .forEach { episode ->
-                    Text(
-                        text = "E${episode.episodeNumber}",
-                        style = MaterialTheme.typography.titleSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        fontWeight = FontWeight.Bold,
-                        modifier = Modifier.padding(horizontal = 10.dp),
+            Column(
+                verticalArrangement = Arrangement.spacedBy(20.dp),
+                horizontalAlignment = Alignment.End,
+                modifier = Modifier.width(48.dp),
+            ) {
+                Text(
+                    text = "   ",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(horizontal = 10.dp),
+                )
+                val longestSeason = seasonEpisodes.values.maxBy { it.size }
+                longestSeason
+                    .sortedBy { it.episodeNumber }
+                    .forEach { episode ->
+                        Text(
+                            text = "E${episode.episodeNumber}",
+                            style = MaterialTheme.typography.titleSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.padding(horizontal = 10.dp),
+                        )
+                    }
+            }
+
+            seasonEpisodes
+                .entries
+                .sortedBy { it.key }
+                .forEach { (seasonNumber, episodes) ->
+                    SeasonColumn(
+                        seasonNumber = seasonNumber,
+                        episodes = episodes,
+                        ratings = imdbRatings[seasonNumber] ?: emptyMap(),
+                        onEpisodeClick = onEpisodeClick,
                     )
                 }
         }
 
-        seasonEpisodes
-            .entries
-            .sortedBy { it.key }
-            .forEach { (seasonNumber, episodes) ->
-                SeasonColumn(
-                    seasonNumber = seasonNumber,
-                    episodes = episodes,
-                    ratings = imdbRatings[seasonNumber] ?: emptyMap(),
-                    onEpisodeClick = onEpisodeClick,
-                )
-            }
-    }
-
-    Spacer(modifier = Modifier.height(4.dp))
-
-    Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(12.dp)
-            .horizontalScroll(scrollState),
-        horizontalArrangement = Arrangement.spacedBy(6.dp)
-    ) {
-        Column(
-            verticalArrangement = Arrangement.spacedBy(20.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(6.dp),
         ) {
-            Text(
-                text = "Avg",
-                style = MaterialTheme.typography.titleSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(horizontal = 10.dp),
-            )
-        }
-
-        seasonEpisodes
-            .entries
-            .sortedBy { it.key }
-            .forEach { (seasonNumber) ->
-                SeasonAverage(
-                    ratings = imdbRatings[seasonNumber] ?: emptyMap(),
+            Column(
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.End,
+                modifier = Modifier.width(48.dp),
+            ) {
+                Text(
+                    text = "Avg",
+                    style = MaterialTheme.typography.titleSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(horizontal = 10.dp),
                 )
             }
+
+            seasonEpisodes
+                .entries
+                .sortedBy { it.key }
+                .forEach { (seasonNumber) ->
+                    SeasonAverage(
+                        ratings = imdbRatings[seasonNumber] ?: emptyMap(),
+                    )
+                }
+        }
     }
 }
 
@@ -143,6 +143,20 @@ private fun SeasonColumn(
                     }
                 )
             }
+
+        episodes?.size?.let {
+            if (it <= 0) {
+                RateBox(
+                    rating = null,
+                    roundedCorners = 7.dp,
+                    minWidth = width,
+                    maxWidth = width,
+                    height = height,
+                    textStyle = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                )
+            }
+        }
     }
 }
 

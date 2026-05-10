@@ -4,7 +4,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
+import com.example.rateio.data.repository.CategoryRepository
 import com.example.rateio.data.repository.RateItemRepository
+import com.example.rateio.model.Category
 import com.example.rateio.model.RateItem
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -15,6 +17,7 @@ import kotlinx.coroutines.launch
 
 data class SavedRateItemState(
     val item: RateItem? = null,
+    val category: Category? = null,
     val isLoading: Boolean = false,
     val error: String? = null,
 )
@@ -22,6 +25,7 @@ data class SavedRateItemState(
 class SavedRateItemViewModel(
     private val id: Long,
     private val itemRepository: RateItemRepository,
+    private val categoryRepository: CategoryRepository,
 ) : ViewModel() {
     private val _state = MutableStateFlow(SavedRateItemState())
     val state: StateFlow<SavedRateItemState> = _state.asStateFlow()
@@ -32,6 +36,10 @@ class SavedRateItemViewModel(
             try {
                 val item = itemRepository.getById(id)
                 _state.update { it.copy(item = item, isLoading = false) }
+                if (item != null) {
+                    val category = categoryRepository.getCategoryById(item.categoryId)
+                    _state.update { it.copy(category = category, isLoading = false) }
+                }
             } catch (e: Exception) {
                 _state.update { it.copy(error = e.message, isLoading = false) }
             }
@@ -45,8 +53,8 @@ class SavedRateItemViewModel(
     }
 
     companion object {
-        fun factory(id: Long, itemRepository: RateItemRepository) = viewModelFactory {
-            initializer { SavedRateItemViewModel(id, itemRepository) }
+        fun factory(id: Long, itemRepository: RateItemRepository, categoryRepository: CategoryRepository) = viewModelFactory {
+            initializer { SavedRateItemViewModel(id, itemRepository, categoryRepository) }
         }
     }
 }

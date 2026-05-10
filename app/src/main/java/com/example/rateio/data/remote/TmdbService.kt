@@ -19,6 +19,16 @@ interface TmdbService {
         @Header("Authorization") bearer: String = "Bearer " + BuildConfig.TMDB_API_KEY,
     ): TmdbShowSearchResponse
 
+    @GET("discover/tv")
+    suspend fun discoverShows(
+        @Query("include_adult") includeAdult: Boolean = false,
+        @Query("language") language: String = "en-US",
+        @Query("page") page: Int = 1,
+        @Query("sort_by") sortBy: String = "popularity.desc",
+        @Header("accept") accept: String = "application/json",
+        @Header("Authorization") bearer: String = "Bearer " + BuildConfig.TMDB_API_KEY,
+    ): TmdbShowSearchResponse
+
     @GET("tv/{id}")
     suspend fun getShow(
         @Path("id") id: Int,
