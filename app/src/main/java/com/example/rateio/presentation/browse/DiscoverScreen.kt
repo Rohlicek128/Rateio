@@ -18,6 +18,7 @@ import com.example.rateio.presentation.category.CategoryItemListScreen
 fun DiscoverScreen(
     category: Category,
     onItemClick: (externalId: String, type: CategoryType) -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     val viewModel: DiscoverViewModel = viewModel(
         key = category.type.name,
@@ -26,7 +27,7 @@ fun DiscoverScreen(
     val state by viewModel.state.collectAsState()
 
     CategoryItemListScreen(
-        //modifier = Modifier.height(350.dp),
+        modifier = modifier,
         title = "Popular",
         items = state.results,
         isLoading = state.isLoading,

@@ -16,11 +16,15 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.rateio.data.db.RateioDatabase
 import com.example.rateio.data.repository.CategoryRepository
 import com.example.rateio.data.repository.RateItemRepository
+import com.example.rateio.model.CategoryType
+import com.example.rateio.presentation.rating.tmdb.TmdbMovieDetailScreen
+import com.example.rateio.presentation.rating.tmdb.TmdbShowDetailScreen
 
 
 @Composable
 fun SavedRateItemScreen(
     itemId: Long,
+    onChildClick: (Long) -> Unit,
     onBackClick: () -> Unit,
 ) {
     val context = LocalContext.current
@@ -53,21 +57,54 @@ fun SavedRateItemScreen(
             val item = state.item!!
             val category = state.category
 
-            RateItemDetailScreen(
-                title = item.title,
-                subtitle = item.subtitle,
-                categoryName = category?.name,
-                description = "${item.externalId}, ${item.externalSource}, ${item.updatedAt}, ${item.createdAt}",
-                coverImageUrl = item.coverImageUrl,
-                backdropImageUrl = null,
-                placeholderRatio = 2f / 3f,
-                rating = item.rating,
-                onBackClick = onBackClick,
-                extraContent = { },
-                onRatingSaved = { rating ->
-                    viewModel.saveRating(rating)
+            val type = if (!item.externalId.isNullOrBlank() && category != null) category.type else CategoryType.CUSTOM
+
+            when (type) {
+                CategoryType.TMDB_SHOWS -> {
+                    TmdbShowDetailScreen(
+                        showId = item.externalId!!.toInt(),
+                        isSaved = true,
+                        customRating = item.rating,
+                        onRatingSaved = { rating ->
+                            viewModel.saveRating(rating)
+                        },
+                        onBackClick = onBackClick,
+                        onEpisodeClick = {showId, seasonNumber, episodeNumber ->
+
+                        }
+                    )
                 }
-            )
+                CategoryType.TMDB_MOVIES -> {
+                    TmdbMovieDetailScreen(
+                        movieId = item.externalId!!.toInt(),
+                        isSaved = true,
+                        customRating = item.rating,
+                        onRatingSaved = { rating ->
+                            viewModel.saveRating(rating)
+                        },
+                        onBackClick = onBackClick,
+                    )
+                }
+                else -> {
+                    RateItemDetailScreen(
+                        title = item.title,
+                        subtitle = item.subtitle,
+                        categoryName = category?.name,
+                        description = "${item.externalId}, ${item.externalSource}, ${item.updatedAt}, ${item.createdAt}",
+                        coverImageUrl = item.coverImageUrl,
+                        backdropImageUrl = null,
+                        placeholderRatio = 2f / 3f,
+                        rating = item.rating,
+                        onBackClick = onBackClick,
+                        canAddToLibrary = true,
+                        extraContent = { },
+                        onRatingSaved = { rating ->
+                            viewModel.saveRating(rating)
+                        },
+                        onOpenSettings = { }
+                    )
+                }
+            }
 
         }
     }

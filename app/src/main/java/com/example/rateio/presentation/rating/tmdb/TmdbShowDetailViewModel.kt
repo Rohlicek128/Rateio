@@ -27,6 +27,9 @@ data class TmdbShowDetailState(
     val imdbRating: ImdbRating? = null,
     val images: TmdbImageResponse? = null,
     val savedItemId: Long? = null,
+
+    val selectedEpisodeMode: Int = 0,
+
     val isLoading: Boolean = false,
     val error: String? = null,
 )
@@ -94,6 +97,10 @@ class TmdbShowDetailViewModel(
                 _state.update { it.copy(savedItemId = id) }
             }
         }
+    }
+
+    fun onModeSelect(selectedMode: Int) {
+        _state.update { it.copy(selectedEpisodeMode = selectedMode) }
     }
 
     companion object {

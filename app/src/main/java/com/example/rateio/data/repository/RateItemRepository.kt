@@ -32,6 +32,9 @@ class RateItemRepository(private val dao: RateItemDao) {
         dao.observeRootItemCounts()
             .map { list -> list.associate { it.categoryId to it.count } }
 
+    fun observeRatedItemCount(): Int =
+        dao.observeRatedItemCount()
+
 
     /** Finds an existing item by external id or inserts a new skeleton one */
     suspend fun findOrCreate(

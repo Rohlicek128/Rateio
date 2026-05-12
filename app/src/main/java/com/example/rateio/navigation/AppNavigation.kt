@@ -5,28 +5,32 @@ import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.slideOutVertically
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.LibraryAdd
 import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.RateReview
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.material.icons.filled.StarRate
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.zIndex
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
@@ -35,21 +39,16 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
-import com.example.rateio.data.CategoryRegistry
-import com.example.rateio.data.remote.imdb.ImdbRating
-import com.example.rateio.data.remote.imdb.ImdbRatingFetcher
 import com.example.rateio.features.home.HomeScreen
-import com.example.rateio.features.settings.SettingsScreen
 import com.example.rateio.model.CategoryType
 import com.example.rateio.presentation.browse.BrowseScreen
 import com.example.rateio.presentation.category.LibraryCategoryScreen
-import com.example.rateio.presentation.rating.RateItemDetailScreen
+import com.example.rateio.presentation.profile.ProfileScreen
 import com.example.rateio.presentation.rating.SavedRateItemScreen
 import com.example.rateio.presentation.rating.steam.SteamGameDetailScreen
 import com.example.rateio.presentation.rating.tmdb.TmdbEpisodeDetailScreen
 import com.example.rateio.presentation.rating.tmdb.TmdbMovieDetailScreen
 import com.example.rateio.presentation.rating.tmdb.TmdbShowDetailScreen
-import kotlinx.coroutines.runBlocking
 
 
 @Composable
@@ -72,9 +71,32 @@ fun AppNavigation(navController: NavHostController = rememberNavController()) {
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
+                        .zIndex(1f)
                 ) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(150.dp)
+                            .align(Alignment.BottomCenter)
+                            .zIndex(2f)
+                            .background(
+                                Brush.verticalGradient(
+                                    colors = listOf(
+                                        Color.Transparent,
+                                        MaterialTheme.colorScheme.background.copy(alpha = 0.8f),
+                                        MaterialTheme.colorScheme.background,
+                                    ),
+                                    startY = 0f,
+                                    endY = Float.POSITIVE_INFINITY,
+                                )
+                            )
+                    )
+
                     NavigationBar(
-                        modifier = Modifier.clip(
+                        modifier = Modifier
+                            .align(Alignment.BottomCenter)
+                            .zIndex(3f)
+                            .clip(
                             RoundedCornerShape(
                                 topStart = 32.dp,
                                 topEnd = 32.dp,
@@ -126,8 +148,6 @@ fun AppNavigation(navController: NavHostController = rememberNavController()) {
                 )
             }
 
-            composable<Route.TopLevel.Profile> { SettingsScreen(contentPadding = globalPadding) }
-
             composable<Route.TopLevel.Browse> {
                 BrowseScreen(
                     contentPadding = globalPadding,
@@ -144,10 +164,21 @@ fun AppNavigation(navController: NavHostController = rememberNavController()) {
                     }
                 )
             }
+
+            composable<Route.TopLevel.Profile> {
+                ProfileScreen(
+                    onOpenSettings = {
+
+                    }
+                )
+            }
+
+
             composable<Route.TmdbShowDetail> { back ->
                 val route = back.toRoute<Route.TmdbShowDetail>()
                 TmdbShowDetailScreen(
                     showId = route.showId,
+                    isSaved = false,
                     onBackClick = { navController.popBackStack() },
                     onEpisodeClick = {showId, seasonNumber, episodeNumber ->
                         navController.navigate(Route.TmdbEpisodeDetail(showId, seasonNumber, episodeNumber)) {
@@ -180,6 +211,7 @@ fun AppNavigation(navController: NavHostController = rememberNavController()) {
                 val route = back.toRoute<Route.TmdbMovieDetail>()
                 TmdbMovieDetailScreen(
                     movieId = route.movieId,
+                    isSaved = false,
                     onBackClick = { navController.popBackStack() },
                 )
             }
@@ -218,27 +250,11 @@ fun AppNavigation(navController: NavHostController = rememberNavController()) {
                 val detail = backStackEntry.toRoute<Route.RateItemDetail>()
                 SavedRateItemScreen(
                     itemId = detail.itemId,
+                    onChildClick = { childId ->
+                        navController.navigate(Route.RateItemDetail(childId))
+                    },
                     onBackClick = { navController.popBackStack() },
                 )
-
-
-                /*val imdbFetcher = ImdbRatingFetcher()
-                var rating: ImdbRating? = null
-                runBlocking {
-                    rating = imdbFetcher.fetch("tt12042730")
-                }
-                RateItemDetailScreen(
-                    title = "Project Hail Mary",
-                    subtitle = "2026  |  ID: ${detail.itemId}",
-                    description = "Science teacher Ryland Grace wakes up on a spaceship light years from home with no recollection of who he is or how he got there. As his memory returns, he begins to uncover his mission: solve the riddle of the mysterious substance causing the sun to die out. He must call on his scientific knowledge and unorthodox ideas to save everything on Earth from extinction.",
-                    coverImageUrl = "https://image.tmdb.org/t/p/w780/yihdXomYb5kTeSivtFndMy5iDmf.jpg",
-                    backdropImageUrl = "https://image.tmdb.org/t/p/w780/yihdXomYb5kTeSivtFndMy5iDmf.jpg",
-                    rating = rating?.normalizedRating,
-                    ratingVotes = rating?.voteCount,
-                    ratingLabel = "",
-                    onBackClick = { navController.popBackStack() },
-                    extraContent = { }
-                )*/
             }
         }
     }

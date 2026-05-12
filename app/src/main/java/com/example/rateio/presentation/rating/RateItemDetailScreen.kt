@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.calculateEndPadding
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -19,7 +20,10 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Bookmark
+import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material.icons.outlined.BookmarkBorder
 import androidx.compose.material3.Card
 import androidx.compose.material3.FilledTonalIconButton
@@ -49,16 +53,21 @@ import androidx.compose.ui.graphics.Paint
 import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
 import androidx.compose.ui.zIndex
 import androidx.palette.graphics.Palette
 import coil3.toBitmap
 import com.example.rateio.presentation.components.AdaptiveAsyncImage
+import com.example.rateio.presentation.components.AlertDialogExample
+import com.example.rateio.presentation.components.LibraryToggle
 import com.example.rateio.presentation.components.RateBox
 import com.example.rateio.presentation.components.RatingBottomSheet
 import com.example.rateio.utils.formatCompact
@@ -83,7 +92,9 @@ fun RateItemDetailScreen(
     ratingVotes: Int? = null,
     extraContent: LazyListScope.() -> Unit = {},
     placeholderRatio: Float = 2f / 3f,
+    canAddToLibrary: Boolean = false,
     onRatingSaved: ((Float?) -> Unit)? = null,
+    onOpenSettings: (() -> Unit)? = null,
 ) {
     var isRefreshing by remember { mutableStateOf(false) }
     val state = rememberPullToRefreshState()
@@ -95,6 +106,10 @@ fun RateItemDetailScreen(
             isRefreshing = false
         }
     }
+
+    var isSaved by remember { mutableStateOf(false) }
+
+    val haptic = LocalHapticFeedback.current
 
     Scaffold { innerPadding ->
         LazyColumn(
@@ -126,46 +141,24 @@ fun RateItemDetailScreen(
             }
 
             // Library
-            item {
-                var isSaved by remember { mutableStateOf(false) }
-                if (isSaved) {
+            if (canAddToLibrary) {
+                item {
                     Row(
                         modifier = Modifier
                             .fillMaxWidth(),
                         horizontalArrangement = Arrangement.Center,
                     ) {
-                        OutlinedToggleButton(
+                        LibraryToggle(
                             checked = isSaved,
-                            onCheckedChange = { isSaved = !isSaved },
-                            shapes = ToggleButtonDefaults.shapes(),
-                        ) {
-                            if (isSaved) {
-                                Icon(
-                                    Icons.Filled.Bookmark,
-                                    contentDescription = "Remove from library",
-                                    modifier = Modifier.size(ToggleButtonDefaults.IconSize)
-                                )
-                            } else {
-                                Icon(
-                                    Icons.Outlined.BookmarkBorder,
-                                    contentDescription = "Add to library",
-                                    modifier = Modifier.size(ToggleButtonDefaults.IconSize)
-                                )
-                            }
-
-                            Spacer(Modifier.size(ToggleButtonDefaults.IconSpacing))
-
-                            Text(
-                                if (isSaved) "Remove from library" else "Add to library",
-                                style = MaterialTheme.typography.titleSmall,
-                                fontWeight = FontWeight.Bold,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis,
-                            )
-                        }
+                            onCheckedChange = {
+                                isSaved = it
+                            },
+                            itemName = title,
+                        )
                     }
                 }
             }
+
 
             // Description
             if (!description.isNullOrBlank() && !isRefreshing) {
@@ -203,7 +196,10 @@ fun RateItemDetailScreen(
 
 
         FilledTonalIconButton(
-            onClick = onBackClick,
+            onClick = {
+                haptic.performHapticFeedback(HapticFeedbackType.ContextClick)
+                onBackClick()
+            },
             colors = IconButtonDefaults.filledTonalIconButtonColors(
                 containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
             ),
@@ -219,6 +215,36 @@ fun RateItemDetailScreen(
                 Icons.AutoMirrored.Filled.ArrowBack,
                 contentDescription = "Back",
             )
+        }
+
+
+        if (onOpenSettings != null) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.End
+            ) {
+                FilledTonalIconButton(
+                    onClick = {
+                        haptic.performHapticFeedback(HapticFeedbackType.ContextClick)
+                        onOpenSettings()
+                    },
+                    colors = IconButtonDefaults.filledTonalIconButtonColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+                    ),
+                    modifier = Modifier
+                        .padding(
+                            top = innerPadding.calculateTopPadding() + 12.dp,
+                            end = 12.dp,
+                        )
+                        .zIndex(1f),
+                    shapes = IconButtonDefaults.shapes()
+                ) {
+                    Icon(
+                        Icons.Filled.MoreVert,
+                        contentDescription = "Back",
+                    )
+                }
+            }
         }
 
     }
@@ -284,7 +310,9 @@ private fun DetailHeader(
             fontWeight = FontWeight.ExtraBold,
             maxLines = 1,
             textAlign = TextAlign.Center,
-            modifier = Modifier.fillMaxWidth().offset(y = 10.dp)
+            modifier = Modifier
+                .fillMaxWidth()
+                .offset(y = 10.dp)
         )
     }
 

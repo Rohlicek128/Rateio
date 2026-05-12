@@ -87,7 +87,7 @@ fun LibraryCategoryScreen(
         }
     ) { padding ->
         CategoryItemListScreen(
-            title = state.category?.name ?: "",
+            title = "",
             items = state.items.sortedWith(compareBy({ -(it.rating ?: -1f) }, { it.title })),
             isLoading = state.isLoading,
             onItemClick = onItemClick,

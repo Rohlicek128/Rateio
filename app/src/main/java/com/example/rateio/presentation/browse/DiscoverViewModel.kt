@@ -42,7 +42,7 @@ class DiscoverViewModel(
                     CategoryType.TMDB_MOVIES -> TmdbClient.tmdb.discoverMovies()
                         .results.map { it.toRateItem() }
                     CategoryType.STEAM_GAMES -> SteamClient.steamApi.getMostPlayedGames()
-                        .response.ranks.map { it.toRateItem() }
+                        .response.ranks.sortedByDescending { it.peakInGame }.map { it.toRateItem() }
                     else -> emptyList()
                 }
                 _state.update { it.copy(results = results, isLoading = false) }

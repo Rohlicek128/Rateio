@@ -9,8 +9,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
@@ -18,20 +16,11 @@ import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.automirrored.filled.WrapText
 import androidx.compose.material.icons.automirrored.outlined.List
 import androidx.compose.material.icons.automirrored.outlined.WrapText
-import androidx.compose.material.icons.filled.Bookmark
 import androidx.compose.material.icons.filled.GridOn
-import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Timeline
-import androidx.compose.material.icons.outlined.BookmarkBorder
 import androidx.compose.material.icons.outlined.GridOn
-import androidx.compose.material.icons.outlined.Lock
 import androidx.compose.material.icons.outlined.Timeline
 import androidx.compose.material3.CircularWavyProgressIndicator
-import androidx.compose.material3.FilledIconButton
-import androidx.compose.material3.FilledIconToggleButton
-import androidx.compose.material3.FilledTonalIconButton
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedToggleButton
 import androidx.compose.material3.Text
@@ -47,34 +36,36 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.rateio.data.CategoryRegistry
 import com.example.rateio.data.db.RateioDatabase
-import com.example.rateio.data.remote.steam.toCarouselImage
 import com.example.rateio.data.remote.toCarouselImage
 import com.example.rateio.data.repository.CategoryRepository
 import com.example.rateio.data.repository.RateItemRepository
 import com.example.rateio.model.CategoryType
-import com.example.rateio.presentation.category.LibraryCategoryViewModel
 import com.example.rateio.presentation.components.AdaptiveImageCarousel
 import com.example.rateio.presentation.components.DateProgressBar
 import com.example.rateio.presentation.components.DisplaySelector
 import com.example.rateio.presentation.components.EpisodeGrid
 import com.example.rateio.presentation.components.EpisodeWrapped
 import com.example.rateio.presentation.components.GenreChips
+import com.example.rateio.presentation.components.LibraryToggle
 import com.example.rateio.presentation.components.PersonCard
 import com.example.rateio.presentation.components.RateItemCard
 import com.example.rateio.presentation.components.SectionHeader
 import com.example.rateio.presentation.components.rating.EpisodeRatingGraph
 import com.example.rateio.presentation.rating.RateItemDetailScreen
 import com.example.rateio.utils.formatDate
+import com.example.rateio.utils.formatTime
 
 
 @Composable
 fun TmdbShowDetailScreen(
     showId: Int,
+    isSaved: Boolean,
+    customRating: Float? = null,
+    onRatingSaved: ((Float?) -> Unit)? = null,
     onBackClick: () -> Unit,
     onEpisodeClick: (showId: Int, seasonNumber: Int, episodeNumber: Int) -> Unit,
 ) {
@@ -116,9 +107,7 @@ fun TmdbShowDetailScreen(
             )
             val episodesState by episodesViewModel.state.collectAsState()
 
-
-            var selectedMode by remember { mutableIntStateOf(0) }
-            var selectedRatings by remember { mutableIntStateOf(0) }
+            var selectedRatings by remember { mutableIntStateOf(if (!isSaved) 0 else 2) }
             var invertedGrid by remember { mutableStateOf(false) }
 
             RateItemDetailScreen(
@@ -136,10 +125,12 @@ fun TmdbShowDetailScreen(
                 backdropImageUrl = show.backdropPath?.let {
                     "https://image.tmdb.org/t/p/w1280$it"
                 },
-                rating = state.imdbRating?.normalizedRating,
-                ratingVotes = state.imdbRating?.voteCount,
-                ratingLabel = show.voteAverage?.let { "%.1f/10 on TMDb".format(it) },
+                rating = if (!isSaved) state.imdbRating?.normalizedRating else customRating,
+                ratingVotes = if (!isSaved) state.imdbRating?.voteCount else null,
+                ratingLabel = state.imdbRating?.normalizedRating?.let { "%.1f/10 on IMDb".format(it * 10f) },
+                onRatingSaved = onRatingSaved,
                 onBackClick = onBackClick,
+                canAddToLibrary = false,
                 extraContent = {
                     // Library
                     item {
@@ -147,36 +138,13 @@ fun TmdbShowDetailScreen(
                             modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp),
                             horizontalArrangement = Arrangement.Center,
                         ) {
-                            val isSaved = state.savedItemId != null
-                            OutlinedToggleButton(
-                                checked = isSaved,
-                                onCheckedChange = { viewModel.onToggleSaved(state.show!!) },
-                                shapes = ToggleButtonDefaults.shapes(),
-                            ) {
-                                if (isSaved) {
-                                    Icon(
-                                        Icons.Filled.Bookmark,
-                                        contentDescription = "Remove from library",
-                                        modifier = Modifier.size(ToggleButtonDefaults.IconSize)
-                                    )
-                                } else {
-                                    Icon(
-                                        Icons.Outlined.BookmarkBorder,
-                                        contentDescription = "Add to library",
-                                        modifier = Modifier.size(ToggleButtonDefaults.IconSize)
-                                    )
-                                }
-
-                                Spacer(Modifier.size(ToggleButtonDefaults.IconSpacing))
-
-                                Text(
-                                    if (isSaved) "Remove from library" else "Add to library",
-                                    style = MaterialTheme.typography.titleSmall,
-                                    fontWeight = FontWeight.Bold,
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis,
-                                )
-                            }
+                            LibraryToggle(
+                                checked = state.savedItemId != null,
+                                onCheckedChange = {
+                                    viewModel.onToggleSaved(state.show!!)
+                                },
+                                itemName = show.name,
+                            )
                         }
                     }
 
@@ -310,8 +278,8 @@ fun TmdbShowDetailScreen(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(horizontal = 8.dp),
-                            selectedIndex = selectedMode,
-                            onSelectionChanged = { selectedMode = it },
+                            selectedIndex = state.selectedEpisodeMode,
+                            onSelectionChanged = viewModel::onModeSelect,
                             options = listOf("List", "Grid", "Wrapped", "Timeline"),
                             unCheckedIcons = listOf(Icons.AutoMirrored.Outlined.List, Icons.Outlined.GridOn, Icons.AutoMirrored.Outlined.WrapText, Icons.Outlined.Timeline),
                             checkedIcons = listOf(Icons.AutoMirrored.Filled.List, Icons.Filled.GridOn, Icons.AutoMirrored.Filled.WrapText, Icons.Filled.Timeline),
@@ -326,39 +294,29 @@ fun TmdbShowDetailScreen(
                         }
                         episodesState.seasonEpisodes.isNotEmpty() -> {
                             val ratings: Map<Int, Map<Int, Float?>> = when (selectedRatings) {
-                                0 -> {
-                                    episodesState.imdbRatings
+                                0 -> episodesState.imdbRatings
+                                1 -> episodesState.seasonEpisodes.mapValues { (_, episodes) ->
+                                    episodes.associate { it -> it.episodeNumber to it.voteAverage?.div(10f).takeIf { it != 0f } }
                                 }
-                                1 -> {
-                                    episodesState.seasonEpisodes.mapValues { (_, episodes) ->
-                                        episodes.associate { it -> it.episodeNumber to it.voteAverage?.div(10f).takeIf { it != 0f } }
-                                    }
+                                2 -> episodesState.seasonEpisodes.mapValues { (_, episodes) ->
+                                    episodes.associate { it.episodeNumber to null }
                                 }
-                                2 -> {
-                                    episodesState.seasonEpisodes.mapValues { (_, episodes) ->
-                                        episodes.associate { it.episodeNumber to null }
-                                    }
-                                }
-                                else -> {
-                                    episodesState.imdbRatings
-                                }
+                                else -> episodesState.imdbRatings
                             }
 
-                            when (selectedMode) {
+                            when (state.selectedEpisodeMode) {
                                 0 -> {
-                                    /*items(seasons, key = { it.id }) { season ->
-                                        var ratingTest: Float? = null
-                                        if (season.voteAverage != null) {
-                                            if (season.voteAverage > 0f) ratingTest = season.voteAverage.div(10f).plus(0.1f)
-                                        }
+                                    items(seasons, key = { it.id }) { season ->
+                                        val flatRatings = ratings[season.seasonNumber]?.values?.filterNotNull()
                                         RateItemCard(
                                             title = "Season ${season.seasonNumber}",
                                             subtitle = "${(season.airDate ?: "N/A").take(4)}  |  ${season.episodeCount} episodes",
                                             coverImagePath = "https://image.tmdb.org/t/p/w185${season.posterPath}",
-                                            rating = ratingTest,
-                                            onClick = { onSeasonClick(season.id, showId) }
+                                            rating = if (!episodesState.isLoadingRatings && !flatRatings.isNullOrEmpty())
+                                                flatRatings.average().toFloat() else null,
+                                            onClick = { }
                                         )
-                                    }*/
+                                    }
 
                                     episodesState.seasonEpisodes
                                         .entries
@@ -373,13 +331,14 @@ fun TmdbShowDetailScreen(
                                                 val rating = ratings[seasonNumber]?.get(episode.episodeNumber)
                                                 RateItemCard(
                                                     title = episode.name,
-                                                    subtitle = "Episode ${episode.episodeNumber}  |  ${if (episode.runtime > 0) "${episode.runtime}m" else "N/A"}",
+                                                    subtitle = "Episode ${episode.episodeNumber}",
                                                     coverImagePath = "https://image.tmdb.org/t/p/w300${episode.stillPath}",
                                                     rating = if (!episodesState.isLoadingRatings && rating == null && ratings[seasonNumber]?.isEmpty() == true)
                                                         episode.voteAverage?.div(10f) else rating,
                                                     isLoading = episodesState.isLoadingRatings && rating == null,
                                                     placeholderRatio = 16f / 9f,
                                                     padding = PaddingValues(horizontal = 16.dp, vertical = 6.dp),
+                                                    bubbleText = if (episode.runtime > 0) formatTime(episode.runtime) else null,
                                                     onClick = { onEpisodeClick(
                                                         show.id,
                                                         episode.seasonNumber,

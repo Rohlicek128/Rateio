@@ -41,6 +41,7 @@ import com.example.rateio.presentation.components.PersonCard
 import com.example.rateio.presentation.components.SectionHeader
 import com.example.rateio.presentation.rating.RateItemDetailScreen
 import com.example.rateio.utils.formatDate
+import com.example.rateio.utils.formatTime
 
 
 @Composable
@@ -73,7 +74,7 @@ fun TmdbEpisodeDetailScreen(
 
             RateItemDetailScreen(
                 title = episode.name,
-                subtitle = "Season ${episode.seasonNumber}, Episode ${episode.episodeNumber}  |  ${formatDate(episode.airDate)}  |  ${if (episode.runtime > 0) "${episode.runtime}m" else "N/A"}",
+                subtitle = "Season ${episode.seasonNumber}, Episode ${episode.episodeNumber}  |  ${formatDate(episode.airDate)}  |  ${formatTime(episode.runtime)}",
                 categoryName = "Episodes",
                 description = episode.overview,
                 coverImageUrl = episode.stillPath?.let {
@@ -140,7 +141,7 @@ fun TmdbEpisodeDetailScreen(
                                     }
                                 }
                                 episode.credits?.guest?.takeIf { it.isNotEmpty() }?.let { guest ->
-                                    items(guest.take(10), key = { it.creditId }) { member ->
+                                    items(guest.take(20), key = { it.creditId }) { member ->
                                         PersonCard(
                                             name = member.name,
                                             position = member.character,

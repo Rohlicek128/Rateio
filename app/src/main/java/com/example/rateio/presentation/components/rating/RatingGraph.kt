@@ -39,6 +39,7 @@ import com.example.rateio.data.remote.TmdbEpisodeSummary
 import com.example.rateio.presentation.components.RateItemCard
 import com.example.rateio.presentation.rating.display.getRatingColor
 import com.example.rateio.utils.formatDateCompact
+import com.example.rateio.utils.formatTime
 import kotlin.math.abs
 
 
@@ -270,6 +271,7 @@ fun EpisodeRatingGraph(
                     subtitle = "S${episode.seasonNumber}E${episode.episodeNumber}  |  ${formatDateCompact(episode.airDate)}",
                     coverImagePath = "https://image.tmdb.org/t/p/w300${episode.stillPath}",
                     rating = episodePoint.rating,
+                    bubbleText = if (episode.runtime > 0) formatTime(episode.runtime) else null,
                     placeholderRatio = 16f / 9f,
                     padding = PaddingValues(horizontal = 16.dp, vertical = 16.dp),
                     onClick = { onEpisodeClick(
@@ -287,7 +289,7 @@ fun EpisodeRatingGraph(
             Slider(
                 value = plotScale,
                 onValueChange = { plotScale = it },
-                valueRange = 1f..2.5f,
+                valueRange = 1f..4f,
             )
 
             //Spacer(modifier = Modifier.height(4.dp))
@@ -296,7 +298,7 @@ fun EpisodeRatingGraph(
             Slider(
                 value = widthScale,
                 onValueChange = { widthScale = it },
-                valueRange = 1f..3f,
+                valueRange = 1f..5f,
             )
         }
     }

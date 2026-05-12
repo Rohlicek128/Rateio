@@ -20,7 +20,7 @@ data class SteamGameDetailResponse(
 )
 
 data class SteamGameDetail(
-    @SerializedName("steam_appid") val steamAppid: Int,
+    @SerializedName("steam_appid") val steamAppId: Int,
     @SerializedName("type") val type: String?,
 
     @SerializedName("name") val name: String,
@@ -94,12 +94,22 @@ data class SteamMostPlayedRank(
 )
 
 
+fun SteamGameDetail.toRateItem(categoryId: Long = 0) = RateItem(
+    id = 0,
+    categoryId = categoryId,
+    title = name,
+    subtitle = releaseDate?.date?.takeLast(4),
+    coverImageUrl = "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/${steamAppId}/library_600x900.jpg",
+    coverImageLowUrl = "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/${steamAppId}/library_600x900.jpg",
+    externalId = steamAppId.toString(),
+    externalSource = CategoryType.STEAM_GAMES,
+)
 fun SteamGameSummary.toRateItem(categoryId: Long = 0) = RateItem(
     id = 0,
     categoryId = categoryId,
     title = name,
     subtitle = null,
-    coverImageUrl = "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/${appId}/library_600x900_2x.jpg",
+    coverImageUrl = "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/${appId}/library_600x900.jpg",
     coverImageLowUrl = "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/${appId}/library_600x900.jpg", //"https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/${appid}/capsule_616x353.jpg",
     externalId = appId,
     externalSource = CategoryType.STEAM_GAMES,

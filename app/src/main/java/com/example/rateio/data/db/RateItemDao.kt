@@ -35,6 +35,9 @@ interface RateItemDao {
     @Query("SELECT categoryId, COUNT(*) as count FROM rate_items WHERE parentId IS NULL GROUP BY categoryId")
     fun observeRootItemCounts(): Flow<List<CategoryCount>>
 
+    @Query("SELECT COUNT(*) FROM rate_items WHERE rating IS NOT NULL")
+    fun observeRatedItemCount(): Int
+
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insert(item: RateItemEntity): Long
