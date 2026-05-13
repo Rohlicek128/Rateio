@@ -14,17 +14,22 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.rateio.data.db.RateioDatabase
+import com.example.rateio.data.remote.TmdbEpisodeMetadata
 import com.example.rateio.data.repository.CategoryRepository
 import com.example.rateio.data.repository.RateItemRepository
 import com.example.rateio.model.CategoryType
+import com.example.rateio.navigation.Route
+import com.example.rateio.presentation.rating.tmdb.TmdbEpisodeDetailScreen
 import com.example.rateio.presentation.rating.tmdb.TmdbMovieDetailScreen
 import com.example.rateio.presentation.rating.tmdb.TmdbShowDetailScreen
+import kotlinx.serialization.json.Json
+import kotlin.reflect.KClass
 
 
 @Composable
 fun SavedRateItemScreen(
     itemId: Long,
-    onChildClick: (Long) -> Unit,
+    onChildClick: (childId: Long, parentId: Long) -> Unit,
     onBackClick: () -> Unit,
 ) {
     val context = LocalContext.current
@@ -57,7 +62,8 @@ fun SavedRateItemScreen(
             val item = state.item!!
             val category = state.category
 
-            val type = if (!item.externalId.isNullOrBlank() && category != null) category.type else CategoryType.CUSTOM
+            val type = if (!item.externalId.isNullOrBlank() && item.externalSource != null)
+                item.externalSource else CategoryType.CUSTOM
 
             when (type) {
                 CategoryType.TMDB_SHOWS -> {
@@ -65,14 +71,53 @@ fun SavedRateItemScreen(
                         showId = item.externalId!!.toInt(),
                         isSaved = true,
                         customRating = item.rating,
-                        onRatingSaved = { rating ->
-                            viewModel.saveRating(rating)
-                        },
+                        onRatingSaved = { rating -> viewModel.saveRating(rating) },
                         onBackClick = onBackClick,
                         onEpisodeClick = {showId, seasonNumber, episodeNumber ->
-
+                            viewModel.findOrCreateEpisodeAndNavigate(
+                                showId = showId,
+                                seasonNumber = seasonNumber,
+                                episodeNumber = episodeNumber,
+                                onNavigate = onChildClick,
+                            )
                         }
                     )
+                }
+                CategoryType.TMDB_EPISODES -> {
+                    val metadata = item.metadataJSON?.let {
+                            runCatching {
+                                Json.decodeFromString<TmdbEpisodeMetadata>(it)
+                            }.getOrNull()
+                        }
+
+                    if (metadata != null) {
+                        TmdbEpisodeDetailScreen(
+                            showId = metadata.showId,
+                            season = metadata.seasonNumber,
+                            episode = metadata.episodeNumber,
+                            //debug = "  |  ${item.id}, ${item.parentId}",
+                            isSaved = true,
+                            customRating = item.rating,
+                            onRatingSaved = { rating -> viewModel.saveRating(rating) },
+                            onBackClick = onBackClick,
+                            onNextClick = { nextSeason, nextEpisode ->
+                                viewModel.findOrCreateEpisodeAndNavigate(
+                                    showId = metadata.showId,
+                                    seasonNumber = nextSeason,
+                                    episodeNumber = nextEpisode,
+                                    onNavigate = onChildClick,
+                                )
+                            },
+                            onPreviousClick = { prevSeason, prevEpisode ->
+                                viewModel.findOrCreateEpisodeAndNavigate(
+                                    showId = metadata.showId,
+                                    seasonNumber = prevSeason,
+                                    episodeNumber = prevEpisode,
+                                    onNavigate = onChildClick,
+                                )
+                            },
+                        )
+                    }
                 }
                 CategoryType.TMDB_MOVIES -> {
                     TmdbMovieDetailScreen(

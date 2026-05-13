@@ -4,6 +4,8 @@ import com.example.rateio.model.CategoryType
 import com.example.rateio.model.RateItem
 import com.example.rateio.presentation.components.CarouselImage
 import com.google.gson.annotations.SerializedName
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.Json
 
 
 data class TmdbShowSearchResponse(
@@ -64,6 +66,16 @@ data class TmdbSeason(
     @SerializedName("vote_average")  val voteAverage: Float?,
 )
 
+data class TmdbSeasonDetail(
+    @SerializedName("id")             val id: Int,
+    @SerializedName("season_number")  val seasonNumber: Int,
+    @SerializedName("episodes")       val episodes: List<TmdbEpisodeSummary>,
+    @SerializedName("overview")       val overview: String?,
+    @SerializedName("vote_average")   val voteAverage: Float?,
+    @SerializedName("air_date")       val airDate: String?,
+    @SerializedName("poster_path")   val posterPath: String?,
+)
+
 data class TmdbCredits(
     @SerializedName("cast") val cast: List<TmdbCastMember>,
     @SerializedName("guest_stars") val guest: List<TmdbCastMember>,
@@ -94,12 +106,6 @@ data class TmdbCreator(
     @SerializedName("profile_path") val profilePath: String?,
 )
 
-
-data class TmdbSeasonDetail(
-    @SerializedName("id")             val id: Int,
-    @SerializedName("season_number")  val seasonNumber: Int,
-    @SerializedName("episodes")       val episodes: List<TmdbEpisodeSummary>,
-)
 
 data class TmdbEpisodeSummary(
     @SerializedName("id")             val id: Int,
@@ -189,6 +195,13 @@ data class TmdbMovieDetail(
 
 
 
+@Serializable
+data class TmdbEpisodeMetadata(
+    val showId: Int,
+    val seasonNumber: Int,
+    val episodeNumber: Int,
+    val imdbId: String? = null,
+)
 
 fun TmdbShow.toRateItem(categoryId: Long = 0) = RateItem(
     id = 0,
@@ -210,6 +223,35 @@ fun TmdbShowDetail.toRateItem(categoryId: Long = 0) = RateItem(
     externalId = id.toString(),
     externalSource = CategoryType.TMDB_SHOWS,
 )
+fun TmdbSeasonDetail.toRateItem(categoryId: Long = 0, parentId: Long) = RateItem(
+    id = 0,
+    categoryId = categoryId,
+    parentId = parentId,
+    title = if (seasonNumber > 0) "Season $seasonNumber" else "Specials",
+    subtitle = "${episodes.size} episodes",
+    coverImageUrl = posterPath?.let { "https://image.tmdb.org/t/p/original$it" },
+    coverImageLowUrl = posterPath?.let { "https://image.tmdb.org/t/p/w185$it" },
+    externalId = id.toString(),
+    externalSource = CategoryType.TMDB_SEASONS,
+)
+fun TmdbEpisodeDetail.toRateItem(categoryId: Long = 0, showId: Int, parentId: Long) = RateItem(
+    id = 0,
+    categoryId = categoryId,
+    parentId = parentId,
+    title = name,
+    subtitle = "$showId $seasonNumber $episodeNumber",
+    coverImageUrl = stillPath?.let { "https://image.tmdb.org/t/p/original$it" },
+    coverImageLowUrl = stillPath?.let { "https://image.tmdb.org/t/p/w300$it" },
+    externalId = id.toString(),
+    externalSource = CategoryType.TMDB_EPISODES,
+    metadataJSON = Json.encodeToString(TmdbEpisodeMetadata(
+        showId = showId,
+        seasonNumber = seasonNumber,
+        episodeNumber = episodeNumber,
+        imdbId = externalIds?.imdbId,
+    ))
+)
+
 
 fun TmdbMovie.toRateItem(categoryId: Long = 0) = RateItem(
     id = 0,

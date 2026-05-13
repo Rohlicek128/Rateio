@@ -193,6 +193,7 @@ fun AppNavigation(navController: NavHostController = rememberNavController()) {
                     showId = route.showId,
                     season = route.season,
                     episode = route.episode,
+                    isSaved = false,
                     onBackClick = { navController.popBackStack() },
                     onNextClick = { nextSeason, nextEpisode ->
                         navController.navigate(Route.TmdbEpisodeDetail(route.showId, nextSeason, nextEpisode)) {
@@ -230,16 +231,6 @@ fun AppNavigation(navController: NavHostController = rememberNavController()) {
                 LibraryCategoryScreen(
                     categoryId = route.categoryId,
                     onItemClick = { item ->
-                        /*when (item.categoryId.toInt()) {
-                            1 -> {
-                                navController.navigate(Route.TmdbShowDetail(item.externalId?.toInt() ?: 1396))
-                            }
-                            2 -> {
-                                navController.navigate(Route.TmdbMovieDetail(item.externalId?.toInt() ?: 550))
-                            }
-                            else -> {}
-                        }*/
-
                         navController.navigate(Route.RateItemDetail(item.id))
                     },
                     onBackClick = { navController.popBackStack() },
@@ -250,8 +241,10 @@ fun AppNavigation(navController: NavHostController = rememberNavController()) {
                 val detail = backStackEntry.toRoute<Route.RateItemDetail>()
                 SavedRateItemScreen(
                     itemId = detail.itemId,
-                    onChildClick = { childId ->
-                        navController.navigate(Route.RateItemDetail(childId))
+                    onChildClick = { childId, parentId ->
+                        navController.navigate(Route.RateItemDetail(childId)) {
+                            popUpTo(Route.RateItemDetail(parentId))
+                        }
                     },
                     onBackClick = { navController.popBackStack() },
                 )

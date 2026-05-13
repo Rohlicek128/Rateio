@@ -49,6 +49,10 @@ fun TmdbEpisodeDetailScreen(
     showId: Int,
     season: Int,
     episode: Int,
+    isSaved: Boolean,
+    debug: String = "",
+    customRating: Float? = null,
+    onRatingSaved: ((Float?) -> Unit)? = null,
     onNextClick: (season: Int, episode: Int) -> Unit,
     onPreviousClick: (season: Int, episode: Int) -> Unit,
     onBackClick: () -> Unit,
@@ -74,7 +78,7 @@ fun TmdbEpisodeDetailScreen(
 
             RateItemDetailScreen(
                 title = episode.name,
-                subtitle = "Season ${episode.seasonNumber}, Episode ${episode.episodeNumber}  |  ${formatDate(episode.airDate)}  |  ${formatTime(episode.runtime)}",
+                subtitle = "Season ${episode.seasonNumber}, Episode ${episode.episodeNumber}  |  ${formatDate(episode.airDate)}  |  ${formatTime(episode.runtime)}$debug",
                 categoryName = "Episodes",
                 description = episode.overview,
                 coverImageUrl = episode.stillPath?.let {
@@ -84,9 +88,10 @@ fun TmdbEpisodeDetailScreen(
                 backdropImageUrl = episode.stillPath?.let {
                     "https://image.tmdb.org/t/p/original$it"
                 },
-                rating = state.imdbRating?.normalizedRating,
-                ratingVotes = state.imdbRating?.voteCount,
-                ratingLabel = episode.voteAverage?.let { "%.1f/10 on TMDb".format(it) },
+                rating = if (!isSaved) state.imdbRating?.normalizedRating else customRating,
+                ratingVotes = if (!isSaved) state.imdbRating?.voteCount else null,
+                ratingLabel = state.imdbRating?.normalizedRating?.let { "%.1f/10 on IMDb".format(it * 10f) },
+                onRatingSaved = onRatingSaved,
                 onBackClick = onBackClick,
                 extraContent = {
 

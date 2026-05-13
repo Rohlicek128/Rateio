@@ -24,8 +24,9 @@ data class TmdbEpisodesState(
 
 class TmdbEpisodesViewModel(
     private val showId: Int,
-    private val imdbId: String?,
     private val seasonNumbers: List<Int>,
+    imdbId: String?,
+    fetchRatings: Boolean,
 ) : ViewModel() {
     private val _state = MutableStateFlow(TmdbEpisodesState())
     val state: StateFlow<TmdbEpisodesState> = _state.asStateFlow()
@@ -44,6 +45,14 @@ class TmdbEpisodesViewModel(
             }
         }
 
+        if (fetchRatings) {
+            fetchImdbRatings(imdbId)
+        } else {
+            _state.update { it.copy(isLoadingRatings = false) }
+        }
+    }
+
+    fun fetchImdbRatings(imdbId: String?) {
         if (imdbId != null) {
             viewModelScope.launch {
                 imdbFetcher
@@ -63,8 +72,8 @@ class TmdbEpisodesViewModel(
     }
 
     companion object {
-        fun factory(showId: Int, imdbId: String?, seasonNumbers: List<Int>) = viewModelFactory {
-            initializer { TmdbEpisodesViewModel(showId, imdbId, seasonNumbers) }
+        fun factory(showId: Int, seasonNumbers: List<Int>, imdbId: String?, fetchRatings: Boolean) = viewModelFactory {
+            initializer { TmdbEpisodesViewModel(showId, seasonNumbers, imdbId, fetchRatings) }
         }
     }
 }

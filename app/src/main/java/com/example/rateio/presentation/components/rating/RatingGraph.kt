@@ -6,7 +6,6 @@ import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -38,6 +37,7 @@ import androidx.compose.ui.unit.dp
 import com.example.rateio.data.remote.TmdbEpisodeSummary
 import com.example.rateio.presentation.components.RateItemCard
 import com.example.rateio.presentation.rating.display.getRatingColor
+import com.example.rateio.presentation.rating.display.getRoundedRating
 import com.example.rateio.utils.formatDateCompact
 import com.example.rateio.utils.formatTime
 import kotlin.math.abs
@@ -52,12 +52,12 @@ private data class EpisodeRatingPoint(
 @Composable
 fun EpisodeRatingGraph(
     episodes: Map<Int, List<TmdbEpisodeSummary>>,
-    imdbRatings: Map<Int, Map<Int, Float?>>,
+    ratings: Map<Int, Map<Int, Float?>>,
     onEpisodeClick: (season: Int, episode: Int) -> Unit,
     modifier: Modifier = Modifier,
     episodeWidth: Dp = 6.dp,
 ) {
-    val points = remember(episodes, imdbRatings) {
+    val points = remember(episodes, ratings) {
         var globalIdx = 0
         episodes.entries
             .sortedBy { it.key }
@@ -66,7 +66,7 @@ fun EpisodeRatingGraph(
                     EpisodeRatingPoint(
                         globalIndex = globalIdx++,
                         episode = ep,
-                        rating = imdbRatings[season]?.get(ep.episodeNumber),
+                        rating = ratings[season]?.get(ep.episodeNumber),
                     )
                 }
             }
@@ -90,7 +90,7 @@ fun EpisodeRatingGraph(
     val padB = 0.dp
 
 
-    val ratingColor = { r: Float -> getRatingColor(r).backgroundColor }
+    val ratingColor = { r: Float -> getRatingColor(getRoundedRating(r)).backgroundColor }
     val gridColor = MaterialTheme.colorScheme.surfaceVariant
     val labelColor = MaterialTheme.colorScheme.onSurfaceVariant
     val dividerColor = MaterialTheme.colorScheme.outline

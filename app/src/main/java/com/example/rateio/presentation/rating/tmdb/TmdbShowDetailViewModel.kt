@@ -15,11 +15,20 @@ import com.example.rateio.data.repository.CategoryRepository
 import com.example.rateio.data.repository.RateItemRepository
 import com.example.rateio.model.CategoryType
 import com.example.rateio.model.RateItem
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlin.collections.emptyList
 
 
 data class TmdbShowDetailState(
@@ -69,6 +78,7 @@ class TmdbShowDetailViewModel(
                             categoryId = cat.id,
                         )
                         if (existing != null) _state.update { it.copy(savedItemId = existing.id) }
+                        //itemRepository.deleteId(271)
                     }
                 }
             } catch (e: Exception) {
@@ -76,6 +86,24 @@ class TmdbShowDetailViewModel(
             }
         }
     }
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val userRatingsState: StateFlow<Map<Int, Map<Int, Float?>>> = state
+        .map { it.savedItemId }
+        .distinctUntilChanged()
+        .flatMapLatest { id ->
+            if (id == null) {
+                flowOf(emptyMap())
+            } else {
+                itemRepository.observeSeasonEpisodeRatings(id)
+            }
+        }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = emptyMap()
+        )
+
 
     fun onToggleSaved(show: TmdbShowDetail) {
         viewModelScope.launch {

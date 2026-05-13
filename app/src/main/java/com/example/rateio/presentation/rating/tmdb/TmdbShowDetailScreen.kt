@@ -37,6 +37,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.rateio.data.CategoryRegistry
 import com.example.rateio.data.db.RateioDatabase
@@ -101,11 +102,14 @@ fun TmdbShowDetailScreen(
             val episodesViewModel: TmdbEpisodesViewModel = viewModel(
                 factory = TmdbEpisodesViewModel.factory(
                     showId = showId,
-                    imdbId = show.externalIds?.imdbId,
                     seasonNumbers = seasons.map { it.seasonNumber },
+                    imdbId = show.externalIds?.imdbId,
+                    fetchRatings = !isSaved
                 )
             )
             val episodesState by episodesViewModel.state.collectAsState()
+
+            val userRatings = viewModel.userRatingsState.collectAsStateWithLifecycle()
 
             var selectedRatings by remember { mutableIntStateOf(if (!isSaved) 0 else 2) }
             var invertedGrid by remember { mutableStateOf(false) }
@@ -269,7 +273,13 @@ fun TmdbShowDetailScreen(
                                 .fillMaxWidth()
                                 .padding(horizontal = 8.dp),
                             selectedIndex = selectedRatings,
-                            onSelectionChanged = { selectedRatings = it },
+                            onSelectionChanged = {
+                                selectedRatings = it
+                                if (selectedRatings == 0 && episodesState.imdbRatings.isEmpty() &&
+                                    isSaved && !episodesState.isLoadingRatings) {
+                                    episodesViewModel.fetchImdbRatings(imdbId = show.externalIds?.imdbId)
+                                }
+                            },
                             options = listOf("IMDb", "TMDb", "Yours"),
                         )
                     }
@@ -298,9 +308,7 @@ fun TmdbShowDetailScreen(
                                 1 -> episodesState.seasonEpisodes.mapValues { (_, episodes) ->
                                     episodes.associate { it -> it.episodeNumber to it.voteAverage?.div(10f).takeIf { it != 0f } }
                                 }
-                                2 -> episodesState.seasonEpisodes.mapValues { (_, episodes) ->
-                                    episodes.associate { it.episodeNumber to null }
-                                }
+                                2 -> userRatings.value
                                 else -> episodesState.imdbRatings
                             }
 
@@ -335,7 +343,7 @@ fun TmdbShowDetailScreen(
                                                     coverImagePath = "https://image.tmdb.org/t/p/w300${episode.stillPath}",
                                                     rating = if (!episodesState.isLoadingRatings && rating == null && ratings[seasonNumber]?.isEmpty() == true)
                                                         episode.voteAverage?.div(10f) else rating,
-                                                    isLoading = episodesState.isLoadingRatings && rating == null,
+                                                    isLoading = selectedRatings == 0 && episodesState.isLoadingRatings && rating == null,
                                                     placeholderRatio = 16f / 9f,
                                                     padding = PaddingValues(horizontal = 16.dp, vertical = 6.dp),
                                                     bubbleText = if (episode.runtime > 0) formatTime(episode.runtime) else null,
@@ -433,7 +441,7 @@ fun TmdbShowDetailScreen(
                                     item {
                                         EpisodeRatingGraph(
                                             episodes = episodesState.seasonEpisodes,
-                                            imdbRatings = ratings,
+                                            ratings = ratings,
                                             onEpisodeClick = { season, episode ->
                                                 onEpisodeClick(showId, season, episode)
                                             },
