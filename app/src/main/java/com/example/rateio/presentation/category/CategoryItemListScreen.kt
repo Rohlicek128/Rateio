@@ -38,7 +38,7 @@ fun CategoryItemListScreen(
     onItemClick: (RateItem) -> Unit,
     modifier: Modifier = Modifier,
     showRanking: Boolean = false,
-    itemTrailingContent: (@Composable (RateItem) -> Unit)? = null,
+    itemTrailingContent: (@Composable () -> Unit)? = null,
     headerContent: (@Composable () -> Unit)? = null,
     emptyContent: (@Composable () -> Unit)? = null,
 ) {
@@ -93,6 +93,7 @@ fun CategoryItemListScreen(
                         padding = PaddingValues(horizontal = 16.dp, vertical = 6.dp),
                         rank = if (showRanking) index + 1 else null,
                         onClick = { onItemClick(item) },
+                        leadingRateBoxContent = itemTrailingContent
                     )
                 }
             }

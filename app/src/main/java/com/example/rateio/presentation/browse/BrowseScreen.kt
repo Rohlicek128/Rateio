@@ -11,13 +11,16 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.input.clearText
 import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.ExpandedFullScreenSearchBar
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.ScrollableTabRow
@@ -94,13 +97,6 @@ fun BrowseScreen(
                         }
                     }
                 },
-                itemTrailingContent = { item ->
-                    Icon(
-                        Icons.Default.Add,
-                        contentDescription = "View",
-                        tint = MaterialTheme.colorScheme.primary,
-                    )
-                },
                 emptyContent = {
                     Text(
                         if (state.query.isBlank()) "Search for something"
@@ -152,6 +148,13 @@ private fun SearchBarExpandable(
                 onSearch = { onQueryChange(textFieldState.text.toString()) },
                 placeholder = { Text(placeholder) },
                 leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
+                trailingIcon = {
+                    if (textFieldState.text.isNotEmpty()) {
+                        IconButton(onClick = { textFieldState.clearText() }) {
+                            Icon(Icons.Default.Close, contentDescription = "Clear")
+                        }
+                    }
+                },
             )
         }
 

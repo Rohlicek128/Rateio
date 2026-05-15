@@ -1,7 +1,13 @@
 package com.example.rateio.presentation.rating.tmdb
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -9,8 +15,11 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.automirrored.filled.WrapText
@@ -18,10 +27,15 @@ import androidx.compose.material.icons.automirrored.outlined.List
 import androidx.compose.material.icons.automirrored.outlined.WrapText
 import androidx.compose.material.icons.filled.GridOn
 import androidx.compose.material.icons.filled.Timeline
+import androidx.compose.material.icons.filled.UnfoldLess
+import androidx.compose.material.icons.filled.UnfoldMore
 import androidx.compose.material.icons.outlined.GridOn
 import androidx.compose.material.icons.outlined.Timeline
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularWavyProgressIndicator
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedToggleButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.ToggleButtonDefaults
@@ -34,9 +48,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.em
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.rateio.data.CategoryRegistry
@@ -45,17 +63,21 @@ import com.example.rateio.data.remote.toCarouselImage
 import com.example.rateio.data.repository.CategoryRepository
 import com.example.rateio.data.repository.RateItemRepository
 import com.example.rateio.model.CategoryType
+import com.example.rateio.model.ItemStatus
 import com.example.rateio.presentation.components.AdaptiveImageCarousel
 import com.example.rateio.presentation.components.DateProgressBar
 import com.example.rateio.presentation.components.DisplaySelector
 import com.example.rateio.presentation.components.EpisodeGrid
 import com.example.rateio.presentation.components.EpisodeWrapped
 import com.example.rateio.presentation.components.GenreChips
+import com.example.rateio.presentation.components.ItemStatusSelector
 import com.example.rateio.presentation.components.LibraryToggle
 import com.example.rateio.presentation.components.PersonCard
 import com.example.rateio.presentation.components.RateItemCard
 import com.example.rateio.presentation.components.SectionHeader
+import com.example.rateio.presentation.components.SortBySelectionButton
 import com.example.rateio.presentation.components.rating.EpisodeRatingGraph
+import com.example.rateio.presentation.components.rating.ItemProgressBar
 import com.example.rateio.presentation.rating.RateItemDetailScreen
 import com.example.rateio.utils.formatDate
 import com.example.rateio.utils.formatTime
@@ -85,6 +107,8 @@ fun TmdbShowDetailScreen(
     )
     val state by viewModel.state.collectAsState()
 
+    val haptic = LocalHapticFeedback.current
+
     when {
         state.isLoading -> {
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -109,10 +133,44 @@ fun TmdbShowDetailScreen(
             )
             val episodesState by episodesViewModel.state.collectAsState()
 
-            val userRatings = viewModel.userRatingsState.collectAsStateWithLifecycle()
-
             var selectedRatings by remember { mutableIntStateOf(if (!isSaved) 0 else 2) }
             var invertedGrid by remember { mutableStateOf(false) }
+
+            val userRatings = viewModel.userRatingsState.collectAsStateWithLifecycle()
+            val ratings: Map<Int, Map<Int, Float?>> = when (selectedRatings) {
+                0 -> episodesState.imdbRatings
+                1 -> episodesState.seasonEpisodes.mapValues { (_, episodes) ->
+                    episodes.associate { it -> it.episodeNumber to it.voteAverage?.div(10f).takeIf { it != 0f } }
+                }
+                2 -> userRatings.value
+                else -> episodesState.imdbRatings
+            }
+
+
+            if (show.numberOfSeasons == 1) state.expandedSeasons.add(1)
+
+            val sortedEpisodes = remember(episodesState.seasonEpisodes, ratings, state.sortMode) {
+                episodesState.seasonEpisodes
+                    .flatMap { (_, episodes) -> episodes }
+                    .let { episodes ->
+                        when (state.sortMode) {
+                            SortMode.BY_RATING_BEST -> episodes.sortedByDescending { episode ->
+                                ratings[episode.seasonNumber]?.get(episode.episodeNumber) ?: -1f
+                            }
+                            SortMode.BY_RATING_WORST -> episodes.sortedBy { episode ->
+                                ratings[episode.seasonNumber]?.get(episode.episodeNumber) ?: 2f
+                            }
+                            SortMode.BY_RUNTIME -> episodes.sortedByDescending { episode ->
+                                episode.runtime
+                            }
+                            else -> episodes.sortedWith(
+                                compareBy({ it.seasonNumber }, { it.episodeNumber })
+                            )
+                        }
+                    }
+            }
+
+            var statusTest by remember { mutableStateOf(ItemStatus.IN_PROGRESS) }
 
             RateItemDetailScreen(
                 title = show.name,
@@ -135,6 +193,7 @@ fun TmdbShowDetailScreen(
                 onRatingSaved = onRatingSaved,
                 onBackClick = onBackClick,
                 canAddToLibrary = false,
+                onOpenSettings = { },
                 extraContent = {
                     // Library
                     item {
@@ -152,7 +211,6 @@ fun TmdbShowDetailScreen(
                         }
                     }
 
-
                     // Genres
                     if (show.genres.isNotEmpty()) {
                         item {
@@ -163,9 +221,76 @@ fun TmdbShowDetailScreen(
                         }
                     }
 
-                    // Next Episode
+                    item { Spacer(modifier = Modifier.height(16.dp)) }
+
+
+                    if (isSaved || userRatings.value.isNotEmpty()) {
+                        // Progress Bar
+                        item { SectionHeader("Progress") }
+                        item {
+                            ItemStatusSelector(
+                                selected = statusTest,
+                                onStatusSelected = { statusTest = it }
+                            ) { openSheet ->
+                                val listOfRatings = userRatings.value.values.flatMap { it.values }.filterNotNull()
+                                val remaining = show.numberOfEpisodes - listOfRatings.size
+                                ItemProgressBar(
+                                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
+                                    endString = "${listOfRatings.size}/${show.numberOfEpisodes} episodes",
+                                    endValue = show.numberOfEpisodes.toFloat(),
+                                    currentString = "Remaining $remaining episode${if (remaining == 1) "" else "s"}",
+                                    currentValue = listOfRatings.size.toFloat(),
+                                    status = statusTest,
+                                    onClick = {
+                                        haptic.performHapticFeedback(HapticFeedbackType.ToggleOn)
+                                        openSheet()
+                                    }
+                                )
+                            }
+                        }
+
+                        // Next Episode
+                        if (episodesState.seasonEpisodes.isNotEmpty()) {
+                            val unwatchedEpisodes = episodesState.seasonEpisodes.mapValues { (season, episodes) ->
+                                episodes.filter { episode ->
+                                    userRatings.value[season]?.get(episode.episodeNumber) == null
+                                }
+                            }.flatMap { it.value }
+                            val nextToWatchEpisode = if (unwatchedEpisodes.isNotEmpty()) unwatchedEpisodes.first() else null
+
+                            if (nextToWatchEpisode != null &&
+                                nextToWatchEpisode.episodeNumber != show.nextEpisodeToAir?.episodeNumber &&
+                                nextToWatchEpisode.seasonNumber != show.nextEpisodeToAir?.seasonNumber) {
+                                item { SectionHeader("Next Episode") }
+                                item {
+                                    RateItemCard(
+                                        title = nextToWatchEpisode.name,
+                                        subtitle = "Season ${nextToWatchEpisode.seasonNumber}, Episode ${nextToWatchEpisode.episodeNumber}",
+                                        coverImagePath = if (!nextToWatchEpisode.stillPath.isNullOrBlank())
+                                            "https://image.tmdb.org/t/p/w300${nextToWatchEpisode.stillPath}" else null,
+                                        rating = ratings[nextToWatchEpisode.seasonNumber]?.get(nextToWatchEpisode.episodeNumber),
+                                        isLoading = false,
+                                        placeholderRatio = 16f / 9f,
+                                        padding = PaddingValues(horizontal = 16.dp, vertical = 6.dp),
+                                        bubbleText = if (nextToWatchEpisode.runtime > 0) formatTime(nextToWatchEpisode.runtime) else null,
+                                        onClick = { onEpisodeClick(
+                                            show.id,
+                                            nextToWatchEpisode.seasonNumber,
+                                            nextToWatchEpisode.episodeNumber
+                                        ) },
+                                        spoilers = false,
+                                    )
+                                    Spacer(modifier = Modifier.height(8.dp))
+                                }
+                            }
+                        }
+
+                    }
+
+
+                    // Upcoming Episode
                     if (show.nextEpisodeToAir != null) {
-                        item { SectionHeader("Next Episode") }
+                        item { SectionHeader("Upcoming Episode") }
                         val episode = show.nextEpisodeToAir
                         item {
                             DateProgressBar(
@@ -180,7 +305,7 @@ fun TmdbShowDetailScreen(
                                 subtitle = "S${episode.seasonNumber}E${episode.episodeNumber}  |  ${formatDate(episode.airDate)}",
                                 coverImagePath = if (!episode.stillPath.isNullOrBlank())
                                     "https://image.tmdb.org/t/p/w300${episode.stillPath}" else null,
-                                rating = episodesState.imdbRatings[episode.seasonNumber]?.get(episode.episodeNumber),
+                                rating = ratings[episode.seasonNumber]?.get(episode.episodeNumber),
                                 isLoading = false,
                                 placeholderRatio = 16f / 9f,
                                 padding = PaddingValues(horizontal = 16.dp, vertical = 6.dp),
@@ -303,49 +428,178 @@ fun TmdbShowDetailScreen(
                             }
                         }
                         episodesState.seasonEpisodes.isNotEmpty() -> {
-                            val ratings: Map<Int, Map<Int, Float?>> = when (selectedRatings) {
-                                0 -> episodesState.imdbRatings
-                                1 -> episodesState.seasonEpisodes.mapValues { (_, episodes) ->
-                                    episodes.associate { it -> it.episodeNumber to it.voteAverage?.div(10f).takeIf { it != 0f } }
-                                }
-                                2 -> userRatings.value
-                                else -> episodesState.imdbRatings
-                            }
-
                             when (state.selectedEpisodeMode) {
                                 0 -> {
-                                    items(seasons, key = { it.id }) { season ->
-                                        val flatRatings = ratings[season.seasonNumber]?.values?.filterNotNull()
-                                        RateItemCard(
-                                            title = "Season ${season.seasonNumber}",
-                                            subtitle = "${(season.airDate ?: "N/A").take(4)}  |  ${season.episodeCount} episodes",
-                                            coverImagePath = "https://image.tmdb.org/t/p/w185${season.posterPath}",
-                                            rating = if (!episodesState.isLoadingRatings && !flatRatings.isNullOrEmpty())
-                                                flatRatings.average().toFloat() else null,
-                                            onClick = { }
-                                        )
+                                    item {
+                                        Row(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .padding(horizontal = 8.dp),
+                                            horizontalArrangement = Arrangement.SpaceBetween,
+                                        ) {
+                                            SortBySelectionButton(
+                                                selected = state.sortMode,
+                                                onSelect = viewModel::onSortModeSelect,
+                                            )
+
+                                            AnimatedVisibility(
+                                                visible = state.sortMode == SortMode.BY_SEASON,
+                                            ) {
+                                                Row(
+                                                    horizontalArrangement = Arrangement.End,
+                                                ) {
+                                                    OutlinedButton(
+                                                        onClick = {
+                                                            haptic.performHapticFeedback(HapticFeedbackType.ToggleOn)
+                                                            seasons.forEach { season ->
+                                                                state.expandedSeasons.add(season.seasonNumber)
+                                                            }
+                                                        },
+                                                        shapes = ButtonDefaults.shapes(),
+                                                    ) {
+                                                        Icon(
+                                                            Icons.Default.UnfoldMore,
+                                                            contentDescription = "Expand",
+                                                            modifier = Modifier.size(ToggleButtonDefaults.IconSize)
+                                                        )
+                                                        Spacer(Modifier.size(ToggleButtonDefaults.IconSpacing))
+                                                        Text(
+                                                            "Expand",
+                                                            style = MaterialTheme.typography.labelMedium,
+                                                            fontWeight = FontWeight.Bold,
+                                                        )
+                                                    }
+                                                    Spacer(modifier = Modifier.width(4.dp))
+                                                    OutlinedButton(
+                                                        onClick = {
+                                                            haptic.performHapticFeedback(HapticFeedbackType.ToggleOn)
+                                                            seasons.forEach { season ->
+                                                                state.expandedSeasons.remove(season.seasonNumber)
+                                                            }
+                                                        },
+                                                        shapes = ButtonDefaults.shapes(),
+                                                    ) {
+                                                        Icon(
+                                                            Icons.Default.UnfoldLess,
+                                                            contentDescription = "Collapse",
+                                                            modifier = Modifier.size(ToggleButtonDefaults.IconSize)
+                                                        )
+                                                        Spacer(Modifier.size(ToggleButtonDefaults.IconSpacing))
+                                                        Text(
+                                                            "Collapse",
+                                                            style = MaterialTheme.typography.labelMedium,
+                                                            fontWeight = FontWeight.Bold,
+                                                        )
+                                                    }
+                                                }
+                                            }
+                                        }
                                     }
 
-                                    episodesState.seasonEpisodes
-                                        .entries
-                                        .sortedBy { it.key }
-                                        .forEach { (seasonNumber, episodes) ->
-                                            item { SectionHeader("Seasons $seasonNumber") }
+                                    when (state.sortMode) {
+                                        SortMode.BY_SEASON -> {
+                                            items(seasons, key = { it.id }) { season ->
+                                                val isExpanded = season.seasonNumber in state.expandedSeasons
+                                                val flatRatings = ratings[season.seasonNumber]?.values?.filterNotNull()
+                                                //val avgRating = flatRatings?.average()?.toFloat()
 
-                                            items(
-                                                episodes.sortedBy { it.episodeNumber },
-                                                key = { it.id },
-                                            ) { episode ->
-                                                val rating = ratings[seasonNumber]?.get(episode.episodeNumber)
+                                                RateItemCard(
+                                                    title = "Season ${season.seasonNumber}",
+                                                    biggerTitle = true,
+                                                    subtitle = "${(season.airDate ?: "N/A").take(4)} | ${season.episodeCount} episodes",
+                                                    coverImagePath = "https://image.tmdb.org/t/p/w342${season.posterPath}",
+                                                    rating = if (!episodesState.isLoadingRatings && !flatRatings.isNullOrEmpty())
+                                                        flatRatings.average().toFloat() else null,
+                                                    //isLoading = selectedRatings == 0 && episodesState.isLoadingRatings && avgRating == null,
+                                                    padding = PaddingValues(horizontal = 16.dp, vertical = 6.dp),
+                                                    tonalElevation = if (isExpanded) 4.dp else 1.dp,
+                                                    onClick = {
+                                                        if (season.episodeCount > 0) {
+                                                            if (isExpanded) state.expandedSeasons.remove(season.seasonNumber)
+                                                            else state.expandedSeasons.add(season.seasonNumber)
+                                                        }
+                                                    },
+                                                    leadingRateBoxContent = {
+                                                        /*if (season.episodeCount > 0) {
+                                                            Icon(
+                                                                imageVector = if (isExpanded) Icons.Default.ExpandLess
+                                                                else Icons.Default.ExpandMore,
+                                                                contentDescription = null,
+                                                                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
+                                                            )
+                                                            Spacer(modifier = Modifier.width(6.dp))
+                                                        }*/
+                                                        if (selectedRatings == 2 && season.episodeCount > 0 && !flatRatings.isNullOrEmpty()) {
+                                                            Text(
+                                                                "${flatRatings.size}/${season.episodeCount}",
+                                                                style = MaterialTheme.typography.titleMedium,
+                                                                //color =  if (flatRatings.size >= season.episodeCount) MaterialTheme.colorScheme.secondary else Color.Unspecified,
+                                                                fontWeight = if (flatRatings.size >= season.episodeCount) FontWeight.ExtraBold else null,
+                                                                lineHeight = 1.em,
+                                                                maxLines = 1,
+                                                                overflow = TextOverflow.Clip,
+                                                            )
+                                                            Spacer(modifier = Modifier.width(6.dp))
+                                                        }
+                                                    },
+                                                )
+
+                                                val episodes = episodesState.seasonEpisodes[season.seasonNumber]
+                                                    ?.sortedBy { it.episodeNumber }
+                                                    ?: emptyList()
+
+                                                AnimatedVisibility(
+                                                    visible = isExpanded,
+                                                    enter = expandVertically(animationSpec = spring(
+                                                        dampingRatio = Spring.DampingRatioNoBouncy,
+                                                        stiffness = Spring.StiffnessMediumLow,
+                                                    )),
+                                                    exit = shrinkVertically(animationSpec = spring(
+                                                        dampingRatio = Spring.DampingRatioNoBouncy,
+                                                        stiffness = Spring.StiffnessMediumLow,
+                                                    )),
+                                                ) {
+                                                    Column {
+                                                        episodes.forEach { episode ->
+                                                            val rating = ratings[season.seasonNumber]?.get(episode.episodeNumber)
+                                                            RateItemCard(
+                                                                title = episode.name,
+                                                                subtitle = "Episode ${episode.episodeNumber}",
+                                                                coverImagePath = "https://image.tmdb.org/t/p/w300${episode.stillPath}",
+                                                                rating = if (!episodesState.isLoadingRatings && rating == null && ratings[episode.seasonNumber]?.isEmpty() == true)
+                                                                    episode.voteAverage?.div(10f) else rating,
+                                                                isLoading = selectedRatings == 0 && episodesState.isLoadingRatings && rating == null,
+                                                                placeholderRatio = 16f / 9f,
+                                                                padding = PaddingValues(horizontal = 28.dp, vertical = 6.dp),
+                                                                bubbleText = if (episode.runtime > 0) formatTime(episode.runtime) else null,
+                                                                onClick = { onEpisodeClick(
+                                                                    show.id,
+                                                                    episode.seasonNumber,
+                                                                    episode.episodeNumber
+                                                                ) },
+                                                            )
+                                                        }
+                                                        Spacer(modifier = Modifier.height(32.dp))
+                                                    }
+                                                }
+                                            }
+                                        }
+                                        else -> {
+                                            itemsIndexed(
+                                                sortedEpisodes,
+                                                key = { index, episode -> "ep-${index}-${episode.seasonNumber}-${episode.episodeNumber}"}
+                                            ) { index, episode ->
+                                                val rating = ratings[episode.seasonNumber]?.get(episode.episodeNumber)
                                                 RateItemCard(
                                                     title = episode.name,
-                                                    subtitle = "Episode ${episode.episodeNumber}",
+                                                    subtitle = "S${episode.seasonNumber}E${episode.episodeNumber}",
                                                     coverImagePath = "https://image.tmdb.org/t/p/w300${episode.stillPath}",
-                                                    rating = if (!episodesState.isLoadingRatings && rating == null && ratings[seasonNumber]?.isEmpty() == true)
+                                                    rating = if (!episodesState.isLoadingRatings && rating == null && ratings[episode.seasonNumber]?.isEmpty() == true)
                                                         episode.voteAverage?.div(10f) else rating,
                                                     isLoading = selectedRatings == 0 && episodesState.isLoadingRatings && rating == null,
                                                     placeholderRatio = 16f / 9f,
                                                     padding = PaddingValues(horizontal = 16.dp, vertical = 6.dp),
+                                                    rank = index + 1,
                                                     bubbleText = if (episode.runtime > 0) formatTime(episode.runtime) else null,
                                                     onClick = { onEpisodeClick(
                                                         show.id,
@@ -355,6 +609,7 @@ fun TmdbShowDetailScreen(
                                                 )
                                             }
                                         }
+                                    }
 
                                     /*items(
                                         episodesState.seasonEpisodes
@@ -391,7 +646,10 @@ fun TmdbShowDetailScreen(
                                         ) {
                                             OutlinedToggleButton(
                                                 checked = invertedGrid,
-                                                onCheckedChange = { invertedGrid = it },
+                                                onCheckedChange = {
+                                                    haptic.performHapticFeedback(HapticFeedbackType.ToggleOn)
+                                                    invertedGrid = it
+                                                },
                                                 shapes = ToggleButtonDefaults.shapes(),
                                             ) {
                                                 Text(

@@ -17,6 +17,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -41,6 +42,7 @@ import com.example.rateio.presentation.rating.display.getRoundedRating
 import com.example.rateio.utils.formatDateCompact
 import com.example.rateio.utils.formatTime
 import kotlin.math.abs
+import kotlin.math.max
 
 
 private data class EpisodeRatingPoint(
@@ -55,7 +57,7 @@ fun EpisodeRatingGraph(
     ratings: Map<Int, Map<Int, Float?>>,
     onEpisodeClick: (season: Int, episode: Int) -> Unit,
     modifier: Modifier = Modifier,
-    episodeWidth: Dp = 6.dp,
+    minEpisodeWidth: Dp = 7.dp,
 ) {
     val points = remember(episodes, ratings) {
         var globalIdx = 0
@@ -95,13 +97,16 @@ fun EpisodeRatingGraph(
     val labelColor = MaterialTheme.colorScheme.onSurfaceVariant
     val dividerColor = MaterialTheme.colorScheme.outline
     val lineColor = MaterialTheme.colorScheme.secondaryFixedDim
-    val background = MaterialTheme.colorScheme.background
-    val labelStyle = MaterialTheme.typography.labelSmall
 
-    var plotScale by rememberSaveable { mutableFloatStateOf(1f) }
-    var widthScale by rememberSaveable { mutableFloatStateOf(1f) }
 
-    val totalWidth = padL + (episodeWidth * widthScale) * points.size + padR
+    val minRating = points.minBy { it.rating ?: 1f }.rating ?: 1f
+    var plotScale by rememberSaveable { mutableFloatStateOf(getInitialPlotScale(minRating)) }
+
+    var episodeWidth by rememberSaveable { mutableFloatStateOf(
+        max(minEpisodeWidth.value, 350f / points.size.toFloat())
+    ) }
+
+    val totalWidth = padL + episodeWidth.dp * points.size + padR
 
     Column(modifier = modifier) {
         Box(
@@ -119,7 +124,7 @@ fun EpisodeRatingGraph(
                             val event = awaitPointerEvent()
                             val pos = event.changes.firstOrNull()?.position ?: continue
                             val padLpx = with(density) { padL.toPx() }
-                            val epWpx = with(density) { (episodeWidth * widthScale).toPx() }
+                            val epWpx = with(density) { episodeWidth.dp.toPx() }
 
                             val closest = points.minByOrNull { ep ->
                                 val x = padLpx + (ep.globalIndex + 0.5f) * epWpx
@@ -137,7 +142,7 @@ fun EpisodeRatingGraph(
                 val padTpx = padT.toPx()
                 val padBpx = padB.toPx()
                 val plotH = h - padTpx - padBpx
-                val epWpx = (episodeWidth * widthScale).toPx()
+                val epWpx = episodeWidth.dp.toPx()
 
                 // X center of each episode slot
                 fun xOf(i: Int) = padLpx + (i + 0.5f) * epWpx
@@ -289,17 +294,27 @@ fun EpisodeRatingGraph(
             Slider(
                 value = plotScale,
                 onValueChange = { plotScale = it },
-                valueRange = 1f..4f,
+                valueRange = 1f..5f,
             )
 
             //Spacer(modifier = Modifier.height(4.dp))
 
-            Text(text = "Width: " + "%.1f".format(widthScale))
+            Text(text = "Episode width: " + "%.1f".format(episodeWidth))
             Slider(
-                value = widthScale,
-                onValueChange = { widthScale = it },
-                valueRange = 1f..5f,
+                value = episodeWidth,
+                onValueChange = { episodeWidth = it },
+                valueRange = 1f..50f,
             )
         }
     }
+}
+
+private fun getInitialPlotScale(minRating: Float): Float {
+    val initialMin = 0.5
+    val initialMax = 1f
+    val targetMin = 1.0
+    val targetMax = 4.0
+
+    val mapped = targetMin + (minRating - initialMin) * (targetMax - targetMin) / (initialMax - initialMin)
+    return mapped.coerceIn(targetMin, targetMax).toFloat()
 }

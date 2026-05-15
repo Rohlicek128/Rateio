@@ -48,9 +48,7 @@ class SavedRateItemViewModel(
 
     fun saveRating(rating: Float?) {
         viewModelScope.launch {
-            if (rating != null) {
-                itemRepository.rate(id, rating)
-            }
+            itemRepository.rate(id, rating)
         }
     }
 

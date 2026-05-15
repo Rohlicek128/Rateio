@@ -22,8 +22,11 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.layout.layout
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -44,10 +47,14 @@ fun RateItemCard(
     modifier: Modifier = Modifier,
     placeholderRatio: Float = 2f / 3f,
     padding: PaddingValues = PaddingValues(horizontal = 20.dp, vertical = 6.dp),
+    tonalElevation: Dp = 1.dp,
     isLoading: Boolean = false,
     rank: Int? = null,
     rankWidth: Dp = 36.dp,
     bubbleText: String? = null,
+    spoilers: Boolean = false,
+    biggerTitle: Boolean = false,
+    leadingRateBoxContent: @Composable (() -> Unit)? = null,
 ) {
     val haptic = LocalHapticFeedback.current
     val offset = (-6).dp
@@ -74,8 +81,24 @@ fun RateItemCard(
         ListItem(
             headlineContent = { Text(
                 title,
-                modifier = Modifier.offset(x = offset),
-                style = MaterialTheme.typography.titleMedium,
+                modifier = Modifier
+                    .offset(x = offset)
+                    .then(if (spoilers)
+                            Modifier
+                                .clip(RoundedCornerShape(6.dp))
+                                .blur(12.dp)
+                        else Modifier
+                    ),
+                /*modifier = Modifier
+                    .offset(x = offset)
+                    .then(
+                        if (spoilers) Modifier
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(MaterialTheme.colorScheme.surfaceContainerHighest)
+                            .drawWithContent { }
+                        else Modifier
+                    ),*/
+                style = if (biggerTitle) MaterialTheme.typography.headlineSmall else MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
                 lineHeight = 1.em,
                 maxLines = 3,
@@ -103,7 +126,8 @@ fun RateItemCard(
                                 contentDescription = "Cover image",
                                 maxWidth = 120.dp,
                                 maxHeight = 120.dp,
-                                placeholderRatio = placeholderRatio
+                                placeholderRatio = placeholderRatio,
+                                blurred = spoilers,
                             )
                         }
 
@@ -131,16 +155,23 @@ fun RateItemCard(
                 }
             },
             trailingContent = {
-                RateBox(
-                    rating = rating,
-                    roundedCorners = 12.dp,
-                    width = 12.dp,
-                    minWidth = 36.dp,
-                    height = 4.dp,
-                    textStyle = MaterialTheme.typography.headlineSmall,
-                    isLoading = isLoading,
-                    //decimalOffset = if (rank != null) 1u else 0u
-                )
+                Row(
+                    horizontalArrangement = Arrangement.End,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    leadingRateBoxContent?.invoke()
+
+                    RateBox(
+                        rating = rating,
+                        roundedCorners = 12.dp,
+                        width = 12.dp,
+                        minWidth = 36.dp,
+                        height = 4.dp,
+                        textStyle = MaterialTheme.typography.headlineSmall,
+                        isLoading = isLoading,
+                        //decimalOffset = if (rank != null) 1u else 0u
+                    )
+                }
             },
             modifier = Modifier
                 .clip(MaterialTheme.shapes.largeIncreased)
@@ -148,7 +179,7 @@ fun RateItemCard(
                     haptic.performHapticFeedback(HapticFeedbackType.Confirm)
                     onClick()
                 }),
-            tonalElevation = 1.dp
+            tonalElevation = tonalElevation
         )
     }
 }

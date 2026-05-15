@@ -33,6 +33,9 @@ import com.example.rateio.presentation.rating.RateItemDetailScreen
 @Composable
 fun SteamGameDetailScreen(
     appId: String,
+    isSaved: Boolean,
+    customRating: Float? = null,
+    onRatingSaved: ((Float?) -> Unit)? = null,
     onBackClick: () -> Unit,
 ) {
     val context = LocalContext.current
@@ -79,11 +82,14 @@ fun SteamGameDetailScreen(
                 description = game.shortDescription,
                 coverImageUrl = "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/${game.steamAppId}/library_600x900_2x.jpg",
                 backdropImageUrl = game.headerImage,
-                rating = if (state.reviews != null && state.reviews?.totalReviews != null
-                    && state.reviews?.totalPositive != null && state.reviews?.totalReviews!! >= 200)
-                    state.reviews?.totalPositive?.div(state.reviews?.totalReviews?.toFloat() ?: 1f) else null,
-                ratingVotes = state.reviews?.totalReviews,
+                rating = if (!isSaved) {
+                    if (state.reviews != null && state.reviews?.totalReviews != null
+                        && state.reviews?.totalPositive != null && state.reviews?.totalReviews!! >= 200)
+                        state.reviews?.totalPositive?.div(state.reviews?.totalReviews?.toFloat() ?: 1f) else null
+                } else customRating,
+                ratingVotes = if (!isSaved) state.reviews?.totalReviews else null,
                 ratingLabel = state.reviews?.reviewScoreDesc,
+                onRatingSaved = onRatingSaved,
                 onBackClick = onBackClick,
                 canAddToLibrary = false,
                 extraContent = {

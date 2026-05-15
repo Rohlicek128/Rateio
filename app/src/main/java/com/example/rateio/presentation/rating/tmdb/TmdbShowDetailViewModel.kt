@@ -1,13 +1,14 @@
 package com.example.rateio.presentation.rating.tmdb
 
+import androidx.compose.runtime.mutableStateSetOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.example.rateio.data.CategoryRegistry
 import com.example.rateio.data.remote.TmdbClient
-import com.example.rateio.data.remote.TmdbShowDetail
 import com.example.rateio.data.remote.TmdbImageResponse
+import com.example.rateio.data.remote.TmdbShowDetail
 import com.example.rateio.data.remote.imdb.ImdbRating
 import com.example.rateio.data.remote.imdb.ImdbRatingFetcher
 import com.example.rateio.data.remote.toRateItem
@@ -16,7 +17,6 @@ import com.example.rateio.data.repository.RateItemRepository
 import com.example.rateio.model.CategoryType
 import com.example.rateio.model.RateItem
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -28,8 +28,14 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlin.collections.emptyList
 
+
+enum class SortMode {
+    BY_SEASON,
+    BY_RATING_BEST,
+    BY_RATING_WORST,
+    BY_RUNTIME,
+}
 
 data class TmdbShowDetailState(
     val show: TmdbShowDetail? = null,
@@ -38,6 +44,8 @@ data class TmdbShowDetailState(
     val savedItemId: Long? = null,
 
     val selectedEpisodeMode: Int = 0,
+    val sortMode: SortMode = SortMode.BY_SEASON,
+    val expandedSeasons: MutableSet<Int> = mutableStateSetOf(),
 
     val isLoading: Boolean = false,
     val error: String? = null,
@@ -129,6 +137,10 @@ class TmdbShowDetailViewModel(
 
     fun onModeSelect(selectedMode: Int) {
         _state.update { it.copy(selectedEpisodeMode = selectedMode) }
+    }
+
+    fun onSortModeSelect(sortMode: SortMode) {
+        _state.update { it.copy(sortMode = sortMode) }
     }
 
     companion object {

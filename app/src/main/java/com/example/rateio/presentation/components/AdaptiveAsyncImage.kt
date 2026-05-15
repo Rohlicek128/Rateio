@@ -13,9 +13,11 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.blur
 import androidx.compose.ui.graphics.painter.ColorPainter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import coil3.compose.AsyncImagePainter
 
@@ -31,6 +33,7 @@ fun AdaptiveAsyncImage(
     maxWidth: Dp = Dp.Unspecified,
     minHeight: Dp = Dp.Unspecified,
     maxHeight: Dp = Dp.Unspecified,
+    blurred: Boolean = false,
     onSuccess: ((AsyncImagePainter.State.Success) -> Unit)? = null,
 ) {
     var imageState by remember { mutableStateOf(AsyncImageState.Loading) }
@@ -50,6 +53,10 @@ fun AdaptiveAsyncImage(
             .then(
                 if (placeholderRatio < 1f) Modifier.fillMaxHeight()
                 else Modifier.fillMaxWidth()
+            )
+            .then(
+                if (blurred) Modifier.blur(24.dp)
+                else Modifier
             ),
         contentScale = contentScale,
         placeholder = ColorPainter(MaterialTheme.colorScheme.surfaceVariant),

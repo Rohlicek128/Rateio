@@ -26,7 +26,7 @@ data class RateItem(
 enum class ItemStatus {
     NONE,
     WATCHLIST,
-    WATCHING,
+    IN_PROGRESS,
     COMPLETED,
     DROPPED,
     ON_HOLD,

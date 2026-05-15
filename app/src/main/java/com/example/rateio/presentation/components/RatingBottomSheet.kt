@@ -11,11 +11,13 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -35,7 +37,7 @@ fun RatingBottomSheet(
     onValueChange: (Float?) -> Unit,
 ) {
     val haptic = LocalHapticFeedback.current
-    var rackPosition by rememberSaveable { mutableFloatStateOf(rating ?: 0.7f) }
+    var rackPosition by rememberSaveable { mutableStateOf(rating) }
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
@@ -63,7 +65,7 @@ fun RatingBottomSheet(
 
             val rtf = getCurrentRatingTransformations()
             RackRatingSlider(
-                rating = rackPosition,
+                rating = rackPosition ?: 0.7f,
                 onValueChange = {
                     rackPosition = it
                 },
@@ -81,10 +83,8 @@ fun RatingBottomSheet(
                 hardPart = rtf.legendaryPart,
             )
 
-            Spacer(modifier = Modifier.height(8.dp))
-
             RackRatingSlider(
-                rating = rackPosition,
+                rating = rackPosition ?: 0.7f,
                 onValueChange = {
                     rackPosition = it
                 },
@@ -102,7 +102,18 @@ fun RatingBottomSheet(
                 hardPart = rtf.legendaryPart,
             )
 
-            Spacer(modifier = Modifier.height(64.dp))
+            Spacer(modifier = Modifier.height(32.dp))
+
+
+            OutlinedButton(
+                onClick = {
+                    haptic.performHapticFeedback(HapticFeedbackType.ToggleOff)
+                    rackPosition = null
+                },
+                shapes = ButtonDefaults.shapes(),
+            ) {
+                Text("Set to Unrated", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+            }
 
             FilledTonalButton(
                 onClick = {

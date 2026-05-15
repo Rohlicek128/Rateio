@@ -56,47 +56,21 @@ fun AppNavigation(navController: NavHostController = rememberNavController()) {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = navBackStackEntry?.destination
 
+    val isDetailScreen = currentDestination?.hasRoute<Route.TopLevel.Home>() == false &&
+            !currentDestination.hasRoute<Route.TopLevel.Browse>() &&
+            !currentDestination.hasRoute<Route.TopLevel.Profile>()
+    val isVisible = !isDetailScreen && currentDestination != null
+
     Scaffold(
         bottomBar = {
-            val isDetailScreen = currentDestination?.hasRoute<Route.TopLevel.Home>() == false &&
-                    !currentDestination.hasRoute<Route.TopLevel.Browse>() &&
-                    !currentDestination.hasRoute<Route.TopLevel.Profile>()
-            val isVisible = !isDetailScreen && currentDestination != null
-
             AnimatedVisibility(
                 visible = isVisible,
                 enter = slideInVertically(initialOffsetY = { it }),
                 exit = slideOutVertically(targetOffsetY = { it }),
             ) {
-                Box(
+                NavigationBar(
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .zIndex(1f)
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(150.dp)
-                            .align(Alignment.BottomCenter)
-                            .zIndex(2f)
-                            .background(
-                                Brush.verticalGradient(
-                                    colors = listOf(
-                                        Color.Transparent,
-                                        MaterialTheme.colorScheme.background.copy(alpha = 0.8f),
-                                        MaterialTheme.colorScheme.background,
-                                    ),
-                                    startY = 0f,
-                                    endY = Float.POSITIVE_INFINITY,
-                                )
-                            )
-                    )
-
-                    NavigationBar(
-                        modifier = Modifier
-                            .align(Alignment.BottomCenter)
-                            .zIndex(3f)
-                            .clip(
+                        .clip(
                             RoundedCornerShape(
                                 topStart = 32.dp,
                                 topEnd = 32.dp,
@@ -104,149 +78,173 @@ fun AppNavigation(navController: NavHostController = rememberNavController()) {
                                 bottomEnd = 0.dp
                             )
                         )
-                    ) {
-                        // Home
-                        NavigationBarItem(
-                            selected = currentDestination?.hasRoute<Route.TopLevel.Home>() == true,
-                            onClick = { navController.navigateSingleTop(Route.TopLevel.Home) },
-                            icon = { Icon(Icons.Default.LibraryAdd, contentDescription = null) },
-                            label = { Text("Ratings", fontWeight = FontWeight.Bold) }
-                        )
-                        // Browse
-                        NavigationBarItem(
-                            selected = currentDestination?.hasRoute<Route.TopLevel.Browse>() == true,
-                            onClick = { navController.navigateSingleTop(Route.TopLevel.Browse) },
-                            icon = { Icon(Icons.Default.Search, contentDescription = null) },
-                            label = { Text("Browse", fontWeight = FontWeight.Bold) }
-                        )
-                        // Settings
-                        NavigationBarItem(
-                            selected = currentDestination?.hasRoute<Route.TopLevel.Profile>() == true,
-                            onClick = { navController.navigateSingleTop(Route.TopLevel.Profile) },
-                            icon = { Icon(Icons.Default.Person, contentDescription = null) },
-                            label = { Text("Profile", fontWeight = FontWeight.Bold) }
-                        )
-                    }
+                ) {
+                    // Home
+                    NavigationBarItem(
+                        selected = currentDestination?.hasRoute<Route.TopLevel.Home>() == true,
+                        onClick = { navController.navigateSingleTop(Route.TopLevel.Home) },
+                        icon = { Icon(Icons.Default.LibraryAdd, contentDescription = null) },
+                        label = { Text("Ratings", fontWeight = FontWeight.Bold) }
+                    )
+                    // Browse
+                    NavigationBarItem(
+                        selected = currentDestination?.hasRoute<Route.TopLevel.Browse>() == true,
+                        onClick = { navController.navigateSingleTop(Route.TopLevel.Browse) },
+                        icon = { Icon(Icons.Default.Search, contentDescription = null) },
+                        label = { Text("Browse", fontWeight = FontWeight.Bold) }
+                    )
+                    // Settings
+                    NavigationBarItem(
+                        selected = currentDestination?.hasRoute<Route.TopLevel.Profile>() == true,
+                        onClick = { navController.navigateSingleTop(Route.TopLevel.Profile) },
+                        icon = { Icon(Icons.Default.Person, contentDescription = null) },
+                        label = { Text("Profile", fontWeight = FontWeight.Bold) }
+                    )
                 }
             }
 
         }
     ) { globalPadding ->
-        NavHost(
-            navController = navController,
-            startDestination = Route.TopLevel.Home,
-            modifier = Modifier.fillMaxSize(),
-            enterTransition = { slideInHorizontally(initialOffsetX = { it }) },
-            exitTransition = { slideOutHorizontally(targetOffsetX = { -it }) },
-            popEnterTransition = { slideInHorizontally(initialOffsetX = { -it }) },
-            popExitTransition = { slideOutHorizontally(targetOffsetX = { it }) }
-        ) {
-            composable<Route.TopLevel.Home> {
-                HomeScreen(
-                    contentPadding = globalPadding,
-                    onItemClick = { id -> navController.navigate(Route.CategoryDetail(id)) }
-                )
-            }
+        Box(modifier = Modifier.fillMaxSize()) {
+            NavHost(
+                navController = navController,
+                startDestination = Route.TopLevel.Home,
+                modifier = Modifier.fillMaxSize(),
+                enterTransition = { slideInHorizontally(initialOffsetX = { it }) },
+                exitTransition = { slideOutHorizontally(targetOffsetX = { -it }) },
+                popEnterTransition = { slideInHorizontally(initialOffsetX = { -it }) },
+                popExitTransition = { slideOutHorizontally(targetOffsetX = { it }) }
+            ) {
+                composable<Route.TopLevel.Home> {
+                    HomeScreen(
+                        contentPadding = globalPadding,
+                        onItemClick = { id -> navController.navigate(Route.CategoryDetail(id)) }
+                    )
+                }
 
-            composable<Route.TopLevel.Browse> {
-                BrowseScreen(
-                    contentPadding = globalPadding,
-                    onItemClick = { externalId, type ->
-                        when (type) {
-                            CategoryType.TMDB_SHOWS  ->
-                                navController.navigate(Route.TmdbShowDetail(externalId.toInt()))
-                            CategoryType.TMDB_MOVIES ->
-                                navController.navigate(Route.TmdbMovieDetail(externalId.toInt()))
-                            CategoryType.STEAM_GAMES ->
-                                navController.navigate(Route.SteamGameDetail(externalId))
-                            else -> {}
+                composable<Route.TopLevel.Browse> {
+                    BrowseScreen(
+                        contentPadding = globalPadding,
+                        onItemClick = { externalId, type ->
+                            when (type) {
+                                CategoryType.TMDB_SHOWS  ->
+                                    navController.navigate(Route.TmdbShowDetail(externalId.toInt()))
+                                CategoryType.TMDB_MOVIES ->
+                                    navController.navigate(Route.TmdbMovieDetail(externalId.toInt()))
+                                CategoryType.STEAM_GAMES ->
+                                    navController.navigate(Route.SteamGameDetail(externalId))
+                                else -> {}
+                            }
                         }
-                    }
-                )
-            }
+                    )
+                }
 
-            composable<Route.TopLevel.Profile> {
-                ProfileScreen(
-                    onOpenSettings = {
+                composable<Route.TopLevel.Profile> {
+                    ProfileScreen(
+                        onOpenSettings = {
 
-                    }
-                )
-            }
-
-
-            composable<Route.TmdbShowDetail> { back ->
-                val route = back.toRoute<Route.TmdbShowDetail>()
-                TmdbShowDetailScreen(
-                    showId = route.showId,
-                    isSaved = false,
-                    onBackClick = { navController.popBackStack() },
-                    onEpisodeClick = {showId, seasonNumber, episodeNumber ->
-                        navController.navigate(Route.TmdbEpisodeDetail(showId, seasonNumber, episodeNumber)) {
-                            popUpTo<Route.TmdbShowDetail>()
                         }
-                    }
-                )
-            }
-            composable<Route.TmdbEpisodeDetail> { back ->
-                val route = back.toRoute<Route.TmdbEpisodeDetail>()
-                TmdbEpisodeDetailScreen(
-                    showId = route.showId,
-                    season = route.season,
-                    episode = route.episode,
-                    isSaved = false,
-                    onBackClick = { navController.popBackStack() },
-                    onNextClick = { nextSeason, nextEpisode ->
-                        navController.navigate(Route.TmdbEpisodeDetail(route.showId, nextSeason, nextEpisode)) {
-                            popUpTo<Route.TmdbShowDetail>()
+                    )
+                }
+
+
+                composable<Route.TmdbShowDetail> { back ->
+                    val route = back.toRoute<Route.TmdbShowDetail>()
+                    TmdbShowDetailScreen(
+                        showId = route.showId,
+                        isSaved = false,
+                        onBackClick = { navController.popBackStack() },
+                        onEpisodeClick = {showId, seasonNumber, episodeNumber ->
+                            navController.navigate(Route.TmdbEpisodeDetail(showId, seasonNumber, episodeNumber)) {
+                                popUpTo<Route.TmdbShowDetail>()
+                            }
                         }
-                    },
-                    onPreviousClick = { prevSeason, prevEpisode ->
-                        navController.navigate(Route.TmdbEpisodeDetail(route.showId, prevSeason, prevEpisode)) {
-                            popUpTo<Route.TmdbShowDetail>()
-                        }
-                    },
-                )
+                    )
+                }
+                composable<Route.TmdbEpisodeDetail> { back ->
+                    val route = back.toRoute<Route.TmdbEpisodeDetail>()
+                    TmdbEpisodeDetailScreen(
+                        showId = route.showId,
+                        season = route.season,
+                        episode = route.episode,
+                        isSaved = false,
+                        onBackClick = { navController.popBackStack() },
+                        onNextClick = { nextSeason, nextEpisode ->
+                            navController.navigate(Route.TmdbEpisodeDetail(route.showId, nextSeason, nextEpisode)) {
+                                popUpTo<Route.TmdbShowDetail>()
+                            }
+                        },
+                        onPreviousClick = { prevSeason, prevEpisode ->
+                            navController.navigate(Route.TmdbEpisodeDetail(route.showId, prevSeason, prevEpisode)) {
+                                popUpTo<Route.TmdbShowDetail>()
+                            }
+                        },
+                    )
+                }
+
+                composable<Route.TmdbMovieDetail> { back ->
+                    val route = back.toRoute<Route.TmdbMovieDetail>()
+                    TmdbMovieDetailScreen(
+                        movieId = route.movieId,
+                        isSaved = false,
+                        onBackClick = { navController.popBackStack() },
+                    )
+                }
+
+                composable<Route.SteamGameDetail> { back ->
+                    val route = back.toRoute<Route.SteamGameDetail>()
+                    SteamGameDetailScreen(
+                        appId = route.appId,
+                        isSaved = false,
+                        onBackClick = { navController.popBackStack() },
+                    )
+                }
+
+
+                composable<Route.CategoryDetail> { back ->
+                    val route = back.toRoute<Route.CategoryDetail>()
+                    LibraryCategoryScreen(
+                        categoryId = route.categoryId,
+                        onItemClick = { item ->
+                            navController.navigate(Route.RateItemDetail(item.id))
+                        },
+                        onBackClick = { navController.popBackStack() },
+                    )
+                }
+
+                composable<Route.RateItemDetail> { backStackEntry ->
+                    val detail = backStackEntry.toRoute<Route.RateItemDetail>()
+                    SavedRateItemScreen(
+                        itemId = detail.itemId,
+                        onChildClick = { childId, parentId ->
+                            navController.navigate(Route.RateItemDetail(childId)) {
+                                popUpTo(Route.RateItemDetail(parentId))
+                            }
+                        },
+                        onBackClick = { navController.popBackStack() },
+                    )
+                }
             }
 
-            composable<Route.TmdbMovieDetail> { back ->
-                val route = back.toRoute<Route.TmdbMovieDetail>()
-                TmdbMovieDetailScreen(
-                    movieId = route.movieId,
-                    isSaved = false,
-                    onBackClick = { navController.popBackStack() },
-                )
-            }
-
-            composable<Route.SteamGameDetail> { back ->
-                val route = back.toRoute<Route.SteamGameDetail>()
-                SteamGameDetailScreen(
-                    appId = route.appId,
-                    onBackClick = { navController.popBackStack() },
-                )
-            }
-
-
-            composable<Route.CategoryDetail> { back ->
-                val route = back.toRoute<Route.CategoryDetail>()
-                LibraryCategoryScreen(
-                    categoryId = route.categoryId,
-                    onItemClick = { item ->
-                        navController.navigate(Route.RateItemDetail(item.id))
-                    },
-                    onBackClick = { navController.popBackStack() },
-                )
-            }
-
-            composable<Route.RateItemDetail> { backStackEntry ->
-                val detail = backStackEntry.toRoute<Route.RateItemDetail>()
-                SavedRateItemScreen(
-                    itemId = detail.itemId,
-                    onChildClick = { childId, parentId ->
-                        navController.navigate(Route.RateItemDetail(childId)) {
-                            popUpTo(Route.RateItemDetail(parentId))
-                        }
-                    },
-                    onBackClick = { navController.popBackStack() },
+            AnimatedVisibility(
+                visible = isVisible,
+                enter = slideInVertically(initialOffsetY = { it }),
+                exit = slideOutVertically(targetOffsetY = { it }),
+                modifier = Modifier.align(Alignment.BottomCenter),
+            ) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(150.dp)
+                        .background(
+                            Brush.verticalGradient(
+                                colors = listOf(
+                                    Color.Transparent,
+                                    MaterialTheme.colorScheme.background.copy(alpha = 0.8f),
+                                    MaterialTheme.colorScheme.background,
+                                )
+                            )
+                        )
                 )
             }
         }

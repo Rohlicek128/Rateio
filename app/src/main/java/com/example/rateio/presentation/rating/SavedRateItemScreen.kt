@@ -19,6 +19,7 @@ import com.example.rateio.data.repository.CategoryRepository
 import com.example.rateio.data.repository.RateItemRepository
 import com.example.rateio.model.CategoryType
 import com.example.rateio.navigation.Route
+import com.example.rateio.presentation.rating.steam.SteamGameDetailScreen
 import com.example.rateio.presentation.rating.tmdb.TmdbEpisodeDetailScreen
 import com.example.rateio.presentation.rating.tmdb.TmdbMovieDetailScreen
 import com.example.rateio.presentation.rating.tmdb.TmdbShowDetailScreen
@@ -124,9 +125,16 @@ fun SavedRateItemScreen(
                         movieId = item.externalId!!.toInt(),
                         isSaved = true,
                         customRating = item.rating,
-                        onRatingSaved = { rating ->
-                            viewModel.saveRating(rating)
-                        },
+                        onRatingSaved = { rating -> viewModel.saveRating(rating) },
+                        onBackClick = onBackClick,
+                    )
+                }
+                CategoryType.STEAM_GAMES -> {
+                    SteamGameDetailScreen(
+                        appId = item.externalId!!,
+                        isSaved = true,
+                        customRating = item.rating,
+                        onRatingSaved = { rating -> viewModel.saveRating(rating) },
                         onBackClick = onBackClick,
                     )
                 }
@@ -143,9 +151,7 @@ fun SavedRateItemScreen(
                         onBackClick = onBackClick,
                         canAddToLibrary = true,
                         extraContent = { },
-                        onRatingSaved = { rating ->
-                            viewModel.saveRating(rating)
-                        },
+                        onRatingSaved = { rating -> viewModel.saveRating(rating) },
                         onOpenSettings = { }
                     )
                 }

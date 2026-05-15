@@ -91,8 +91,8 @@ class RateItemRepository(private val dao: RateItemDao) {
     suspend fun save(item: RateItem): Long =
         dao.insert(item.toEntity())
 
-    suspend fun rate(id: Long, rating: Float) =
-        dao.updateRating(id, rating.coerceIn(0f, 1f))
+    suspend fun rate(id: Long, rating: Float?) =
+        dao.updateRating(id, rating?.coerceIn(0f, 1f))
 
     suspend fun setStatus(id: Long, status: ItemStatus) =
         dao.updateStatus(id, status.name)

@@ -89,7 +89,7 @@ interface RateItemDao {
 
 
     @Query("UPDATE rate_items SET rating = :rating, updatedAt = :now WHERE id = :id")
-    suspend fun updateRating(id: Long, rating: Float, now: Long = System.currentTimeMillis())
+    suspend fun updateRating(id: Long, rating: Float?, now: Long = System.currentTimeMillis())
 
     @Query("UPDATE rate_items SET status = :status, updatedAt = :now WHERE id = :id")
     suspend fun updateStatus(id: Long, status: String, now: Long = System.currentTimeMillis())
