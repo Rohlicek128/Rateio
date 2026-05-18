@@ -100,5 +100,6 @@ fun SortMode.label() = when (this) {
     SortMode.BY_RATING_BEST -> "Rating (Best)"
     SortMode.BY_RATING_WORST -> "Rating (Worst)"
     SortMode.BY_RUNTIME -> "Runtime"
+    SortMode.BY_NAME -> "Alphabetically"
     else -> "Unknown"
 }

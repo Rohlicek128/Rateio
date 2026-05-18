@@ -24,7 +24,6 @@ data class BrowseState(
     val selectedCategory: Category? = null,
     val query: String = "",
     val results: List<RateItem> = emptyList(),
-    val resultsRatings: List<Float?> = emptyList(),
     val isLoading: Boolean = false,
     val error: String? = null,
 )
@@ -71,7 +70,6 @@ class BrowseViewModel : ViewModel() {
                 }
                 _state.update { it.copy(
                     results = results,
-                    resultsRatings = List(results.size) { null },
                     isLoading = false,
                 )}
 

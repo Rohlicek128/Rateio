@@ -107,7 +107,7 @@ fun RatingBottomSheet(
 
             OutlinedButton(
                 onClick = {
-                    haptic.performHapticFeedback(HapticFeedbackType.ToggleOff)
+                    haptic.performHapticFeedback(HapticFeedbackType.ToggleOn)
                     rackPosition = null
                 },
                 shapes = ButtonDefaults.shapes(),

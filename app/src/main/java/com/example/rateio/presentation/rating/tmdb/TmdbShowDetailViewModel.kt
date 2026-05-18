@@ -35,6 +35,7 @@ enum class SortMode {
     BY_RATING_BEST,
     BY_RATING_WORST,
     BY_RUNTIME,
+    BY_NAME,
 }
 
 data class TmdbShowDetailState(

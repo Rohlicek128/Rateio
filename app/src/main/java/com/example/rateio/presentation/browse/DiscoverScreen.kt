@@ -1,17 +1,15 @@
 package com.example.rateio.presentation.browse
 
-import androidx.compose.foundation.layout.height
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.rateio.model.Category
 import com.example.rateio.model.CategoryType
-import com.example.rateio.presentation.category.CategoryItemListScreen
+import com.example.rateio.presentation.category.ItemListRow
 
 
 @Composable
@@ -26,7 +24,7 @@ fun DiscoverScreen(
     )
     val state by viewModel.state.collectAsState()
 
-    CategoryItemListScreen(
+    ItemListRow(
         modifier = modifier,
         title = "Popular",
         items = state.results,

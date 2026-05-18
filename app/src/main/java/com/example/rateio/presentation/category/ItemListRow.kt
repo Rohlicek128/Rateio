@@ -4,33 +4,22 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material3.CircularWavyProgressIndicator
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedToggleButton
 import androidx.compose.material3.Text
-import androidx.compose.material3.ToggleButtonDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.rateio.model.RateItem
-import com.example.rateio.presentation.components.RateItemCard
+import com.example.rateio.presentation.components.RateItemGridCard
 import com.example.rateio.presentation.components.SectionHeader
 
-
 @Composable
-fun CategoryItemListScreen(
+fun ItemListRow(
     title: String,
     items: List<RateItem>,
     isLoading: Boolean,
@@ -38,17 +27,12 @@ fun CategoryItemListScreen(
     modifier: Modifier = Modifier,
     showRanking: Boolean = false,
     itemTrailingContent: (@Composable () -> Unit)? = null,
-    headerContent: (@Composable () -> Unit)? = null,
     emptyContent: (@Composable () -> Unit)? = null,
 ) {
-    var displayCover by remember { mutableStateOf(true) }
-
-    Column(modifier = modifier.fillMaxSize()) {
+    Column {
         if (title.isNotBlank()) {
             SectionHeader(title)
         }
-
-        headerContent?.invoke()
 
         when {
             isLoading -> Box(Modifier.fillMaxSize(), Alignment.Center) {
@@ -60,36 +44,18 @@ fun CategoryItemListScreen(
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
-            else -> LazyColumn {
-                item {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 16.dp),
-                        horizontalArrangement = Arrangement.End,
-                    ) {
-                        OutlinedToggleButton(
-                            checked = displayCover,
-                            onCheckedChange = { displayCover = it },
-                            shapes = ToggleButtonDefaults.shapes(),
-                        ) {
-                            Text(
-                                "Cover Images",
-                                style = MaterialTheme.typography.labelMedium,
-                                fontWeight = FontWeight.Bold,
-                            )
-                        }
-                    }
-                }
-
+            else -> LazyRow (
+                modifier = modifier,
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
                 itemsIndexed(items) { index, item ->
-                    RateItemCard(
+                    RateItemGridCard(
                         title = item.title,
                         subtitle = item.subtitle,
-                        coverImagePath = if (displayCover) item.coverImageLowUrl else null,
+                        coverImagePath = item.coverImageLowUrl,
                         rating = item.rating,
                         placeholderRatio = 2f / 3f,
-                        padding = PaddingValues(horizontal = 16.dp, vertical = 6.dp),
+                        padding = PaddingValues(0.dp),
                         rank = if (showRanking) index + 1 else null,
                         onClick = { onItemClick(item) },
                         leadingRateBoxContent = itemTrailingContent

@@ -15,6 +15,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.rateio.utils.formatDate
+import com.example.rateio.utils.formatDateCompact
 import com.example.rateio.utils.hoursUntil
 import com.example.rateio.utils.parseDate
 import java.time.LocalDate
@@ -66,7 +67,7 @@ fun DateProgressBar(
             horizontalArrangement = Arrangement.SpaceBetween,
         ) {
             Text(
-                text = formatDate(startDate),
+                text = formatDateCompact(startDate),
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -80,7 +81,7 @@ fun DateProgressBar(
                 fontWeight = FontWeight.Bold
             )
             Text(
-                text = formatDate(endDate),
+                text = formatDateCompact(endDate),
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )

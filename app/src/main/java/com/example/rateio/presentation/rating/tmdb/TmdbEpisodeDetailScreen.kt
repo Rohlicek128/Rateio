@@ -114,7 +114,7 @@ fun TmdbEpisodeDetailScreen(
                                 contentPadding = PaddingValues(horizontal = 16.dp),
                                 horizontalArrangement = Arrangement.spacedBy(12.dp),
                             ) {
-                                items(crew.take(10), key = { it.creditId }) { member ->
+                                items(crew.sortedByDescending { it.popularity }.take(10), key = { it.creditId }) { member ->
                                     PersonCard(
                                         name = member.name,
                                         position = member.job,
@@ -146,7 +146,7 @@ fun TmdbEpisodeDetailScreen(
                                     }
                                 }
                                 episode.credits?.guest?.takeIf { it.isNotEmpty() }?.let { guest ->
-                                    items(guest.take(20), key = { it.creditId }) { member ->
+                                    items(guest.sortedByDescending { it.popularity }.take(20), key = { it.creditId }) { member ->
                                         PersonCard(
                                             name = member.name,
                                             position = member.character,

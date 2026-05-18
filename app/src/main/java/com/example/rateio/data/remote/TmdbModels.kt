@@ -88,6 +88,7 @@ data class TmdbCastMember(
     @SerializedName("name") val name: String,
     @SerializedName("character") val character: String,
     @SerializedName("profile_path") val profilePath: String?,
+    @SerializedName("popularity") val popularity: Float,
 )
 
 data class TmdbCrewMember(
@@ -97,6 +98,7 @@ data class TmdbCrewMember(
     @SerializedName("job") val job: String,
     @SerializedName("name") val name: String,
     @SerializedName("profile_path") val profilePath: String?,
+    @SerializedName("popularity") val popularity: Float,
 )
 
 data class TmdbCreator(
@@ -117,7 +119,10 @@ data class TmdbEpisodeSummary(
     @SerializedName("vote_average")   val voteAverage: Float?,
     @SerializedName("still_path")     val stillPath: String?,
     @SerializedName("air_date")       val airDate: String?,
-)
+) {
+    override fun equals(other: Any?) = other is TmdbEpisodeSummary && other.id == id
+    override fun hashCode() = id.hashCode()
+}
 
 data class TmdbEpisodeDetail(
     @SerializedName("id")             val id: Int,

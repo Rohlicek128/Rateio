@@ -74,6 +74,7 @@ import com.example.rateio.presentation.components.ItemStatusSelector
 import com.example.rateio.presentation.components.LibraryToggle
 import com.example.rateio.presentation.components.PersonCard
 import com.example.rateio.presentation.components.RateItemCard
+import com.example.rateio.presentation.components.RateItemGridCard
 import com.example.rateio.presentation.components.SectionHeader
 import com.example.rateio.presentation.components.SortBySelectionButton
 import com.example.rateio.presentation.components.rating.EpisodeRatingGraph
@@ -81,6 +82,7 @@ import com.example.rateio.presentation.components.rating.ItemProgressBar
 import com.example.rateio.presentation.rating.RateItemDetailScreen
 import com.example.rateio.utils.formatDate
 import com.example.rateio.utils.formatTime
+import kotlin.math.round
 
 
 @Composable
@@ -137,6 +139,8 @@ fun TmdbShowDetailScreen(
             var invertedGrid by remember { mutableStateOf(false) }
 
             val userRatings = viewModel.userRatingsState.collectAsStateWithLifecycle()
+            val listOfRatings = userRatings.value.values.flatMap { it.values }.filterNotNull()
+
             val ratings: Map<Int, Map<Int, Float?>> = when (selectedRatings) {
                 0 -> episodesState.imdbRatings
                 1 -> episodesState.seasonEpisodes.mapValues { (_, episodes) ->
@@ -146,31 +150,68 @@ fun TmdbShowDetailScreen(
                 else -> episodesState.imdbRatings
             }
 
+            var statusTest by remember {
+                mutableStateOf(
+                    if (listOfRatings.size >= show.numberOfEpisodes)
+                        ItemStatus.COMPLETED else ItemStatus.IN_PROGRESS
+                )
+            }
 
+
+            val unwatchedEpisodes = episodesState.seasonEpisodes.mapValues { (season, episodes) ->
+                episodes.filter { episode ->
+                    userRatings.value[season]?.get(episode.episodeNumber) == null
+                }
+            }.flatMap { it.value }
+            val nextToWatchEpisode = if (unwatchedEpisodes.isNotEmpty() && statusTest != ItemStatus.COMPLETED)
+                unwatchedEpisodes.first() else null
+
+            val expandWatchedSeason = true
             if (show.numberOfSeasons == 1) state.expandedSeasons.add(1)
+            else if (expandWatchedSeason && nextToWatchEpisode != null) {
+                state.expandedSeasons.add(nextToWatchEpisode.seasonNumber)
+            }
 
+
+            val sortedBestEpisodes = remember(episodesState.seasonEpisodes, ratings) {
+                episodesState.seasonEpisodes
+                    .flatMap { (_, episodes) -> episodes }
+                    .sortedByDescending { episode ->
+                        ratings[episode.seasonNumber]?.get(episode.episodeNumber) ?: -1f
+                    }
+            }
             val sortedEpisodes = remember(episodesState.seasonEpisodes, ratings, state.sortMode) {
                 episodesState.seasonEpisodes
                     .flatMap { (_, episodes) -> episodes }
                     .let { episodes ->
                         when (state.sortMode) {
-                            SortMode.BY_RATING_BEST -> episodes.sortedByDescending { episode ->
-                                ratings[episode.seasonNumber]?.get(episode.episodeNumber) ?: -1f
-                            }
                             SortMode.BY_RATING_WORST -> episodes.sortedBy { episode ->
                                 ratings[episode.seasonNumber]?.get(episode.episodeNumber) ?: 2f
                             }
                             SortMode.BY_RUNTIME -> episodes.sortedByDescending { episode ->
                                 episode.runtime
                             }
-                            else -> episodes.sortedWith(
-                                compareBy({ it.seasonNumber }, { it.episodeNumber })
-                            )
+                            SortMode.BY_NAME -> episodes.sortedBy { episode ->
+                                episode.name
+                            }
+                            else -> sortedBestEpisodes
                         }
                     }
             }
+            val episodesCount = if (selectedRatings == 2) listOfRatings.size else sortedBestEpisodes.size
+            val sortedEpisodesTop = when {
+                episodesCount >= 10 -> {
+                    sortedBestEpisodes.take(round(episodesCount * 0.1f).toInt().coerceIn(3, 10))
+                }
+                episodesCount in 5..<10 -> {
+                    sortedBestEpisodes.take(1)
+                }
+                else -> {
+                    emptyList()
+                }
+            }
 
-            var statusTest by remember { mutableStateOf(ItemStatus.IN_PROGRESS) }
+            val spoilers = true
 
             RateItemDetailScreen(
                 title = show.name,
@@ -232,7 +273,6 @@ fun TmdbShowDetailScreen(
                                 selected = statusTest,
                                 onStatusSelected = { statusTest = it }
                             ) { openSheet ->
-                                val listOfRatings = userRatings.value.values.flatMap { it.values }.filterNotNull()
                                 val remaining = show.numberOfEpisodes - listOfRatings.size
                                 ItemProgressBar(
                                     modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
@@ -250,38 +290,30 @@ fun TmdbShowDetailScreen(
                         }
 
                         // Next Episode
-                        if (episodesState.seasonEpisodes.isNotEmpty()) {
-                            val unwatchedEpisodes = episodesState.seasonEpisodes.mapValues { (season, episodes) ->
-                                episodes.filter { episode ->
-                                    userRatings.value[season]?.get(episode.episodeNumber) == null
-                                }
-                            }.flatMap { it.value }
-                            val nextToWatchEpisode = if (unwatchedEpisodes.isNotEmpty()) unwatchedEpisodes.first() else null
-
-                            if (nextToWatchEpisode != null &&
-                                nextToWatchEpisode.episodeNumber != show.nextEpisodeToAir?.episodeNumber &&
-                                nextToWatchEpisode.seasonNumber != show.nextEpisodeToAir?.seasonNumber) {
-                                item { SectionHeader("Next Episode") }
-                                item {
-                                    RateItemCard(
-                                        title = nextToWatchEpisode.name,
-                                        subtitle = "Season ${nextToWatchEpisode.seasonNumber}, Episode ${nextToWatchEpisode.episodeNumber}",
-                                        coverImagePath = if (!nextToWatchEpisode.stillPath.isNullOrBlank())
-                                            "https://image.tmdb.org/t/p/w300${nextToWatchEpisode.stillPath}" else null,
-                                        rating = ratings[nextToWatchEpisode.seasonNumber]?.get(nextToWatchEpisode.episodeNumber),
-                                        isLoading = false,
-                                        placeholderRatio = 16f / 9f,
-                                        padding = PaddingValues(horizontal = 16.dp, vertical = 6.dp),
-                                        bubbleText = if (nextToWatchEpisode.runtime > 0) formatTime(nextToWatchEpisode.runtime) else null,
-                                        onClick = { onEpisodeClick(
-                                            show.id,
-                                            nextToWatchEpisode.seasonNumber,
-                                            nextToWatchEpisode.episodeNumber
-                                        ) },
-                                        spoilers = false,
-                                    )
-                                    Spacer(modifier = Modifier.height(8.dp))
-                                }
+                        if (nextToWatchEpisode != null &&
+                            !(nextToWatchEpisode.episodeNumber == show.nextEpisodeToAir?.episodeNumber &&
+                            nextToWatchEpisode.seasonNumber == show.nextEpisodeToAir.seasonNumber)) {
+                            item { SectionHeader("Next Episode") }
+                            item {
+                                RateItemCard(
+                                    title = nextToWatchEpisode.name,
+                                    subtitle = "Season ${nextToWatchEpisode.seasonNumber}, Episode ${nextToWatchEpisode.episodeNumber}",
+                                    coverImagePath = if (!nextToWatchEpisode.stillPath.isNullOrBlank())
+                                        "https://image.tmdb.org/t/p/w300${nextToWatchEpisode.stillPath}" else null,
+                                    rating = ratings[nextToWatchEpisode.seasonNumber]?.get(nextToWatchEpisode.episodeNumber),
+                                    isLoading = false,
+                                    placeholderRatio = 16f / 9f,
+                                    padding = PaddingValues(horizontal = 16.dp, vertical = 6.dp),
+                                    bubbleText = if (nextToWatchEpisode.runtime > 0) formatTime(nextToWatchEpisode.runtime) else null,
+                                    onClick = { onEpisodeClick(
+                                        show.id,
+                                        nextToWatchEpisode.seasonNumber,
+                                        nextToWatchEpisode.episodeNumber
+                                    ) },
+                                    spoilers = spoilers,
+                                    //modifier = Modifier.width(260.dp)
+                                )
+                                Spacer(modifier = Modifier.height(8.dp))
                             }
                         }
 
@@ -314,6 +346,7 @@ fun TmdbShowDetailScreen(
                                     episode.seasonNumber,
                                     episode.episodeNumber
                                 ) },
+                                spoilers = spoilers || (selectedRatings == 2 && ratings[episode.seasonNumber]?.get(episode.episodeNumber) != null)
                             )
                             Spacer(modifier = Modifier.height(8.dp))
                         }
@@ -562,9 +595,11 @@ fun TmdbShowDetailScreen(
                                                     Column {
                                                         episodes.forEach { episode ->
                                                             val rating = ratings[season.seasonNumber]?.get(episode.episodeNumber)
+                                                            val topIndex = sortedEpisodesTop.indexOf(episode)
                                                             RateItemCard(
                                                                 title = episode.name,
                                                                 subtitle = "Episode ${episode.episodeNumber}",
+                                                                overlineText = if (topIndex != -1) "RATED #${topIndex + 1}" else null,
                                                                 coverImagePath = "https://image.tmdb.org/t/p/w300${episode.stillPath}",
                                                                 rating = if (!episodesState.isLoadingRatings && rating == null && ratings[episode.seasonNumber]?.isEmpty() == true)
                                                                     episode.voteAverage?.div(10f) else rating,
@@ -577,6 +612,7 @@ fun TmdbShowDetailScreen(
                                                                     episode.seasonNumber,
                                                                     episode.episodeNumber
                                                                 ) },
+                                                                spoilers = spoilers || (selectedRatings == 2 && rating != null)
                                                             )
                                                         }
                                                         Spacer(modifier = Modifier.height(32.dp))
@@ -590,9 +626,11 @@ fun TmdbShowDetailScreen(
                                                 key = { index, episode -> "ep-${index}-${episode.seasonNumber}-${episode.episodeNumber}"}
                                             ) { index, episode ->
                                                 val rating = ratings[episode.seasonNumber]?.get(episode.episodeNumber)
+                                                val topIndex = sortedEpisodesTop.indexOf(episode)
                                                 RateItemCard(
                                                     title = episode.name,
                                                     subtitle = "S${episode.seasonNumber}E${episode.episodeNumber}",
+                                                    overlineText = if (topIndex != -1) "RATED #${topIndex + 1}" else null,
                                                     coverImagePath = "https://image.tmdb.org/t/p/w300${episode.stillPath}",
                                                     rating = if (!episodesState.isLoadingRatings && rating == null && ratings[episode.seasonNumber]?.isEmpty() == true)
                                                         episode.voteAverage?.div(10f) else rating,
@@ -606,6 +644,7 @@ fun TmdbShowDetailScreen(
                                                         episode.seasonNumber,
                                                         episode.episodeNumber
                                                     ) },
+                                                    spoilers = spoilers || (selectedRatings == 2 && rating != null)
                                                 )
                                             }
                                         }

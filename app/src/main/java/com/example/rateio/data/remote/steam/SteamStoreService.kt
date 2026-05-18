@@ -11,6 +11,7 @@ interface SteamStoreService {
     suspend fun getGames(
         @Query("appids") appids: String,
         @Query("cc") cc: String = "eu",
+        @Query("filters") filters: String = "",
         @Header("accept") accept: String = "application/json",
     ): Map<String, SteamGameDetailResponse>
 

@@ -21,7 +21,6 @@ import kotlinx.coroutines.launch
 
 data class DiscoverState(
     val results: List<RateItem> = emptyList(),
-    //val resultsRatings: List<Float?> = emptyList(),
     val isLoading: Boolean = false,
     val error: String? = null,
 )
@@ -46,6 +45,38 @@ class DiscoverViewModel(
                     else -> emptyList()
                 }
                 _state.update { it.copy(results = results, isLoading = false) }
+
+
+                if (category.type == CategoryType.STEAM_GAMES) {
+                    results.mapIndexed { index, item ->
+                        launch {
+                            val rating = runCatching {
+                                SteamClient.steamStore.getGameReviews(item.externalId ?: "")
+                                    .querySummary?.normalizedRating
+                            }.getOrNull()
+                            _state.update { current ->
+                                val updated = current.results.toMutableList()
+                                if (index < updated.size) updated[index] = updated[index].copy(
+                                    rating = rating
+                                )
+                                current.copy(results = updated)
+                            }
+                        }
+                        launch {
+                            val details = runCatching {
+                                SteamClient.steamStore.getGames(item.externalId ?: "", filters = "basic")[item.externalId]
+                            }.getOrNull()?.data
+
+                            _state.update { current ->
+                                val updated = current.results.toMutableList()
+                                if (index < updated.size) updated[index] = updated[index].copy(
+                                    title = details?.name ?: updated[index].title
+                                )
+                                current.copy(results = updated)
+                            }
+                        }
+                    }
+                }
             } catch (e: Exception) {
                 _state.update { it.copy(error = e.message, isLoading = false) }
             }
