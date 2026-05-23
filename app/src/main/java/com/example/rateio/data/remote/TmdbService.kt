@@ -118,4 +118,27 @@ interface TmdbService {
         @Header("accept") accept: String = "application/json",
         @Header("Authorization") bearer: String = "Bearer " + BuildConfig.TMDB_API_KEY,
     ): TmdbImageResponse
+
+
+    // People
+    @GET("person/{id}")
+    suspend fun getPerson(
+        @Path("id") id: Int,
+        @Query("language") language: String = "en-US",
+        @Query("append_to_response") append: String = "images,combined_credits",
+        @Header("accept") accept: String = "application/json",
+        @Header("Authorization") bearer: String = "Bearer " + BuildConfig.TMDB_API_KEY,
+    ): TmdbPersonDetail
+
+
+    @GET("tv/{id}/external_ids")
+    suspend fun getTvExternalIds(
+        @Path("id") id: Int,
+        @Header("Authorization") bearer: String = "Bearer " + BuildConfig.TMDB_API_KEY,
+    ): TmdbExternalIds
+    @GET("movie/{id}/external_ids")
+    suspend fun getMovieExternalIds(
+        @Path("id") id: Int,
+        @Header("Authorization") bearer: String = "Bearer " + BuildConfig.TMDB_API_KEY,
+    ): TmdbExternalIds
 }

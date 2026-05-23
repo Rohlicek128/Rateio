@@ -27,6 +27,7 @@ data class DiscoverState(
 
 class DiscoverViewModel(
     category: Category,
+    sortBy: String,
 ) : ViewModel() {
     private val _state = MutableStateFlow(DiscoverState())
     val state: StateFlow<DiscoverState> = _state.asStateFlow()
@@ -36,9 +37,9 @@ class DiscoverViewModel(
             _state.update { it.copy(isLoading = true) }
             try {
                 val results = when (category.type) {
-                    CategoryType.TMDB_SHOWS -> TmdbClient.tmdb.discoverShows()
+                    CategoryType.TMDB_SHOWS -> TmdbClient.tmdb.discoverShows(sortBy = sortBy)
                         .results.map { it.toRateItem() }
-                    CategoryType.TMDB_MOVIES -> TmdbClient.tmdb.discoverMovies()
+                    CategoryType.TMDB_MOVIES -> TmdbClient.tmdb.discoverMovies(sortBy = sortBy)
                         .results.map { it.toRateItem() }
                     CategoryType.STEAM_GAMES -> SteamClient.steamApi.getMostPlayedGames()
                         .response.ranks.sortedByDescending { it.peakInGame }.map { it.toRateItem() }
@@ -84,8 +85,8 @@ class DiscoverViewModel(
     }
 
     companion object {
-        fun factory(category: Category) = viewModelFactory {
-            initializer { DiscoverViewModel(category) }
+        fun factory(category: Category, sortBy: String) = viewModelFactory {
+            initializer { DiscoverViewModel(category, sortBy) }
         }
     }
 }

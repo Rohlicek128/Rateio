@@ -17,19 +17,23 @@ fun DiscoverScreen(
     category: Category,
     onItemClick: (externalId: String, type: CategoryType) -> Unit,
     modifier: Modifier = Modifier,
+    title: String,
+    sortBy: String = "popularity.desc",
+    showNullRatings: Boolean = false,
 ) {
     val viewModel: DiscoverViewModel = viewModel(
-        key = category.type.name,
-        factory = DiscoverViewModel.factory(category),
+        key = category.type.name + sortBy,
+        factory = DiscoverViewModel.factory(category, sortBy),
     )
     val state by viewModel.state.collectAsState()
 
     ItemListRow(
         modifier = modifier,
-        title = "Popular",
+        title = title,
         items = state.results,
         isLoading = state.isLoading,
         showRanking = true,
+        showNullRatings = showNullRatings,
         onItemClick = { item ->
             item.externalId?.let { id ->
                 item.externalSource?.let { type ->

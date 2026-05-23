@@ -2,6 +2,7 @@ package com.example.rateio.presentation.rating
 
 import android.graphics.Bitmap
 import android.graphics.BlurMaskFilter
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -15,6 +16,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
@@ -70,6 +72,8 @@ import com.example.rateio.presentation.components.AlertDialogExample
 import com.example.rateio.presentation.components.LibraryToggle
 import com.example.rateio.presentation.components.RateBox
 import com.example.rateio.presentation.components.RatingBottomSheet
+import com.example.rateio.presentation.rating.display.RatingColorBuckets
+import com.example.rateio.presentation.rating.display.getCurrentRatingColorBuckets
 import com.example.rateio.utils.formatCompact
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -90,6 +94,8 @@ fun RateItemDetailScreen(
     categoryName: String? = null,
     ratingLabel: String? = "N/A",
     ratingVotes: Int? = null,
+    showNullRating: Boolean = true,
+    ratingColorBucketsOverride: RatingColorBuckets = getCurrentRatingColorBuckets(),
     extraContent: LazyListScope.() -> Unit = {},
     placeholderRatio: Float = 2f / 3f,
     canAddToLibrary: Boolean = false,
@@ -108,6 +114,7 @@ fun RateItemDetailScreen(
     }
 
     var isSaved by remember { mutableStateOf(false) }
+    var expandDescription by remember { mutableStateOf(false) }
 
     val haptic = LocalHapticFeedback.current
 
@@ -136,7 +143,9 @@ fun RateItemDetailScreen(
                     backdropImageUrl = backdropImageUrl,
                     rating = rating,
                     ratingVotes = ratingVotes,
+                    showNullRating = showNullRating,
                     onRatingSaved = onRatingSaved,
+                    colorBucketsOverride = ratingColorBucketsOverride,
                 )
             }
 
@@ -167,7 +176,11 @@ fun RateItemDetailScreen(
                         text = description,
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                        modifier = Modifier
+                            .padding(horizontal = 16.dp, vertical = 8.dp)
+                            .clickable(onClick = { expandDescription = !expandDescription }),
+                        maxLines = if (expandDescription) Int.MAX_VALUE else 10,
+                        overflow = TextOverflow.Ellipsis,
                     )
                 }
             }
@@ -261,6 +274,8 @@ private fun DetailHeader(
     backdropImageUrl: String?,
     rating: Float?,
     ratingVotes: Int?,
+    showNullRating: Boolean = true,
+    colorBucketsOverride: RatingColorBuckets,
     onRatingSaved: ((Float?) -> Unit)? = null,
 ) {
     /*val backgroundColor = MaterialTheme.colorScheme.background
@@ -320,7 +335,7 @@ private fun DetailHeader(
         modifier = Modifier
             .fillMaxWidth()
             .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(56.dp),
+        verticalArrangement = Arrangement.spacedBy(if (!showNullRating && rating == null) 8.dp else 56.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         PosterWithRating(
@@ -328,7 +343,9 @@ private fun DetailHeader(
             placeholderRatio = placeholderRatio,
             rating = rating,
             ratingVotes = ratingVotes,
-            onRatingSaved = onRatingSaved
+            colorBucketsOverride = colorBucketsOverride,
+            showNullRating = showNullRating,
+            onRatingSaved = onRatingSaved,
         )
 
         Column(
@@ -359,7 +376,9 @@ private fun PosterWithRating(
     imageUrl: String?,
     rating: Float?,
     ratingVotes: Int?,
+    colorBucketsOverride: RatingColorBuckets,
     modifier: Modifier = Modifier,
+    showNullRating: Boolean = true,
     placeholderRatio: Float = 2f / 3f,
     onRatingSaved: ((Float?) -> Unit)? = null,
 ) {
@@ -440,34 +459,37 @@ private fun PosterWithRating(
         }
 
 
-        Column(
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .offset(y = rateBoxOverhang),
-            verticalArrangement = Arrangement.spacedBy(2.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
-            RateBox(
-                rating = if (onRatingSaved == null) rating else ratingPer,
-                roundedCorners = 18.dp,
-                width = 24.dp,
-                minWidth = 42.dp,
-                height = 4.dp,
-                textStyle = MaterialTheme.typography.displayMedium,
-                fontWeight = FontWeight.Bold,
-                loadingSize = 38.dp,
-                onClick = {
-                    showRatingSheet = true
-                }.takeIf { onRatingSaved != null }
-            )
-
-            if (ratingVotes != null && ratingVotes > 0) {
-                Text(
-                    text = "${formatCompact(ratingVotes)} votes",
-                    style = MaterialTheme.typography.bodyMedium,
+        if (showNullRating || rating != null) {
+            Column(
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .offset(y = rateBoxOverhang),
+                verticalArrangement = Arrangement.spacedBy(2.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                RateBox(
+                    rating = if (onRatingSaved == null) rating else ratingPer,
+                    roundedCorners = 18.dp,
+                    width = 24.dp,
+                    minWidth = 42.dp,
+                    height = 4.dp,
+                    textStyle = MaterialTheme.typography.displayMedium,
                     fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant ,
+                    loadingSize = 38.dp,
+                    colorBucketsOverride = colorBucketsOverride,
+                    onClick = {
+                        showRatingSheet = true
+                    }.takeIf { onRatingSaved != null }
                 )
+
+                if (ratingVotes != null && ratingVotes > 0) {
+                    Text(
+                        text = "${formatCompact(ratingVotes)} votes",
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant ,
+                    )
+                }
             }
         }
 

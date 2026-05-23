@@ -25,6 +25,7 @@ fun ItemListRow(
     isLoading: Boolean,
     onItemClick: (RateItem) -> Unit,
     modifier: Modifier = Modifier,
+    showNullRatings: Boolean = true,
     showRanking: Boolean = false,
     itemTrailingContent: (@Composable () -> Unit)? = null,
     emptyContent: (@Composable () -> Unit)? = null,
@@ -58,7 +59,8 @@ fun ItemListRow(
                         padding = PaddingValues(0.dp),
                         rank = if (showRanking) index + 1 else null,
                         onClick = { onItemClick(item) },
-                        leadingRateBoxContent = itemTrailingContent
+                        leadingRateBoxContent = itemTrailingContent,
+                        showNullRatings = showNullRatings,
                     )
                 }
             }

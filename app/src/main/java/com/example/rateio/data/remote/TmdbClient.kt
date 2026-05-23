@@ -12,8 +12,14 @@ object TmdbClient {
     private const val IMDB_BASE_URL = "https://api.imdbapi.dev/"
 
     private val okHttpClient = OkHttpClient.Builder()
+        .addInterceptor { chain ->
+            val request = chain.request().newBuilder()
+                .header("Accept-Encoding", "identity")
+                .build()
+            chain.proceed(request)
+        }
         .addInterceptor(HttpLoggingInterceptor().apply {
-            level = HttpLoggingInterceptor.Level.BODY
+            level = HttpLoggingInterceptor.Level.NONE
         })
         .build()
 

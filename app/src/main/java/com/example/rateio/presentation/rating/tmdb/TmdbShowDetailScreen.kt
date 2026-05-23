@@ -80,6 +80,8 @@ import com.example.rateio.presentation.components.SortBySelectionButton
 import com.example.rateio.presentation.components.rating.EpisodeRatingGraph
 import com.example.rateio.presentation.components.rating.ItemProgressBar
 import com.example.rateio.presentation.rating.RateItemDetailScreen
+import com.example.rateio.presentation.rating.display.RatingColorBucketConstants
+import com.example.rateio.presentation.rating.display.getCurrentRatingColorBuckets
 import com.example.rateio.utils.formatDate
 import com.example.rateio.utils.formatTime
 import kotlin.math.round
@@ -168,7 +170,7 @@ fun TmdbShowDetailScreen(
 
             val expandWatchedSeason = true
             if (show.numberOfSeasons == 1) state.expandedSeasons.add(1)
-            else if (expandWatchedSeason && nextToWatchEpisode != null) {
+            else if (isSaved && expandWatchedSeason && nextToWatchEpisode != null) {
                 state.expandedSeasons.add(nextToWatchEpisode.seasonNumber)
             }
 
@@ -211,7 +213,7 @@ fun TmdbShowDetailScreen(
                 }
             }
 
-            val spoilers = true
+            val spoilers = true || !isSaved
 
             RateItemDetailScreen(
                 title = show.name,
@@ -231,6 +233,7 @@ fun TmdbShowDetailScreen(
                 rating = if (!isSaved) state.imdbRating?.normalizedRating else customRating,
                 ratingVotes = if (!isSaved) state.imdbRating?.voteCount else null,
                 ratingLabel = state.imdbRating?.normalizedRating?.let { "%.1f/10 on IMDb".format(it * 10f) },
+                ratingColorBucketsOverride = if (!isSaved) RatingColorBucketConstants.RC_IMDB_SHOWS else getCurrentRatingColorBuckets(),
                 onRatingSaved = onRatingSaved,
                 onBackClick = onBackClick,
                 canAddToLibrary = false,

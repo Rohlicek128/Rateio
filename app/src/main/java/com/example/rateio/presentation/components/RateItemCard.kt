@@ -2,17 +2,12 @@ package com.example.rateio.presentation.components
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
@@ -37,6 +32,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
+import com.example.rateio.presentation.rating.display.RatingColorBuckets
+import com.example.rateio.presentation.rating.display.getCurrentRatingColorBuckets
 
 
 @Composable
@@ -54,6 +51,7 @@ fun RateItemCard(
     isLoading: Boolean = false,
     rank: Int? = null,
     rankWidth: Dp = 36.dp,
+    colorBucketsOverride: RatingColorBuckets = getCurrentRatingColorBuckets(),
     bubbleText: String? = null,
     spoilers: Boolean = true,
     biggerTitle: Boolean = false,
@@ -183,6 +181,7 @@ fun RateItemCard(
                         textStyle = MaterialTheme.typography.headlineSmall,
                         isLoading = isLoading,
                         //decimalOffset = if (rank != null) 1u else 0u
+                        colorBucketsOverride = colorBucketsOverride,
                     )
                 }
             },
@@ -210,7 +209,9 @@ fun RateItemGridCard(
     padding: PaddingValues = PaddingValues(horizontal = 20.dp, vertical = 6.dp),
     tonalElevation: Dp = 1.dp,
     isLoading: Boolean = false,
+    showNullRatings: Boolean = true,
     rank: Int? = null,
+    colorBucketsOverride: RatingColorBuckets = getCurrentRatingColorBuckets(),
     spoilers: Boolean = true,
     biggerTitle: Boolean = false,
     leadingRateBoxContent: @Composable (() -> Unit)? = null,
@@ -242,29 +243,32 @@ fun RateItemGridCard(
                         }
                     }
 
-                    Surface(
-                        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.0f),
-                        border = null,
-                        modifier = Modifier
-                            .padding(8.dp)
-                            .align(Alignment.BottomEnd),
-                    ) {
-                        Row(
-                            horizontalArrangement = Arrangement.End,
-                            verticalAlignment = Alignment.CenterVertically,
+                    if (showNullRatings) {
+                        Surface(
+                            color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.0f),
+                            border = null,
+                            modifier = Modifier
+                                .padding(8.dp)
+                                .align(Alignment.BottomEnd),
                         ) {
-                            leadingRateBoxContent?.invoke()
+                            Row(
+                                horizontalArrangement = Arrangement.End,
+                                verticalAlignment = Alignment.CenterVertically,
+                            ) {
+                                leadingRateBoxContent?.invoke()
 
-                            RateBox(
-                                rating = rating,
-                                roundedCorners = 10.dp,
-                                width = 12.dp,
-                                minWidth = 36.dp,
-                                height = 2.5.dp,
-                                textStyle = MaterialTheme.typography.headlineSmall,
-                                isLoading = isLoading,
-                                //decimalOffset = if (rank != null) 1u else 0u
-                            )
+                                RateBox(
+                                    rating = rating,
+                                    roundedCorners = 10.dp,
+                                    width = 12.dp,
+                                    minWidth = 36.dp,
+                                    height = 2.5.dp,
+                                    textStyle = MaterialTheme.typography.headlineSmall,
+                                    isLoading = isLoading,
+                                    //decimalOffset = if (rank != null) 1u else 0u
+                                    colorBucketsOverride = colorBucketsOverride,
+                                )
+                            }
                         }
                     }
 

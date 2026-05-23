@@ -5,6 +5,7 @@ enum class CategoryType {
     TMDB_SEASONS,
     TMDB_EPISODES,
     TMDB_MOVIES,
+    TMDB_PEOPLE,
     STEAM_GAMES,
     CUSTOM,
 }

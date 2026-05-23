@@ -4,6 +4,7 @@ import retrofit2.http.GET
 import retrofit2.http.Header
 import retrofit2.http.Path
 import retrofit2.http.Query
+import retrofit2.http.Url
 
 
 interface ImdbService {
@@ -12,6 +13,11 @@ interface ImdbService {
         @Path("imdbId") imdbId: String,
         @Header("accept") accept: String = "application/json",
     ): ImdbTitleDetails
+
+    @GET
+    suspend fun batchGetTitles(
+        @Url url: String,
+    ): ImdbBatchResponse
 
     @GET("titles/{titleId}/episodes")
     suspend fun getEpisodes(

@@ -1,5 +1,6 @@
 package com.example.rateio.presentation.components
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
@@ -12,7 +13,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -29,7 +32,10 @@ fun PersonCard(
     width: Dp = 80.dp,
     height: Dp = 100.dp,
     roundedCorners: Dp = 16.dp,
+    onClick: (() -> Unit)? = null,
 ) {
+    val haptic = LocalHapticFeedback.current
+
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = modifier.width(width),
@@ -39,7 +45,14 @@ fun PersonCard(
             contentDescription = name,
             modifier = Modifier
                 .size(width = width, height = height)
-                .clip(RoundedCornerShape(roundedCorners)),
+                .clip(RoundedCornerShape(roundedCorners))
+                .then(
+                    if (onClick != null) Modifier.clickable(onClick = {
+                        haptic.performHapticFeedback(HapticFeedbackType.ToggleOn)
+                        onClick()
+                    })
+                    else Modifier
+                ),
             placeholderRatio = width / height,
             contentScale = ContentScale.Crop,
         )

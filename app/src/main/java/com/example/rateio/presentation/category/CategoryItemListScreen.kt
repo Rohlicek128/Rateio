@@ -24,9 +24,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.example.rateio.model.Category
+import com.example.rateio.model.CategoryType
 import com.example.rateio.model.RateItem
 import com.example.rateio.presentation.components.RateItemCard
 import com.example.rateio.presentation.components.SectionHeader
+import com.example.rateio.presentation.rating.display.RatingColorBucketConstants
+import com.example.rateio.presentation.rating.display.getCurrentRatingColorBuckets
 
 
 @Composable
@@ -36,7 +40,9 @@ fun CategoryItemListScreen(
     isLoading: Boolean,
     onItemClick: (RateItem) -> Unit,
     modifier: Modifier = Modifier,
+    category: Category? = null,
     showRanking: Boolean = false,
+    ratingColorOverride: Boolean = false,
     itemTrailingContent: (@Composable () -> Unit)? = null,
     headerContent: (@Composable () -> Unit)? = null,
     emptyContent: (@Composable () -> Unit)? = null,
@@ -92,7 +98,14 @@ fun CategoryItemListScreen(
                         padding = PaddingValues(horizontal = 16.dp, vertical = 6.dp),
                         rank = if (showRanking) index + 1 else null,
                         onClick = { onItemClick(item) },
-                        leadingRateBoxContent = itemTrailingContent
+                        leadingRateBoxContent = itemTrailingContent,
+                        colorBucketsOverride = if (ratingColorOverride && category != null) {
+                            when (category.type) {
+                                CategoryType.TMDB_SHOWS -> RatingColorBucketConstants.RC_IMDB_SHOWS
+                                CategoryType.TMDB_MOVIES -> RatingColorBucketConstants.RC_IMDB_MOVIES
+                                else -> getCurrentRatingColorBuckets()
+                            }
+                        } else getCurrentRatingColorBuckets()
                     )
                 }
             }

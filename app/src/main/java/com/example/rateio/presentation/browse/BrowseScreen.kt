@@ -1,15 +1,18 @@
 package com.example.rateio.presentation.browse
 
+import androidx.compose.foundation.focusable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.input.clearText
 import androidx.compose.foundation.text.input.rememberTextFieldState
@@ -84,6 +87,8 @@ fun BrowseScreen(
         ) { collapse ->
             CategoryItemListScreen(
                 title = "",
+                category = state.selectedCategory,
+                ratingColorOverride = true,
                 items = state.results,
                 isLoading = state.isLoading,
                 onItemClick = { item ->
@@ -107,13 +112,35 @@ fun BrowseScreen(
             )
         }
 
-        if (state.selectedCategory != null) {
-            DiscoverScreen(
-                category = state.selectedCategory!!,
-                onItemClick = onItemClick
-            )
-        }
+        LazyColumn(
+            modifier = Modifier.fillMaxSize()
+        ) {
+            if (state.selectedCategory != null) {
+                item {
+                    DiscoverScreen(
+                        title = "Popular",
+                        sortBy = "popularity.desc",
+                        category = state.selectedCategory!!,
+                        onItemClick = onItemClick,
+                        showNullRatings = state.selectedCategory?.type == CategoryType.STEAM_GAMES
+                    )
+                }
 
+                if (state.selectedCategory?.type == CategoryType.TMDB_SHOWS ||
+                    state.selectedCategory?.type == CategoryType.TMDB_MOVIES) {
+                    item {
+                        DiscoverScreen(
+                            title = "Most Rated",
+                            sortBy = "vote_count.desc",
+                            category = state.selectedCategory!!,
+                            onItemClick = onItemClick
+                        )
+                    }
+                }
+            }
+
+            item { Spacer(modifier = Modifier.height(200.dp)) }
+        }
     }
 }
 

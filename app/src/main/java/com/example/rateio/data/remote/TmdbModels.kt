@@ -199,6 +199,53 @@ data class TmdbMovieDetail(
 )
 
 
+data class TmdbPersonDetail(
+    @SerializedName("id") val id: Int,
+    @SerializedName("imdb_id") val imdbId: String?,
+
+    @SerializedName("name") val name: String,
+    @SerializedName("biography") val biography: String?,
+    @SerializedName("profile_path") val profilePath: String?,
+
+    @SerializedName("birthday") val birthday: String?,
+    @SerializedName("place_of_birth") val placeOfBirth: String?,
+    @SerializedName("deathday") val deathday: String?,
+
+    @SerializedName("known_for_department") val knownForDepartment: String?,
+    @SerializedName("popularity") val popularity: Float?,
+
+    @SerializedName("images") val images: TmdbPersonImageResponse?,
+    @SerializedName("combined_credits") val combinedCredits: TmdbPersonCreditsResponse?,
+)
+
+data class TmdbPersonImageResponse(
+    @SerializedName("id") val id: Int,
+    @SerializedName("profiles") val profiles: List<TmdbImage>,
+)
+
+data class TmdbPersonCreditsResponse(
+    @SerializedName("id") val id: Int,
+    @SerializedName("cast") val cast: List<TmdbCastDetail>,
+)
+
+data class TmdbCastDetail(
+    @SerializedName("id") val id: Int,
+    @SerializedName("credit_id") val creditId: String,
+    @SerializedName("media_type") val mediaType: String,
+
+    @SerializedName("original_title") val originalTitle: String?,
+    @SerializedName("original_name") val originalName: String?,
+    @SerializedName("overview") val overview: String?,
+    @SerializedName("release_date") val releaseDate: String?,
+    @SerializedName("first_air_date") val firstAirDate: String?,
+    @SerializedName("poster_path") val posterPath: String?,
+    @SerializedName("vote_average") val voteAverage: Float?,
+    @SerializedName("character") val character: String?,
+
+    @SerializedName("popularity") val popularity: Float?,
+)
+
+
 
 @Serializable
 data class TmdbEpisodeMetadata(
@@ -282,4 +329,15 @@ fun TmdbMovieDetail.toRateItem(categoryId: Long = 0) = RateItem(
 fun TmdbImage.toCarouselImage() = CarouselImage(
     filePath = filePath,
     aspectRatio = aspectRatio,
+)
+
+fun TmdbPersonDetail.toRateItem(categoryId: Long = 0) = RateItem(
+    id = 0,
+    categoryId = categoryId,
+    title = name,
+    subtitle = knownForDepartment,
+    coverImageUrl = profilePath?.let { "https://image.tmdb.org/t/p/original$it" },
+    coverImageLowUrl = profilePath?.let { "https://image.tmdb.org/t/p/w185$it" },
+    externalId = id.toString(),
+    externalSource = CategoryType.TMDB_PEOPLE,
 )

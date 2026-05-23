@@ -24,7 +24,9 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.rateio.presentation.rating.display.RatingColorBuckets
 import com.example.rateio.presentation.rating.display.RatingTransformations
+import com.example.rateio.presentation.rating.display.getCurrentRatingColorBuckets
 import com.example.rateio.presentation.rating.display.getCurrentRatingTransformations
 import com.example.rateio.presentation.rating.display.getRatingColor
 import com.example.rateio.presentation.rating.display.getRoundedRating
@@ -47,12 +49,13 @@ fun RateBox(
     fontWeight: FontWeight = FontWeight.Bold,
     loadingSize: Dp = 28.dp,
     decimalOffset: UInt = 0u,
+    colorBucketsOverride: RatingColorBuckets = getCurrentRatingColorBuckets(),
     isLoading: Boolean = false,
     onClick: (() -> Unit)? = null,
 ) {
     val haptic = LocalHapticFeedback.current
 
-    val colors = getRatingColor(getRoundedRating(rating))
+    val colors = getRatingColor(getRoundedRating(rating), colorBucketsOverride)
     val display = getTransformedRating(rating, decimalOffset)
 
     Surface(

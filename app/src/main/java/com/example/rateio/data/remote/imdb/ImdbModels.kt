@@ -26,6 +26,11 @@ data class ImdbEpisode(
 }
 
 
+data class ImdbBatchResponse(
+    @SerializedName("titles") val titles: List<ImdbTitleDetails>,
+)
+
+
 data class ImdbRating(
     @SerializedName("aggregateRating") val aggregateRating: Float?,
     @SerializedName("voteCount") val voteCount: Int?,

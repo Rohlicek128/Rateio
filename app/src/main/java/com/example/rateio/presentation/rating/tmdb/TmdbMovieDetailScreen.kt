@@ -34,6 +34,8 @@ import com.example.rateio.presentation.components.LibraryToggle
 import com.example.rateio.presentation.components.PersonCard
 import com.example.rateio.presentation.components.SectionHeader
 import com.example.rateio.presentation.rating.RateItemDetailScreen
+import com.example.rateio.presentation.rating.display.RatingColorBucketConstants
+import com.example.rateio.presentation.rating.display.getCurrentRatingColorBuckets
 import com.example.rateio.utils.formatDate
 import com.example.rateio.utils.formatTime
 
@@ -44,6 +46,7 @@ fun TmdbMovieDetailScreen(
     isSaved: Boolean,
     customRating: Float? = null,
     onRatingSaved: ((Float?) -> Unit)? = null,
+    onPersonClick: ((Int) -> Unit)? = null,
     onBackClick: () -> Unit,
 ) {
     val context = LocalContext.current
@@ -92,6 +95,7 @@ fun TmdbMovieDetailScreen(
                 rating = if (!isSaved) state.imdbRating?.normalizedRating else customRating,
                 ratingVotes = if (!isSaved) state.imdbRating?.voteCount else null,
                 ratingLabel = state.imdbRating?.normalizedRating?.let { "%.1f/10 on IMDb".format(it * 10f) },
+                ratingColorBucketsOverride = if (!isSaved) RatingColorBucketConstants.RC_IMDB_MOVIES else getCurrentRatingColorBuckets(),
                 onRatingSaved = onRatingSaved,
                 onBackClick = onBackClick,
                 canAddToLibrary = false,
@@ -139,6 +143,9 @@ fun TmdbMovieDetailScreen(
                                         profilePath = member.profilePath?.let { "https://image.tmdb.org/t/p/w185$it" },
                                         width = 80.dp,
                                         height = 80.dp,
+                                        onClick = {
+                                            onPersonClick?.invoke(member.id)
+                                        },
                                     )
                                 }
                             }
@@ -155,11 +162,14 @@ fun TmdbMovieDetailScreen(
                                 horizontalArrangement = Arrangement.spacedBy(12.dp),
                             ) {
                                 movie.credits?.cast?.takeIf { it.isNotEmpty() }?.let { cast ->
-                                    items(cast.take(10), key = { it.creditId }) { member ->
+                                    items(cast.take(15), key = { it.creditId }) { member ->
                                         PersonCard(
                                             name = member.name,
                                             position = member.character,
                                             profilePath = member.profilePath?.let { "https://image.tmdb.org/t/p/w185$it" },
+                                            onClick = {
+                                                onPersonClick?.invoke(member.id)
+                                            },
                                         )
                                     }
                                 }

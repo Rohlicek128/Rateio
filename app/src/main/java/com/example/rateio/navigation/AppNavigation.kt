@@ -48,6 +48,7 @@ import com.example.rateio.presentation.rating.SavedRateItemScreen
 import com.example.rateio.presentation.rating.steam.SteamGameDetailScreen
 import com.example.rateio.presentation.rating.tmdb.TmdbEpisodeDetailScreen
 import com.example.rateio.presentation.rating.tmdb.TmdbMovieDetailScreen
+import com.example.rateio.presentation.rating.tmdb.TmdbPersonDetailScreen
 import com.example.rateio.presentation.rating.tmdb.TmdbShowDetailScreen
 
 
@@ -188,8 +189,21 @@ fun AppNavigation(navController: NavHostController = rememberNavController()) {
                         movieId = route.movieId,
                         isSaved = false,
                         onBackClick = { navController.popBackStack() },
+                        onPersonClick = { personId ->
+                            navController.navigate(Route.TmdbPersonDetail(personId))
+                        }
                     )
                 }
+
+                composable<Route.TmdbPersonDetail> { back ->
+                    val route = back.toRoute<Route.TmdbPersonDetail>()
+                    TmdbPersonDetailScreen (
+                        personId = route.personId,
+                        isSaved = false,
+                        onBackClick = { navController.popBackStack() },
+                    )
+                }
+
 
                 composable<Route.SteamGameDetail> { back ->
                     val route = back.toRoute<Route.SteamGameDetail>()

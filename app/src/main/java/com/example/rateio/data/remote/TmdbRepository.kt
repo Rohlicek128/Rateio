@@ -1,5 +1,6 @@
 package com.example.rateio.data.remote
 
+import android.util.Log
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
@@ -16,7 +17,10 @@ class TmdbRepository {
                 async {
                     runCatching {
                         seasonNumber to TmdbClient.tmdb.getSeason(showId, seasonNumber).episodes
-                    }.getOrNull()
+                    }.getOrElse { e ->
+                        Log.e("TmdbRepository", "Failed season $seasonNumber: ${e.message}")
+                        null
+                    }
                 }
             }
             .awaitAll()
