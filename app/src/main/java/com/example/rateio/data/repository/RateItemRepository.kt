@@ -97,6 +97,9 @@ class RateItemRepository(private val dao: RateItemDao) {
     suspend fun setStatus(id: Long, status: ItemStatus) =
         dao.updateStatus(id, status.name)
 
+    suspend fun setMetadata(id: Long, metadata: String?) =
+        dao.updateMetadata(id, metadata)
+
     suspend fun delete(item: RateItem) =
         dao.delete(item.toEntity())
 

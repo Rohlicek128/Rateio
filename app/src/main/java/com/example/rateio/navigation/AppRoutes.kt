@@ -6,6 +6,7 @@ import kotlinx.serialization.Serializable
 sealed interface Route {
     @Serializable sealed class TopLevel : Route {
         @Serializable data object Home : TopLevel()
+        @Serializable data object Leaderboard : TopLevel()
         @Serializable data object Browse : TopLevel()
         @Serializable data object Profile : TopLevel()
     }

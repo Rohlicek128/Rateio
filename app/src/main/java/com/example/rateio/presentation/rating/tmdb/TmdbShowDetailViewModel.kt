@@ -9,6 +9,7 @@ import com.example.rateio.data.CategoryRegistry
 import com.example.rateio.data.remote.TmdbClient
 import com.example.rateio.data.remote.TmdbImageResponse
 import com.example.rateio.data.remote.TmdbShowDetail
+import com.example.rateio.data.remote.TmdbShowMetadata
 import com.example.rateio.data.remote.imdb.ImdbRating
 import com.example.rateio.data.remote.imdb.ImdbRatingFetcher
 import com.example.rateio.data.remote.toRateItem
@@ -42,7 +43,7 @@ data class TmdbShowDetailState(
     val show: TmdbShowDetail? = null,
     val imdbRating: ImdbRating? = null,
     val images: TmdbImageResponse? = null,
-    val savedItemId: Long? = null,
+    val savedItem: RateItem? = null,
 
     val selectedEpisodeMode: Int = 0,
     val sortMode: SortMode = SortMode.BY_SEASON,
@@ -86,7 +87,7 @@ class TmdbShowDetailViewModel(
                             externalId = show.id.toString(),
                             categoryId = cat.id,
                         )
-                        if (existing != null) _state.update { it.copy(savedItemId = existing.id) }
+                        if (existing != null) _state.update { it.copy(savedItem = existing) }
                         //itemRepository.deleteId(271)
                     }
                 }
@@ -98,7 +99,7 @@ class TmdbShowDetailViewModel(
 
     @OptIn(ExperimentalCoroutinesApi::class)
     val userRatingsState: StateFlow<Map<Int, Map<Int, Float?>>> = state
-        .map { it.savedItemId }
+        .map { it.savedItem?.id }
         .distinctUntilChanged()
         .flatMapLatest { id ->
             if (id == null) {
@@ -117,13 +118,13 @@ class TmdbShowDetailViewModel(
     fun onToggleSaved(show: TmdbShowDetail) {
         viewModelScope.launch {
             val state = _state.value
-            if (state.savedItemId != null) {
+            if (state.savedItem != null) {
                 itemRepository.delete(RateItem(
-                    id = state.savedItemId,
+                    id = state.savedItem.id,
                     categoryId = categoryRepository.getCategoryByType(CategoryType.TMDB_SHOWS)?.id ?: 0,
                     title = show.name,
                 ))
-                _state.update { it.copy(savedItemId = null) }
+                _state.update { it.copy(savedItem = null) }
             } else {
                 val cat = categoryRepository.getCategoryByType(CategoryType.TMDB_SHOWS)
                     ?: categoryRepository.addCategory(
@@ -131,7 +132,17 @@ class TmdbShowDetailViewModel(
                     ).let { id -> CategoryRegistry.forType(CategoryType.TMDB_SHOWS)!!.copy(id = id) }
 
                 val id = itemRepository.save(show.toRateItem(cat.id))
-                _state.update { it.copy(savedItemId = id) }
+                val item = itemRepository.getById(id)
+                _state.update { it.copy(savedItem = item) }
+            }
+        }
+    }
+
+    fun updateSavedItem() {
+        if (_state.value.savedItem != null) {
+            viewModelScope.launch {
+                val item = itemRepository.getById(_state.value.savedItem!!.id)
+                _state.update { it.copy(savedItem = item) }
             }
         }
     }

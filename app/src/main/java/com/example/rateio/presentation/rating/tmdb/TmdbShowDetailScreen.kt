@@ -59,6 +59,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.rateio.data.CategoryRegistry
 import com.example.rateio.data.db.RateioDatabase
+import com.example.rateio.data.remote.TmdbEpisodeMetadata
+import com.example.rateio.data.remote.TmdbShowMetadata
 import com.example.rateio.data.remote.toCarouselImage
 import com.example.rateio.data.repository.CategoryRepository
 import com.example.rateio.data.repository.RateItemRepository
@@ -74,16 +76,17 @@ import com.example.rateio.presentation.components.ItemStatusSelector
 import com.example.rateio.presentation.components.LibraryToggle
 import com.example.rateio.presentation.components.PersonCard
 import com.example.rateio.presentation.components.RateItemCard
-import com.example.rateio.presentation.components.RateItemGridCard
 import com.example.rateio.presentation.components.SectionHeader
 import com.example.rateio.presentation.components.SortBySelectionButton
 import com.example.rateio.presentation.components.rating.EpisodeRatingGraph
 import com.example.rateio.presentation.components.rating.ItemProgressBar
+import com.example.rateio.presentation.components.settings.ModalShowsSettingsSheet
 import com.example.rateio.presentation.rating.RateItemDetailScreen
 import com.example.rateio.presentation.rating.display.RatingColorBucketConstants
 import com.example.rateio.presentation.rating.display.getCurrentRatingColorBuckets
 import com.example.rateio.utils.formatDate
 import com.example.rateio.utils.formatTime
+import kotlinx.serialization.json.Json
 import kotlin.math.round
 
 
@@ -93,6 +96,7 @@ fun TmdbShowDetailScreen(
     isSaved: Boolean,
     customRating: Float? = null,
     onRatingSaved: ((Float?) -> Unit)? = null,
+    onMetadataSaved: ((String?) -> Unit)? = null,
     onBackClick: () -> Unit,
     onEpisodeClick: (showId: Int, seasonNumber: Int, episodeNumber: Int) -> Unit,
 ) {
@@ -126,6 +130,12 @@ fun TmdbShowDetailScreen(
         }
         state.show != null -> {
             val show = state.show!!
+            val metadata = remember(state.savedItem?.metadataJSON) {
+                state.savedItem?.metadataJSON?.let {
+                    runCatching { Json.decodeFromString<TmdbShowMetadata>(it) }.getOrNull()
+                } ?: TmdbShowMetadata()
+            }
+
             val seasons = show.seasons.filter { it.seasonNumber > 0 }
             val episodesViewModel: TmdbEpisodesViewModel = viewModel(
                 factory = TmdbEpisodesViewModel.factory(
@@ -213,7 +223,24 @@ fun TmdbShowDetailScreen(
                 }
             }
 
-            val spoilers = true || !isSaved
+            val spoilers = metadata.showSpoilers || !isSaved
+            val spoilEpisode = { seasonNumber: Int, episodeNumber: Int ->
+                spoilers || (selectedRatings == 2 && ratings[seasonNumber]?.get(episodeNumber) != null) || selectedRatings != 2
+            }
+
+
+            // Settings
+            var showSettings by remember { mutableStateOf(false) }
+            if (showSettings) {
+                ModalShowsSettingsSheet(
+                    metadata = metadata,
+                    onValueChange = { newMetadata ->
+                        onMetadataSaved?.invoke(Json.encodeToString(newMetadata))
+                        viewModel.updateSavedItem()
+                    },
+                    onDismiss = { showSettings = false }
+                )
+            }
 
             RateItemDetailScreen(
                 title = show.name,
@@ -237,7 +264,7 @@ fun TmdbShowDetailScreen(
                 onRatingSaved = onRatingSaved,
                 onBackClick = onBackClick,
                 canAddToLibrary = false,
-                onOpenSettings = { },
+                onOpenSettings = { showSettings = true },
                 extraContent = {
                     // Library
                     item {
@@ -246,7 +273,7 @@ fun TmdbShowDetailScreen(
                             horizontalArrangement = Arrangement.Center,
                         ) {
                             LibraryToggle(
-                                checked = state.savedItemId != null,
+                                checked = state.savedItem != null,
                                 onCheckedChange = {
                                     viewModel.onToggleSaved(state.show!!)
                                 },
@@ -349,7 +376,7 @@ fun TmdbShowDetailScreen(
                                     episode.seasonNumber,
                                     episode.episodeNumber
                                 ) },
-                                spoilers = spoilers || (selectedRatings == 2 && ratings[episode.seasonNumber]?.get(episode.episodeNumber) != null)
+                                spoilers = spoilEpisode(episode.seasonNumber, episode.episodeNumber)
                             )
                             Spacer(modifier = Modifier.height(8.dp))
                         }
@@ -615,7 +642,7 @@ fun TmdbShowDetailScreen(
                                                                     episode.seasonNumber,
                                                                     episode.episodeNumber
                                                                 ) },
-                                                                spoilers = spoilers || (selectedRatings == 2 && rating != null)
+                                                                spoilers = spoilEpisode(episode.seasonNumber, episode.episodeNumber)
                                                             )
                                                         }
                                                         Spacer(modifier = Modifier.height(32.dp))
@@ -647,7 +674,7 @@ fun TmdbShowDetailScreen(
                                                         episode.seasonNumber,
                                                         episode.episodeNumber
                                                     ) },
-                                                    spoilers = spoilers || (selectedRatings == 2 && rating != null)
+                                                    spoilers = spoilEpisode(episode.seasonNumber, episode.episodeNumber)
                                                 )
                                             }
                                         }

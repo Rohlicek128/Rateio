@@ -246,6 +246,10 @@ data class TmdbCastDetail(
 )
 
 
+@Serializable
+data class TmdbShowMetadata(
+    val showSpoilers: Boolean = true,
+)
 
 @Serializable
 data class TmdbEpisodeMetadata(

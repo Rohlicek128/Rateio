@@ -52,6 +52,12 @@ class SavedRateItemViewModel(
         }
     }
 
+    fun updateMetadata(metadata: String?) {
+        viewModelScope.launch {
+            itemRepository.setMetadata(id, metadata)
+        }
+    }
+
     fun findOrCreateEpisodeAndNavigate(
         showId: Int,
         seasonNumber: Int,

@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Leaderboard
 import androidx.compose.material.icons.filled.LibraryAdd
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Search
@@ -58,6 +59,7 @@ fun AppNavigation(navController: NavHostController = rememberNavController()) {
     val currentDestination = navBackStackEntry?.destination
 
     val isDetailScreen = currentDestination?.hasRoute<Route.TopLevel.Home>() == false &&
+            !currentDestination.hasRoute<Route.TopLevel.Leaderboard>() &&
             !currentDestination.hasRoute<Route.TopLevel.Browse>() &&
             !currentDestination.hasRoute<Route.TopLevel.Profile>()
     val isVisible = !isDetailScreen && currentDestination != null
@@ -86,6 +88,13 @@ fun AppNavigation(navController: NavHostController = rememberNavController()) {
                         onClick = { navController.navigateSingleTop(Route.TopLevel.Home) },
                         icon = { Icon(Icons.Default.LibraryAdd, contentDescription = null) },
                         label = { Text("Ratings", fontWeight = FontWeight.Bold) }
+                    )
+                    // Leaderboard
+                    NavigationBarItem(
+                        selected = currentDestination?.hasRoute<Route.TopLevel.Leaderboard>() == true,
+                        onClick = { navController.navigateSingleTop(Route.TopLevel.Leaderboard) },
+                        icon = { Icon(Icons.Default.Leaderboard, contentDescription = null) },
+                        label = { Text("Leaderboard", fontWeight = FontWeight.Bold) }
                     )
                     // Browse
                     NavigationBarItem(
@@ -121,6 +130,10 @@ fun AppNavigation(navController: NavHostController = rememberNavController()) {
                         contentPadding = globalPadding,
                         onItemClick = { id -> navController.navigate(Route.CategoryDetail(id)) }
                     )
+                }
+
+                composable<Route.TopLevel.Leaderboard> {
+                    Text("Leaderboard")
                 }
 
                 composable<Route.TopLevel.Browse> {
