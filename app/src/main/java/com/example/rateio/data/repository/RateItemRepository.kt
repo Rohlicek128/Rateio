@@ -5,6 +5,7 @@ import com.example.rateio.data.db.RateItemEntity
 import com.example.rateio.data.db.toDomain
 import com.example.rateio.data.db.toEntity
 import com.example.rateio.data.remote.TmdbEpisodeMetadata
+import com.example.rateio.model.CategoryType
 import com.example.rateio.model.ItemStatus
 import com.example.rateio.model.RateItem
 import kotlinx.coroutines.flow.Flow
@@ -40,6 +41,10 @@ class RateItemRepository(private val dao: RateItemDao) {
                     entry.value.associate { it.first.episodeNumber to it.second }
                 }
         }
+    }
+
+    fun observeBySource(source: CategoryType): Flow<List<RateItem>> {
+        return dao.observeBySource(source.name).map { it.map(RateItemEntity::toDomain) }
     }
 
 

@@ -6,6 +6,7 @@ import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Update
+import com.example.rateio.model.CategoryType
 import kotlinx.coroutines.flow.Flow
 
 
@@ -26,6 +27,9 @@ interface RateItemDao {
     WHERE parentId IN (SELECT id FROM rate_items WHERE parentId = :parentId)
 """)
     fun observeGrandchildren(parentId: Long): Flow<List<RateItemEntity>>
+
+    @Query("SELECT * FROM rate_items WHERE externalSource = :source")
+    fun observeBySource(source: String): Flow<List<RateItemEntity>>
 
 
 

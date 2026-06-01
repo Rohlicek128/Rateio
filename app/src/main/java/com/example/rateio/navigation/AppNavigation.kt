@@ -44,6 +44,7 @@ import com.example.rateio.features.home.HomeScreen
 import com.example.rateio.model.CategoryType
 import com.example.rateio.presentation.browse.BrowseScreen
 import com.example.rateio.presentation.category.LibraryCategoryScreen
+import com.example.rateio.presentation.leaderboard.LeaderboardScreen
 import com.example.rateio.presentation.profile.ProfileScreen
 import com.example.rateio.presentation.rating.SavedRateItemScreen
 import com.example.rateio.presentation.rating.steam.SteamGameDetailScreen
@@ -133,7 +134,10 @@ fun AppNavigation(navController: NavHostController = rememberNavController()) {
                 }
 
                 composable<Route.TopLevel.Leaderboard> {
-                    Text("Leaderboard")
+                    LeaderboardScreen(
+                        contentPadding = globalPadding,
+                        onItemClick = { item -> navController.navigate(Route.RateItemDetail(item.id)) }
+                    )
                 }
 
                 composable<Route.TopLevel.Browse> {
