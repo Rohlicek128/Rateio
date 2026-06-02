@@ -10,6 +10,7 @@ import com.example.rateio.data.repository.CategoryRepository
 import com.example.rateio.data.repository.RateItemRepository
 import com.example.rateio.model.Category
 import com.example.rateio.model.CategoryType
+import com.example.rateio.model.ItemStatus
 import com.example.rateio.model.RateItem
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -49,6 +50,12 @@ class SavedRateItemViewModel(
     fun saveRating(rating: Float?) {
         viewModelScope.launch {
             itemRepository.rate(id, rating)
+        }
+    }
+
+    fun updateStatus(status: ItemStatus) {
+        viewModelScope.launch {
+            itemRepository.setStatus(id, status)
         }
     }
 

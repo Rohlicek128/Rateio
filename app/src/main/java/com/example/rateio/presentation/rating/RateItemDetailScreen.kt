@@ -9,39 +9,29 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.calculateEndPadding
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Bookmark
 import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material.icons.filled.Remove
-import androidx.compose.material.icons.outlined.BookmarkBorder
 import androidx.compose.material3.Card
 import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedToggleButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.ToggleButtonDefaults
 import androidx.compose.material3.pulltorefresh.PullToRefreshDefaults
 import androidx.compose.material3.pulltorefresh.pullToRefresh
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -53,22 +43,18 @@ import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Paint
 import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
 import androidx.compose.ui.zIndex
 import androidx.palette.graphics.Palette
 import coil3.toBitmap
 import com.example.rateio.presentation.components.AdaptiveAsyncImage
-import com.example.rateio.presentation.components.AlertDialogExample
 import com.example.rateio.presentation.components.LibraryToggle
 import com.example.rateio.presentation.components.RateBox
 import com.example.rateio.presentation.components.RatingBottomSheet
@@ -96,6 +82,7 @@ fun RateItemDetailScreen(
     ratingVotes: Int? = null,
     showNullRating: Boolean = true,
     ratingColorBucketsOverride: RatingColorBuckets = getCurrentRatingColorBuckets(),
+    headerExtraContent: LazyListScope.() -> Unit = {},
     extraContent: LazyListScope.() -> Unit = {},
     placeholderRatio: Float = 2f / 3f,
     canAddToLibrary: Boolean = false,
@@ -149,6 +136,8 @@ fun RateItemDetailScreen(
                 )
             }
 
+            headerExtraContent()
+
             // Library
             if (canAddToLibrary) {
                 item {
@@ -188,7 +177,6 @@ fun RateItemDetailScreen(
             // Divider before extra content
             item { HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp, horizontal = 16.dp)) }
 
-            // Type-specific content injected here
             extraContent()
 
             item { Spacer(modifier = Modifier.height(200.dp)) }

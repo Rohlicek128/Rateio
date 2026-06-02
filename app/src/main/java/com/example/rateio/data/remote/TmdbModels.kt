@@ -40,6 +40,8 @@ data class TmdbShowDetail(
     @SerializedName("number_of_seasons") val numberOfSeasons: Int,
 
     @SerializedName("vote_average") val voteAverage: Float?,
+    @SerializedName("popularity") val popularity: Float?,
+
     @SerializedName("status") val status: String?,
     @SerializedName("genres") val genres: List<TmdbGenre>,
     @SerializedName("seasons") val seasons: List<TmdbSeason>,
@@ -249,6 +251,7 @@ data class TmdbCastDetail(
 @Serializable
 data class TmdbShowMetadata(
     val showSpoilers: Boolean = true,
+    val numberOfEpisodes: Int = -1,
 )
 
 @Serializable

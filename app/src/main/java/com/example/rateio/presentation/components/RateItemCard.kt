@@ -4,6 +4,7 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -12,6 +13,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -57,6 +59,7 @@ fun RateItemCard(
     bubbleText: String? = null,
     spoilers: Boolean = true,
     biggerTitle: Boolean = false,
+    preciseRatings: Boolean = false,
     leadingRateBoxContent: @Composable (() -> Unit)? = null,
 ) {
     val haptic = LocalHapticFeedback.current
@@ -69,7 +72,7 @@ fun RateItemCard(
         verticalAlignment = Alignment.Top,
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        AnimatedVisibility(visible = rank != null) {
+        /*AnimatedVisibility(visible = rank != null) {
             Text(
                 text = "${rank}.",
                 style = MaterialTheme.typography.headlineSmall,
@@ -78,35 +81,46 @@ fun RateItemCard(
                 modifier = Modifier.width(rankWidth).offset(y = 12.dp),
                 textAlign = TextAlign.End,
             )
-        }
+        }*/
 
 
         ListItem(
-            headlineContent = { Text(
-                title,
-                modifier = Modifier
-                    .offset(x = offset)
-                    .then(if (!spoilers)
-                            Modifier
-                                .clip(RoundedCornerShape(6.dp))
-                                .blur(12.dp)
-                        else Modifier
-                    ),
-                /*modifier = Modifier
-                    .offset(x = offset)
-                    .then(
-                        if (spoilers) Modifier
-                            .clip(RoundedCornerShape(8.dp))
-                            .background(MaterialTheme.colorScheme.surfaceContainerHighest)
-                            .drawWithContent { }
-                        else Modifier
-                    ),*/
-                style = if (biggerTitle) MaterialTheme.typography.headlineSmall else MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-                lineHeight = 1.em,
-                maxLines = if (overlineText == null) 3 else 2,
-                overflow = TextOverflow.Ellipsis,
-            ) },
+            headlineContent = {
+                Column(
+                    verticalArrangement = Arrangement.Bottom,
+                ) {
+                    if (rank != null && overlineText == null) {
+                        Text(
+                            text = "${rank}.",
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.ExtraBold,
+                            color = MaterialTheme.colorScheme.secondaryFixedDim,
+                            modifier = Modifier.offset(x = (-6).dp)
+                        )
+                    }
+
+                    Text(
+                        title,
+                        modifier = Modifier
+                            .offset(x = offset)
+                            .then(if (!spoilers)
+                                Modifier
+                                    .clip(RoundedCornerShape(6.dp))
+                                    .blur(12.dp)
+                            else Modifier
+                            ),
+                        style = if (biggerTitle) MaterialTheme.typography.headlineSmall else MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        lineHeight = 1.em,
+                        maxLines = when {
+                            overlineText != null -> 2
+                            rank != null -> 2
+                            else -> 3
+                        },
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
+            },
             overlineContent = {
                 overlineText?.let { Text(
                     it,
@@ -182,7 +196,7 @@ fun RateItemCard(
                         height = 4.dp,
                         textStyle = MaterialTheme.typography.headlineSmall,
                         isLoading = isLoading,
-                        //decimalOffset = if (rank != null) 1u else 0u
+                        decimalOffset = if (preciseRatings) 1u else 0u,
                         colorBucketsOverride = colorBucketsOverride,
                     )
                 }

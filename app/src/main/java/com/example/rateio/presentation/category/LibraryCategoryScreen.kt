@@ -1,5 +1,7 @@
 package com.example.rateio.presentation.category
 
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.wrapContentWidth
@@ -91,7 +93,10 @@ fun LibraryCategoryScreen(
             items = state.items.sortedWith(compareBy({ -(it.rating ?: -1f) }, { it.title })),
             isLoading = state.isLoading,
             onItemClick = onItemClick,
-            modifier = Modifier.padding(padding),
+            modifier = Modifier.fillMaxSize().padding(
+                top = padding.calculateTopPadding(),
+                bottom = 0.dp
+            ),
             showRanking = true,
         )
     }

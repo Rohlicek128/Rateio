@@ -72,8 +72,9 @@ fun SavedRateItemScreen(
                         showId = item.externalId!!.toInt(),
                         isSaved = true,
                         customRating = item.rating,
-                        onRatingSaved = { rating -> viewModel.saveRating(rating)},
-                        onMetadataSaved = { metadata -> viewModel.updateMetadata(metadata)},
+                        onRatingSaved = viewModel::saveRating,
+                        onStatusSaved = viewModel::updateStatus,
+                        onMetadataSaved = viewModel::updateMetadata,
                         onBackClick = onBackClick,
                         onEpisodeClick = {showId, seasonNumber, episodeNumber ->
                             viewModel.findOrCreateEpisodeAndNavigate(

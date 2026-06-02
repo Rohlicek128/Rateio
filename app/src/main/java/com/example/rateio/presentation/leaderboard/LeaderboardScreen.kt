@@ -59,7 +59,9 @@ fun LeaderboardScreen(
             else -> {
                 CategoryItemListScreen(
                     title = "",
-                    items = state.items.sortedWith(compareBy({ -(it.rating ?: -1f) }, { it.title })),
+                    items = state.items
+                        .filter { it.rating != null }
+                        .sortedWith(compareBy({ -(it.rating ?: -1f) }, { it.title })),
                     placeholderRatio = if (type == CategoryType.TMDB_EPISODES) 16f / 9f else 2f / 3f,
                     isLoading = false,
                     onItemClick = onItemClick,

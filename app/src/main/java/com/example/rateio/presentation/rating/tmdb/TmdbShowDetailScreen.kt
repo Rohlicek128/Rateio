@@ -72,6 +72,7 @@ import com.example.rateio.presentation.components.DisplaySelector
 import com.example.rateio.presentation.components.EpisodeGrid
 import com.example.rateio.presentation.components.EpisodeWrapped
 import com.example.rateio.presentation.components.GenreChips
+import com.example.rateio.presentation.components.ItemStatCard
 import com.example.rateio.presentation.components.ItemStatusSelector
 import com.example.rateio.presentation.components.LibraryToggle
 import com.example.rateio.presentation.components.PersonCard
@@ -87,6 +88,7 @@ import com.example.rateio.presentation.rating.display.getCurrentRatingColorBucke
 import com.example.rateio.utils.formatDate
 import com.example.rateio.utils.formatTime
 import kotlinx.serialization.json.Json
+import java.util.Locale
 import kotlin.math.round
 
 
@@ -96,6 +98,7 @@ fun TmdbShowDetailScreen(
     isSaved: Boolean,
     customRating: Float? = null,
     onRatingSaved: ((Float?) -> Unit)? = null,
+    onStatusSaved: ((ItemStatus) -> Unit)? = null,
     onMetadataSaved: ((String?) -> Unit)? = null,
     onBackClick: () -> Unit,
     onEpisodeClick: (showId: Int, seasonNumber: Int, episodeNumber: Int) -> Unit,
@@ -162,11 +165,14 @@ fun TmdbShowDetailScreen(
                 else -> episodesState.imdbRatings
             }
 
-            var statusTest by remember {
-                mutableStateOf(
-                    if (listOfRatings.size >= show.numberOfEpisodes)
-                        ItemStatus.COMPLETED else ItemStatus.IN_PROGRESS
-                )
+            if (listOfRatings.size >= show.numberOfEpisodes)
+                onStatusSaved?.invoke(ItemStatus.COMPLETED)
+            var status = remember(state.savedItem?.status) {
+                when {
+                    listOfRatings.size >= show.numberOfEpisodes -> ItemStatus.COMPLETED
+                    state.savedItem == null -> ItemStatus.IN_PROGRESS
+                    else -> state.savedItem!!.status
+                }
             }
 
 
@@ -175,7 +181,7 @@ fun TmdbShowDetailScreen(
                     userRatings.value[season]?.get(episode.episodeNumber) == null
                 }
             }.flatMap { it.value }
-            val nextToWatchEpisode = if (unwatchedEpisodes.isNotEmpty() && statusTest != ItemStatus.COMPLETED)
+            val nextToWatchEpisode = if (unwatchedEpisodes.isNotEmpty() && status != ItemStatus.COMPLETED)
                 unwatchedEpisodes.first() else null
 
             val expandWatchedSeason = true
@@ -265,6 +271,28 @@ fun TmdbShowDetailScreen(
                 onBackClick = onBackClick,
                 canAddToLibrary = false,
                 onOpenSettings = { showSettings = true },
+                headerExtraContent = {
+                    //Stats
+                    item {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceEvenly,
+                        ) {
+                            ItemStatCard(
+                                header = "Seasons",
+                                statistic = show.numberOfSeasons.toString(),
+                            )
+                            ItemStatCard(
+                                header = "Episodes",
+                                statistic = show.numberOfEpisodes.toString(),
+                            )
+                            ItemStatCard(
+                                header = "Popularity",
+                                statistic = "%.1f".format(Locale.US, show.popularity),
+                            )
+                        }
+                    }
+                },
                 extraContent = {
                     // Library
                     item {
@@ -300,8 +328,11 @@ fun TmdbShowDetailScreen(
                         item { SectionHeader("Progress") }
                         item {
                             ItemStatusSelector(
-                                selected = statusTest,
-                                onStatusSelected = { statusTest = it }
+                                selected = status,
+                                onStatusSelected = {
+                                    status = it
+                                    onStatusSaved?.invoke(it)
+                                }
                             ) { openSheet ->
                                 val remaining = show.numberOfEpisodes - listOfRatings.size
                                 ItemProgressBar(
@@ -310,7 +341,7 @@ fun TmdbShowDetailScreen(
                                     endValue = show.numberOfEpisodes.toFloat(),
                                     currentString = "Remaining $remaining episode${if (remaining == 1) "" else "s"}",
                                     currentValue = listOfRatings.size.toFloat(),
-                                    status = statusTest,
+                                    status = status,
                                     onClick = {
                                         haptic.performHapticFeedback(HapticFeedbackType.ToggleOn)
                                         openSheet()
