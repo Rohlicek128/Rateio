@@ -59,7 +59,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.rateio.data.CategoryRegistry
 import com.example.rateio.data.db.RateioDatabase
-import com.example.rateio.data.remote.TmdbEpisodeMetadata
 import com.example.rateio.data.remote.TmdbShowMetadata
 import com.example.rateio.data.remote.toCarouselImage
 import com.example.rateio.data.repository.CategoryRepository
@@ -67,6 +66,7 @@ import com.example.rateio.data.repository.RateItemRepository
 import com.example.rateio.model.CategoryType
 import com.example.rateio.model.ItemStatus
 import com.example.rateio.presentation.components.AdaptiveImageCarousel
+import com.example.rateio.presentation.components.CollapsibleHeader
 import com.example.rateio.presentation.components.DateProgressBar
 import com.example.rateio.presentation.components.DisplaySelector
 import com.example.rateio.presentation.components.EpisodeGrid
@@ -167,13 +167,13 @@ fun TmdbShowDetailScreen(
 
             if (listOfRatings.size >= show.numberOfEpisodes)
                 onStatusSaved?.invoke(ItemStatus.COMPLETED)
-            var status = remember(state.savedItem?.status) {
+            var status by remember(state.savedItem?.status) { mutableStateOf(
                 when {
                     listOfRatings.size >= show.numberOfEpisodes -> ItemStatus.COMPLETED
                     state.savedItem == null -> ItemStatus.IN_PROGRESS
                     else -> state.savedItem!!.status
                 }
-            }
+            ) }
 
 
             val unwatchedEpisodes = episodesState.seasonEpisodes.mapValues { (season, episodes) ->
@@ -230,6 +230,7 @@ fun TmdbShowDetailScreen(
             }
 
             val spoilers = metadata.showSpoilers || !isSaved
+            val spoilName = true
             val spoilEpisode = { seasonNumber: Int, episodeNumber: Int ->
                 spoilers || (selectedRatings == 2 && ratings[seasonNumber]?.get(episodeNumber) != null) || selectedRatings != 2
             }
@@ -325,28 +326,37 @@ fun TmdbShowDetailScreen(
 
                     if (isSaved || userRatings.value.isNotEmpty()) {
                         // Progress Bar
-                        item { SectionHeader("Progress") }
                         item {
-                            ItemStatusSelector(
-                                selected = status,
-                                onStatusSelected = {
-                                    status = it
-                                    onStatusSaved?.invoke(it)
+                            val headerName = "Progress"
+                            CollapsibleHeader(
+                                headerName,
+                                isOpened = headerName !in state.collapsedHeaders,
+                                onClick = {
+                                    if (it) state.collapsedHeaders.remove(headerName)
+                                    else state.collapsedHeaders.add(headerName)
                                 }
-                            ) { openSheet ->
-                                val remaining = show.numberOfEpisodes - listOfRatings.size
-                                ItemProgressBar(
-                                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
-                                    endString = "${listOfRatings.size}/${show.numberOfEpisodes} episodes",
-                                    endValue = show.numberOfEpisodes.toFloat(),
-                                    currentString = "Remaining $remaining episode${if (remaining == 1) "" else "s"}",
-                                    currentValue = listOfRatings.size.toFloat(),
-                                    status = status,
-                                    onClick = {
-                                        haptic.performHapticFeedback(HapticFeedbackType.ToggleOn)
-                                        openSheet()
+                            ) {
+                                ItemStatusSelector(
+                                    selected = status,
+                                    onStatusSelected = {
+                                        status = it
+                                        onStatusSaved?.invoke(it)
                                     }
-                                )
+                                ) { openSheet ->
+                                    val remaining = show.numberOfEpisodes - listOfRatings.size
+                                    ItemProgressBar(
+                                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
+                                        endString = "${listOfRatings.size}/${show.numberOfEpisodes} episodes",
+                                        endValue = show.numberOfEpisodes.toFloat(),
+                                        currentString = "Remaining $remaining episode${if (remaining == 1) "" else "s"}",
+                                        currentValue = listOfRatings.size.toFloat(),
+                                        status = status,
+                                        onClick = {
+                                            haptic.performHapticFeedback(HapticFeedbackType.ToggleOn)
+                                            openSheet()
+                                        }
+                                    )
+                                }
                             }
                         }
 
@@ -354,27 +364,36 @@ fun TmdbShowDetailScreen(
                         if (nextToWatchEpisode != null &&
                             !(nextToWatchEpisode.episodeNumber == show.nextEpisodeToAir?.episodeNumber &&
                             nextToWatchEpisode.seasonNumber == show.nextEpisodeToAir.seasonNumber)) {
-                            item { SectionHeader("Next Episode") }
                             item {
-                                RateItemCard(
-                                    title = nextToWatchEpisode.name,
-                                    subtitle = "Season ${nextToWatchEpisode.seasonNumber}, Episode ${nextToWatchEpisode.episodeNumber}",
-                                    coverImagePath = if (!nextToWatchEpisode.stillPath.isNullOrBlank())
-                                        "https://image.tmdb.org/t/p/w300${nextToWatchEpisode.stillPath}" else null,
-                                    rating = ratings[nextToWatchEpisode.seasonNumber]?.get(nextToWatchEpisode.episodeNumber),
-                                    isLoading = false,
-                                    placeholderRatio = 16f / 9f,
-                                    padding = PaddingValues(horizontal = 16.dp, vertical = 6.dp),
-                                    bubbleText = if (nextToWatchEpisode.runtime > 0) formatTime(nextToWatchEpisode.runtime) else null,
-                                    onClick = { onEpisodeClick(
-                                        show.id,
-                                        nextToWatchEpisode.seasonNumber,
-                                        nextToWatchEpisode.episodeNumber
-                                    ) },
-                                    spoilers = spoilers,
-                                    //modifier = Modifier.width(260.dp)
-                                )
-                                Spacer(modifier = Modifier.height(8.dp))
+                                val headerName = "Next Episode"
+                                CollapsibleHeader(
+                                    headerName,
+                                    isOpened = headerName !in state.collapsedHeaders,
+                                    onClick = {
+                                        if (it) state.collapsedHeaders.remove(headerName)
+                                        else state.collapsedHeaders.add(headerName)
+                                    }
+                                ) {
+                                    RateItemCard(
+                                        title = nextToWatchEpisode.name,
+                                        subtitle = "Season ${nextToWatchEpisode.seasonNumber}, Episode ${nextToWatchEpisode.episodeNumber}",
+                                        coverImagePath = if (!nextToWatchEpisode.stillPath.isNullOrBlank())
+                                            "https://image.tmdb.org/t/p/w300${nextToWatchEpisode.stillPath}" else null,
+                                        rating = ratings[nextToWatchEpisode.seasonNumber]?.get(nextToWatchEpisode.episodeNumber),
+                                        isLoading = false,
+                                        placeholderRatio = 16f / 9f,
+                                        padding = PaddingValues(horizontal = 16.dp, vertical = 6.dp),
+                                        bubbleText = if (nextToWatchEpisode.runtime > 0) formatTime(nextToWatchEpisode.runtime) else null,
+                                        onClick = { onEpisodeClick(
+                                            show.id,
+                                            nextToWatchEpisode.seasonNumber,
+                                            nextToWatchEpisode.episodeNumber
+                                        ) },
+                                        spoilers = spoilers,
+                                        spoilName = spoilName,
+                                        //modifier = Modifier.width(260.dp)
+                                    )
+                                }
                             }
                         }
 
@@ -383,53 +402,72 @@ fun TmdbShowDetailScreen(
 
                     // Upcoming Episode
                     if (show.nextEpisodeToAir != null) {
-                        item { SectionHeader("Upcoming Episode") }
                         val episode = show.nextEpisodeToAir
                         item {
-                            DateProgressBar(
-                                startDateString = show.lastEpisodeToAir?.airDate,
-                                endDateString = episode.airDate,
-                                modifier = Modifier.padding(horizontal = 32.dp, vertical = 4.dp)
-                            )
-                        }
-                        item {
-                            RateItemCard(
-                                title = episode.name,
-                                subtitle = "S${episode.seasonNumber}E${episode.episodeNumber}  |  ${formatDate(episode.airDate)}",
-                                coverImagePath = if (!episode.stillPath.isNullOrBlank())
-                                    "https://image.tmdb.org/t/p/w300${episode.stillPath}" else null,
-                                rating = ratings[episode.seasonNumber]?.get(episode.episodeNumber),
-                                isLoading = false,
-                                placeholderRatio = 16f / 9f,
-                                padding = PaddingValues(horizontal = 16.dp, vertical = 6.dp),
-                                onClick = { onEpisodeClick(
-                                    show.id,
-                                    episode.seasonNumber,
-                                    episode.episodeNumber
-                                ) },
-                                spoilers = spoilEpisode(episode.seasonNumber, episode.episodeNumber)
-                            )
-                            Spacer(modifier = Modifier.height(8.dp))
+                            val headerName = "Upcoming Episode"
+                            CollapsibleHeader(
+                                headerName,
+                                isOpened = headerName !in state.collapsedHeaders,
+                                onClick = {
+                                    if (it) state.collapsedHeaders.remove(headerName)
+                                    else state.collapsedHeaders.add(headerName)
+                                }
+                            ) {
+                                Column {
+                                    DateProgressBar(
+                                        startDateString = show.lastEpisodeToAir?.airDate,
+                                        endDateString = episode.airDate,
+                                        modifier = Modifier.padding(horizontal = 32.dp, vertical = 4.dp)
+                                    )
+                                    RateItemCard(
+                                        title = episode.name,
+                                        subtitle = "S${episode.seasonNumber}E${episode.episodeNumber}  |  ${formatDate(episode.airDate)}",
+                                        coverImagePath = if (!episode.stillPath.isNullOrBlank())
+                                            "https://image.tmdb.org/t/p/w300${episode.stillPath}" else null,
+                                        rating = ratings[episode.seasonNumber]?.get(episode.episodeNumber),
+                                        isLoading = false,
+                                        placeholderRatio = 16f / 9f,
+                                        padding = PaddingValues(horizontal = 16.dp, vertical = 6.dp),
+                                        onClick = { onEpisodeClick(
+                                            show.id,
+                                            episode.seasonNumber,
+                                            episode.episodeNumber
+                                        ) },
+                                        spoilers = spoilEpisode(episode.seasonNumber, episode.episodeNumber),
+                                        spoilName = spoilName,
+                                    )
+                                }
+                            }
+                            Spacer(modifier = Modifier.height(4.dp))
                         }
                     }
 
                     // Creators
                     show.createdBy.takeIf { it.isNotEmpty() }?.let { creator ->
-                        item { SectionHeader("Creators") }
                         item {
-                            LazyRow(
-                                modifier = Modifier.height(120.dp),
-                                contentPadding = PaddingValues(horizontal = 16.dp),
-                                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                            val headerName = "Creators"
+                            CollapsibleHeader(
+                                headerName,
+                                isOpened = headerName !in state.collapsedHeaders,
+                                onClick = {
+                                    if (it) state.collapsedHeaders.remove(headerName)
+                                    else state.collapsedHeaders.add(headerName)
+                                }
                             ) {
-                                items(creator.take(10), key = { it.creditId }) { member ->
-                                    PersonCard(
-                                        name = member.name,
-                                        position = null,
-                                        profilePath = member.profilePath?.let { "https://image.tmdb.org/t/p/w185$it" },
-                                        width = 80.dp,
-                                        height = 80.dp,
-                                    )
+                                LazyRow(
+                                    modifier = Modifier.height(120.dp),
+                                    contentPadding = PaddingValues(horizontal = 16.dp),
+                                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                ) {
+                                    items(creator.take(10), key = { it.creditId }) { member ->
+                                        PersonCard(
+                                            name = member.name,
+                                            position = null,
+                                            profilePath = member.profilePath?.let { "https://image.tmdb.org/t/p/w185$it" },
+                                            width = 80.dp,
+                                            height = 80.dp,
+                                        )
+                                    }
                                 }
                             }
                         }
@@ -437,20 +475,29 @@ fun TmdbShowDetailScreen(
 
                     // Cast
                     if (show.credits != null && show.credits.cast.isNotEmpty()) {
-                        item { SectionHeader("Cast") }
                         item {
-                            LazyRow(
-                                modifier = Modifier.height(150.dp),
-                                contentPadding = PaddingValues(horizontal = 16.dp),
-                                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                            val headerName = "Cast"
+                            CollapsibleHeader(
+                                headerName,
+                                isOpened = headerName !in state.collapsedHeaders,
+                                onClick = {
+                                    if (it) state.collapsedHeaders.remove(headerName)
+                                    else state.collapsedHeaders.add(headerName)
+                                }
                             ) {
-                                show.credits?.cast?.takeIf { it.isNotEmpty() }?.let { cast ->
-                                    items(cast.take(10), key = { it.creditId }) { member ->
-                                        PersonCard(
-                                            name = member.name,
-                                            position = member.character,
-                                            profilePath = member.profilePath?.let { "https://image.tmdb.org/t/p/w185$it" },
-                                        )
+                                LazyRow(
+                                    modifier = Modifier.height(150.dp),
+                                    contentPadding = PaddingValues(horizontal = 16.dp),
+                                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                ) {
+                                    show.credits?.cast?.takeIf { it.isNotEmpty() }?.let { cast ->
+                                        items(cast.take(10), key = { it.creditId }) { member ->
+                                            PersonCard(
+                                                name = member.name,
+                                                position = member.character,
+                                                profilePath = member.profilePath?.let { "https://image.tmdb.org/t/p/w185$it" },
+                                            )
+                                        }
                                     }
                                 }
                             }
@@ -459,26 +506,44 @@ fun TmdbShowDetailScreen(
 
                     //Images
                     state.images?.posters?.takeIf { it.isNotEmpty() }?.let { images ->
-                        item { SectionHeader("Posters") }
                         item {
-                            AdaptiveImageCarousel(
-                                baseUrl = "https://image.tmdb.org/t/p/w500",
-                                images.sortedBy { -it.voteCount }.map { it.toCarouselImage() },
-                                itemWidth = 110.dp,
-                                itemHeight = 180.dp,
-                                shape = MaterialTheme.shapes.large,
-                            )
+                            val headerName = "Posters"
+                            CollapsibleHeader(
+                                headerName,
+                                isOpened = headerName !in state.collapsedHeaders,
+                                onClick = {
+                                    if (it) state.collapsedHeaders.remove(headerName)
+                                    else state.collapsedHeaders.add(headerName)
+                                }
+                            ) {
+                                AdaptiveImageCarousel(
+                                    baseUrl = "https://image.tmdb.org/t/p/w500",
+                                    images.sortedBy { -it.voteCount }.map { it.toCarouselImage() },
+                                    itemWidth = 110.dp,
+                                    itemHeight = 180.dp,
+                                    shape = MaterialTheme.shapes.large,
+                                )
+                            }
                         }
                     }
                     state.images?.backdrops?.takeIf { it.isNotEmpty() }?.let { images ->
-                        item { SectionHeader("Backdrops") }
                         item {
-                            AdaptiveImageCarousel(
-                                baseUrl = "https://image.tmdb.org/t/p/w780",
-                                images.sortedBy { -it.voteCount }.map { it.toCarouselImage() },
-                                itemWidth = 240.dp,
-                                shape = MaterialTheme.shapes.large,
-                            )
+                            val headerName = "Backdrops"
+                            CollapsibleHeader(
+                                headerName,
+                                isOpened = headerName !in state.collapsedHeaders,
+                                onClick = {
+                                    if (it) state.collapsedHeaders.remove(headerName)
+                                    else state.collapsedHeaders.add(headerName)
+                                }
+                            ) {
+                                AdaptiveImageCarousel(
+                                    baseUrl = "https://image.tmdb.org/t/p/w780",
+                                    images.sortedBy { -it.voteCount }.map { it.toCarouselImage() },
+                                    itemWidth = 240.dp,
+                                    shape = MaterialTheme.shapes.large,
+                                )
+                            }
                         }
                     }
 
@@ -673,7 +738,8 @@ fun TmdbShowDetailScreen(
                                                                     episode.seasonNumber,
                                                                     episode.episodeNumber
                                                                 ) },
-                                                                spoilers = spoilEpisode(episode.seasonNumber, episode.episodeNumber)
+                                                                spoilers = spoilEpisode(episode.seasonNumber, episode.episodeNumber),
+                                                                spoilName = spoilName,
                                                             )
                                                         }
                                                         Spacer(modifier = Modifier.height(32.dp))
@@ -705,7 +771,8 @@ fun TmdbShowDetailScreen(
                                                         episode.seasonNumber,
                                                         episode.episodeNumber
                                                     ) },
-                                                    spoilers = spoilEpisode(episode.seasonNumber, episode.episodeNumber)
+                                                    spoilers = spoilEpisode(episode.seasonNumber, episode.episodeNumber),
+                                                    spoilName = spoilName,
                                                 )
                                             }
                                         }

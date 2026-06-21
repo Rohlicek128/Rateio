@@ -43,6 +43,7 @@ import androidx.navigation.toRoute
 import com.example.rateio.features.home.HomeScreen
 import com.example.rateio.model.CategoryType
 import com.example.rateio.presentation.browse.BrowseScreen
+import com.example.rateio.presentation.category.EnhancedCategoryScreen
 import com.example.rateio.presentation.category.LibraryCategoryScreen
 import com.example.rateio.presentation.leaderboard.LeaderboardScreen
 import com.example.rateio.presentation.profile.ProfileScreen
@@ -234,7 +235,7 @@ fun AppNavigation(navController: NavHostController = rememberNavController()) {
 
                 composable<Route.CategoryDetail> { back ->
                     val route = back.toRoute<Route.CategoryDetail>()
-                    LibraryCategoryScreen(
+                    EnhancedCategoryScreen (
                         categoryId = route.categoryId,
                         onItemClick = { item ->
                             navController.navigate(Route.RateItemDetail(item.id))

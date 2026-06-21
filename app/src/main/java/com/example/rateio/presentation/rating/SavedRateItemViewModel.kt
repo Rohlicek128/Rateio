@@ -52,6 +52,12 @@ class SavedRateItemViewModel(
             itemRepository.rate(id, rating)
         }
     }
+    fun saveRatingAndComplete(rating: Float?) {
+        viewModelScope.launch {
+            itemRepository.rate(id, rating)
+            itemRepository.setStatus(id, ItemStatus.COMPLETED)
+        }
+    }
 
     fun updateStatus(status: ItemStatus) {
         viewModelScope.launch {

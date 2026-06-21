@@ -101,7 +101,7 @@ fun SavedRateItemScreen(
                             //debug = "  |  ${item.id}, ${item.parentId}",
                             isSaved = true,
                             customRating = item.rating,
-                            onRatingSaved = { rating -> viewModel.saveRating(rating) },
+                            onRatingSaved = viewModel::saveRatingAndComplete,
                             onBackClick = onBackClick,
                             onNextClick = { nextSeason, nextEpisode ->
                                 viewModel.findOrCreateEpisodeAndNavigate(
@@ -127,7 +127,7 @@ fun SavedRateItemScreen(
                         movieId = item.externalId!!.toInt(),
                         isSaved = true,
                         customRating = item.rating,
-                        onRatingSaved = { rating -> viewModel.saveRating(rating) },
+                        onRatingSaved = viewModel::saveRatingAndComplete,
                         onBackClick = onBackClick,
                     )
                 }
@@ -136,7 +136,7 @@ fun SavedRateItemScreen(
                         appId = item.externalId!!,
                         isSaved = true,
                         customRating = item.rating,
-                        onRatingSaved = { rating -> viewModel.saveRating(rating) },
+                        onRatingSaved = viewModel::saveRating,
                         onBackClick = onBackClick,
                     )
                 }
@@ -153,7 +153,7 @@ fun SavedRateItemScreen(
                         onBackClick = onBackClick,
                         canAddToLibrary = true,
                         extraContent = { },
-                        onRatingSaved = { rating -> viewModel.saveRating(rating) },
+                        onRatingSaved = viewModel::saveRating,
                         onOpenSettings = { }
                     )
                 }

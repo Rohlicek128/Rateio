@@ -80,7 +80,7 @@ fun CategoryItemListScreen(
                 Box(modifier = Modifier.fillMaxSize()) {
                     LazyColumn(
                         modifier = Modifier
-                            .padding(start = 12.dp, end = 24.dp)
+                            .padding(start = 18.dp, end = 24.dp)
                             .clip(MaterialTheme.shapes.largeIncreased)
                             .fillMaxSize(),
                         state = listState,
@@ -103,7 +103,6 @@ fun CategoryItemListScreen(
                                         fontWeight = FontWeight.Bold,
                                     )
                                 }
-                                //Spacer(modifier = modifier.width(4.dp))
                                 OutlinedToggleButton(
                                     checked = displayCover,
                                     onCheckedChange = { displayCover = it },

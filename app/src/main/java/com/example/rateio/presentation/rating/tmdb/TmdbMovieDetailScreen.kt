@@ -10,16 +10,23 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularWavyProgressIndicator
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.rateio.data.CategoryRegistry
@@ -28,11 +35,15 @@ import com.example.rateio.data.remote.toCarouselImage
 import com.example.rateio.data.repository.CategoryRepository
 import com.example.rateio.data.repository.RateItemRepository
 import com.example.rateio.model.CategoryType
+import com.example.rateio.model.ItemStatus
 import com.example.rateio.presentation.components.AdaptiveImageCarousel
 import com.example.rateio.presentation.components.GenreChips
+import com.example.rateio.presentation.components.ItemStatusSelector
 import com.example.rateio.presentation.components.LibraryToggle
 import com.example.rateio.presentation.components.PersonCard
 import com.example.rateio.presentation.components.SectionHeader
+import com.example.rateio.presentation.components.label
+import com.example.rateio.presentation.components.rating.ItemProgressBar
 import com.example.rateio.presentation.rating.RateItemDetailScreen
 import com.example.rateio.presentation.rating.display.RatingColorBucketConstants
 import com.example.rateio.presentation.rating.display.getCurrentRatingColorBuckets
@@ -64,6 +75,8 @@ fun TmdbMovieDetailScreen(
     )
     val state by viewModel.state.collectAsState()
 
+    val haptic = LocalHapticFeedback.current
+
     when {
         state.isLoading -> {
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -77,6 +90,8 @@ fun TmdbMovieDetailScreen(
         }
         state.movie != null -> {
             val movie = state.movie!!
+
+            var status by remember { mutableStateOf(ItemStatus.COMPLETED) }
 
             RateItemDetailScreen(
                 title = movie.title,
@@ -124,6 +139,31 @@ fun TmdbMovieDetailScreen(
                                 genres = movie.genres.map { it.name },
                                 modifier = Modifier.padding(horizontal = 16.dp),
                             )
+                        }
+                    }
+
+                    // Status
+                    if (isSaved) {
+                        item { SectionHeader("Status") }
+                        item {
+                            ItemStatusSelector(
+                                selected = status,
+                                onStatusSelected = { status = it }
+                            ) { openSheet ->
+                                FilledTonalButton(
+                                    onClick = {
+                                        haptic.performHapticFeedback(HapticFeedbackType.ToggleOn)
+                                        openSheet()
+                                    },
+                                    shapes = ButtonDefaults.shapes()
+                                ) {
+                                    Text(
+                                        status.label(),
+                                        style = MaterialTheme.typography.labelMedium,
+                                        fontWeight = FontWeight.Bold,
+                                    )
+                                }
+                            }
                         }
                     }
 

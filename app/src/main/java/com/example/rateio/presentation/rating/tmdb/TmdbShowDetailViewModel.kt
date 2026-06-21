@@ -9,7 +9,6 @@ import com.example.rateio.data.CategoryRegistry
 import com.example.rateio.data.remote.TmdbClient
 import com.example.rateio.data.remote.TmdbImageResponse
 import com.example.rateio.data.remote.TmdbShowDetail
-import com.example.rateio.data.remote.TmdbShowMetadata
 import com.example.rateio.data.remote.imdb.ImdbRating
 import com.example.rateio.data.remote.imdb.ImdbRatingFetcher
 import com.example.rateio.data.remote.toRateItem
@@ -47,6 +46,7 @@ data class TmdbShowDetailState(
 
     val selectedEpisodeMode: Int = 0,
     val sortMode: SortMode = SortMode.BY_SEASON,
+    val collapsedHeaders: MutableSet<String> = mutableStateSetOf(),
     val expandedSeasons: MutableSet<Int> = mutableStateSetOf(),
 
     val isLoading: Boolean = false,

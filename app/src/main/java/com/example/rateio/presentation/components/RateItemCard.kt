@@ -58,6 +58,7 @@ fun RateItemCard(
     colorBucketsOverride: RatingColorBuckets = getCurrentRatingColorBuckets(),
     bubbleText: String? = null,
     spoilers: Boolean = true,
+    spoilName: Boolean = true,
     biggerTitle: Boolean = false,
     preciseRatings: Boolean = false,
     leadingRateBoxContent: @Composable (() -> Unit)? = null,
@@ -103,7 +104,7 @@ fun RateItemCard(
                         title,
                         modifier = Modifier
                             .offset(x = offset)
-                            .then(if (!spoilers)
+                            .then(if (!spoilers && !spoilName)
                                 Modifier
                                     .clip(RoundedCornerShape(6.dp))
                                     .blur(12.dp)

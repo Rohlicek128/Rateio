@@ -15,7 +15,7 @@ data class RateItem(
     val rating: Float? = null,
     val ratingWeight: Float = 1.0f,
 
-    val status: ItemStatus = ItemStatus.NONE,
+    val status: ItemStatus = ItemStatus.WATCHLIST,
 
     val metadataJSON: String? = null,
 
