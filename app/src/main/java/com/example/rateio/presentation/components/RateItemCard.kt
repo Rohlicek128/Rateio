@@ -243,7 +243,7 @@ fun RateItemGridCard(
                     modifier = Modifier.padding(bottom = 6.dp),
                 ) {
                     Row(
-                        modifier = Modifier.fillMaxWidth(),
+                        //modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.Center,
                     ) {
                         Card(

@@ -14,6 +14,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.example.rateio.model.CategoryType
 import com.example.rateio.model.RateItem
 import com.example.rateio.presentation.components.RateItemGridCard
 import com.example.rateio.presentation.components.SectionHeader
@@ -27,6 +28,7 @@ fun ItemListRow(
     modifier: Modifier = Modifier,
     showNullRatings: Boolean = true,
     showRanking: Boolean = false,
+    placeholderRatio: Float = 2f / 3f,
     itemTrailingContent: (@Composable () -> Unit)? = null,
     emptyContent: (@Composable () -> Unit)? = null,
 ) {
@@ -55,7 +57,7 @@ fun ItemListRow(
                         subtitle = item.subtitle,
                         coverImagePath = item.coverImageLowUrl,
                         rating = item.rating,
-                        placeholderRatio = 2f / 3f,
+                        //placeholderRatio = if (item.externalSource == CategoryType.TMDB_EPISODES) 16f / 9f else 2f / 3f,
                         padding = PaddingValues(0.dp),
                         rank = if (showRanking) index + 1 else null,
                         onClick = { onItemClick(item) },

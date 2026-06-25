@@ -12,6 +12,14 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface RateItemDao {
+
+    @Query("""
+        SELECT * FROM rate_items
+        WHERE rating IS NOT NULL
+        ORDER BY createdAt DESC
+    """)
+    fun observeItems(): Flow<List<RateItemEntity>>
+
     @Query("""
         SELECT * FROM rate_items 
         WHERE categoryId = :categoryId AND parentId IS NULL 

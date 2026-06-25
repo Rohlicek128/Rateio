@@ -16,6 +16,9 @@ import kotlinx.serialization.json.Json
 
 class RateItemRepository(private val dao: RateItemDao) {
 
+    fun observeItems(): Flow<List<RateItem>> =
+        dao.observeItems().map { it.map(RateItemEntity::toDomain) }
+
     fun observeRootItems(categoryId: Long): Flow<List<RateItem>> =
         dao.observeRootItems(categoryId).map { it.map(RateItemEntity::toDomain) }
 

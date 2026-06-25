@@ -20,6 +20,21 @@ data class RatingTransformations(
     val legendaryPart: Float = 0.96f
 )
 
+fun RatingTransformations.getMinValue(): Float {
+    val rtf = getCurrentRatingTransformations()
+
+    val transformed = (rtf.offset) / (rtf.divider)
+    val decimalPow = 10f.pow((rtf.decimalPlaces).toInt())
+    return round(transformed * decimalPow) / decimalPow
+}
+fun RatingTransformations.getMaxValue(): Float {
+    val rtf = getCurrentRatingTransformations()
+
+    val transformed = (rtf.stepCount.toInt() + rtf.offset) / (rtf.divider)
+    val decimalPow = 10f.pow((rtf.decimalPlaces).toInt())
+    return round(transformed * decimalPow) / decimalPow
+}
+
 fun getTransformedRating(rating: Float?, decimalOffset: UInt = 0u): String {
     val rtf = getCurrentRatingTransformations()
     if (rating == null) return rtf.nullString
@@ -78,6 +93,11 @@ object RatingTransformationsConstants {
     )
     val TF_TEN = RatingTransformations(
         stepCount = 9u,
+        offset = 1f,
+        majorTickFrequency = 1,
+    )
+    val TF_FIVE = RatingTransformations(
+        stepCount = 4u,
         offset = 1f,
         majorTickFrequency = 1,
     )

@@ -14,9 +14,12 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardColors
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularWavyProgressIndicator
 import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.HorizontalDivider
@@ -28,9 +31,12 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
@@ -46,7 +52,15 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.rateio.data.db.RateioDatabase
 import com.example.rateio.data.repository.CategoryRepository
 import com.example.rateio.data.repository.RateItemRepository
+import com.example.rateio.model.CategoryType
+import com.example.rateio.presentation.category.CategoryItemListScreen
+import com.example.rateio.presentation.category.ItemListRow
 import com.example.rateio.presentation.components.AdaptiveAsyncImage
+import com.example.rateio.presentation.rating.display.getCurrentRatingTransformations
+import com.example.rateio.presentation.rating.display.getMaxValue
+import com.example.rateio.presentation.rating.display.getMinValue
+import com.example.rateio.presentation.rating.display.getRatingColor
+import com.example.rateio.presentation.rating.display.getTransformedRating
 
 
 @Composable
@@ -69,6 +83,28 @@ fun ProfileScreen(
     val state by viewModel.state.collectAsState()
 
     val haptic = LocalHapticFeedback.current
+
+
+    val rtf = getCurrentRatingTransformations()
+    val barChartGroups = state.items.groupBy { if (it.rating != null) getTransformedRating(it.rating) else null }
+    val barChartEntries = barChartGroups.mapValues {
+            BarChartEntry(
+                label = it.key ?: "Null",
+                itemCount = it.value.size.coerceAtLeast(0),
+                order = it.value.first().rating ?: 0.0f,
+                color = getRatingColor(it.value.last().rating).backgroundColor
+            )
+        }.toMutableMap()
+    for (i in 0..rtf.stepCount.toInt()) {
+        val ratingGroup = getTransformedRating(i.toFloat() / rtf.stepCount.toFloat())
+        barChartEntries.putIfAbsent(ratingGroup, BarChartEntry(
+            label = ratingGroup,
+            itemCount = 0,
+            order = i.toFloat() / rtf.stepCount.toFloat(),
+        ))
+    }
+
+    var selectedRatingGroup by remember { mutableStateOf("Null") }
 
 
     Scaffold { innerPadding ->
@@ -144,13 +180,13 @@ fun ProfileScreen(
                                     fontWeight = FontWeight.ExtraBold,
                                     textAlign = TextAlign.Center
                                 )
-                                val itemCount = (state.itemCount ?: "N/A").toString()
+                                /*val itemCount = state.items.size.toString()
                                 Text(
                                     text = "Rated $itemCount items",
                                     //modifier = Modifier.padding(horizontal = 4.dp),
                                     style = MaterialTheme.typography.titleMedium,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
+                                )*/
                             }
                         }
                     }
@@ -158,12 +194,68 @@ fun ProfileScreen(
 
                     item { HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp, horizontal = 16.dp)) }
 
-                    items(20) { id ->
-                        Card(
-                            shape = MaterialTheme.shapes.large,
-                            modifier = Modifier.fillMaxWidth().padding(16.dp)
-                        ) {
-                            Text("Something #$id", modifier = Modifier.padding(8.dp), style = MaterialTheme.typography.titleMedium)
+                    item {
+                        StatCardRow(
+                            itemCount = state.items.size,
+                            categoryCount = 3,
+                            modifier = Modifier.padding(horizontal = 20.dp, vertical = 10.dp),
+                        )
+                    }
+
+                    item {
+                        RatingsBarChart(
+                            modifier = Modifier.padding(horizontal = 20.dp, vertical = 10.dp),
+                            entries = barChartEntries.map { it.value }.sortedBy { it.order },
+                            onSelect = {
+                                selectedRatingGroup = it
+                            }
+                        )
+                    }
+
+                    if (selectedRatingGroup != "Null") {
+                        item {
+                            Card(
+                                shape = RoundedCornerShape(28.dp),
+                                modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 10.dp),
+                            ) {
+                                Column(
+                                    modifier = Modifier.padding(horizontal = 0.dp, vertical = 20.dp),
+                                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                                ) {
+                                    Text(
+                                        modifier = Modifier.padding(horizontal = 20.dp),
+                                        text = selectedRatingGroup,
+                                        style = MaterialTheme.typography.headlineMedium,
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = MaterialTheme.colorScheme.onSurface
+                                    )
+
+                                    val selectedItems = barChartGroups[selectedRatingGroup]
+                                    if (selectedItems != null) {
+                                        ItemListRow(
+                                            title = "",
+                                            items = selectedItems.sortedByDescending { it.rating ?: -1f },
+                                            isLoading = false,
+                                            showRanking = true,
+                                            showNullRatings = true,
+                                            //placeholderRatio = 16f / 9f,
+                                            onItemClick = { item ->
+                                                item.externalId?.let { id ->
+                                                    item.externalSource?.let { type ->
+
+                                                    }
+                                                }
+                                            },
+                                            emptyContent = {
+                                                Text(
+                                                    "Nothing Selected",
+                                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                                )
+                                            }
+                                        )
+                                    }
+                                }
+                            }
                         }
                     }
 
