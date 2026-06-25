@@ -38,17 +38,19 @@ import com.example.rateio.model.CategoryType
 import com.example.rateio.model.ItemStatus
 import com.example.rateio.presentation.components.AdaptiveImageCarousel
 import com.example.rateio.presentation.components.GenreChips
+import com.example.rateio.presentation.components.ItemStatCard
 import com.example.rateio.presentation.components.ItemStatusSelector
 import com.example.rateio.presentation.components.LibraryToggle
 import com.example.rateio.presentation.components.PersonCard
 import com.example.rateio.presentation.components.SectionHeader
 import com.example.rateio.presentation.components.label
-import com.example.rateio.presentation.components.rating.ItemProgressBar
 import com.example.rateio.presentation.rating.RateItemDetailScreen
 import com.example.rateio.presentation.rating.display.RatingColorBucketConstants
 import com.example.rateio.presentation.rating.display.getCurrentRatingColorBuckets
+import com.example.rateio.utils.formatCompact
 import com.example.rateio.utils.formatDate
 import com.example.rateio.utils.formatTime
+import java.util.Locale
 
 
 @Composable
@@ -57,6 +59,7 @@ fun TmdbMovieDetailScreen(
     isSaved: Boolean,
     customRating: Float? = null,
     onRatingSaved: ((Float?) -> Unit)? = null,
+    onStatusSaved: ((ItemStatus) -> Unit)? = null,
     onPersonClick: ((Int) -> Unit)? = null,
     onBackClick: () -> Unit,
 ) {
@@ -91,13 +94,16 @@ fun TmdbMovieDetailScreen(
         state.movie != null -> {
             val movie = state.movie!!
 
-            var status by remember { mutableStateOf(ItemStatus.COMPLETED) }
+            var status by remember(state.savedItem?.status) { mutableStateOf(
+                if (state.savedItem == null) ItemStatus.WATCHLIST
+                else state.savedItem!!.status
+            ) }
 
             RateItemDetailScreen(
                 title = movie.title,
                 subtitle = buildString {
                     append(formatDate(movie.releaseDate))
-                    if (movie.status != null) append("  |  ${movie.status}  |  ${formatTime(movie.runtime)}")
+                    if (movie.status != null) append("  |  ${movie.status}")
                 }.ifBlank { null },
                 categoryName = CategoryRegistry.forType(CategoryType.TMDB_MOVIES)?.name,
                 description = movie.overview,
@@ -109,11 +115,38 @@ fun TmdbMovieDetailScreen(
                 },
                 rating = if (!isSaved) state.imdbRating?.normalizedRating else customRating,
                 ratingVotes = if (!isSaved) state.imdbRating?.voteCount else null,
-                ratingLabel = state.imdbRating?.normalizedRating?.let { "%.1f/10 on IMDb".format(it * 10f) },
+                ratingLabel = state.imdbRating?.normalizedRating?.let { "%.1f on IMDb".format(Locale.US, it * 10f) },
                 ratingColorBucketsOverride = if (!isSaved) RatingColorBucketConstants.RC_IMDB_MOVIES else getCurrentRatingColorBuckets(),
                 onRatingSaved = onRatingSaved,
                 onBackClick = onBackClick,
                 canAddToLibrary = false,
+                headerExtraContent = {
+                    //Stats
+                    item {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceEvenly,
+                        ) {
+                            ItemStatCard(
+                                header = "Runtime",
+                                statistic = formatTime(movie.runtime),
+                            )
+                            if (movie.revenue > 0) {
+                                ItemStatCard(
+                                    header = "Revenue",
+                                    statistic = formatCompact(
+                                        movie.revenue,
+                                        decimalsMillion = 0,
+                                    ),
+                                )
+                            }
+                            ItemStatCard(
+                                header = "Popularity",
+                                statistic = "%.1f".format(Locale.US, movie.popularity),
+                            )
+                        }
+                    }
+                },
                 extraContent = {
                     // Library
                     item {
@@ -122,7 +155,7 @@ fun TmdbMovieDetailScreen(
                             horizontalArrangement = Arrangement.Center,
                         ) {
                             LibraryToggle(
-                                checked = state.savedItemId != null,
+                                checked = state.savedItem != null,
                                 onCheckedChange = {
                                     viewModel.onToggleSaved(state.movie!!)
                                 },
@@ -148,14 +181,18 @@ fun TmdbMovieDetailScreen(
                         item {
                             ItemStatusSelector(
                                 selected = status,
-                                onStatusSelected = { status = it }
+                                onStatusSelected = {
+                                    status = it
+                                    onStatusSaved?.invoke(it)
+                                }
                             ) { openSheet ->
                                 FilledTonalButton(
                                     onClick = {
                                         haptic.performHapticFeedback(HapticFeedbackType.ToggleOn)
                                         openSheet()
                                     },
-                                    shapes = ButtonDefaults.shapes()
+                                    shapes = ButtonDefaults.shapes(),
+                                    modifier = Modifier.padding(horizontal = 16.dp)
                                 ) {
                                     Text(
                                         status.label(),

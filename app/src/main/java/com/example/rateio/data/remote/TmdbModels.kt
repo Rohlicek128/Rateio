@@ -196,6 +196,7 @@ data class TmdbMovieDetail(
 
     @SerializedName("revenue") val revenue: Long,
     @SerializedName("budget") val budget: Int,
+    @SerializedName("popularity") val popularity: Float?,
 
     @SerializedName("credits") val credits: TmdbCredits?,
 )

@@ -8,7 +8,6 @@ import androidx.lifecycle.viewmodel.viewModelFactory
 import com.example.rateio.data.CategoryRegistry
 import com.example.rateio.data.remote.TmdbClient
 import com.example.rateio.data.remote.TmdbImageResponse
-import com.example.rateio.data.remote.TmdbShowDetail
 import com.example.rateio.data.remote.imdb.ImdbRating
 import com.example.rateio.data.remote.imdb.ImdbRatingFetcher
 import com.example.rateio.data.remote.toRateItem
@@ -27,7 +26,7 @@ data class TmdbMovieDetailState(
     val movie: TmdbMovieDetail? = null,
     val imdbRating: ImdbRating? = null,
     val images: TmdbImageResponse? = null,
-    val savedItemId: Long? = null,
+    val savedItem: RateItem? = null,
     val isLoading: Boolean = false,
     val error: String? = null,
 )
@@ -66,7 +65,7 @@ class TmdbMovieDetailViewModel(
                             externalId = movie.id.toString(),
                             categoryId = cat.id,
                         )
-                        if (existing != null) _state.update { it.copy(savedItemId = existing.id) }
+                        if (existing != null) _state.update { it.copy(savedItem = existing) }
                     }
                 }
             } catch (e: Exception) {
@@ -78,13 +77,13 @@ class TmdbMovieDetailViewModel(
     fun onToggleSaved(movie: TmdbMovieDetail) {
         viewModelScope.launch {
             val state = _state.value
-            if (state.savedItemId != null) {
+            if (state.savedItem != null) {
                 itemRepository.delete(RateItem(
-                    id = state.savedItemId,
+                    id = state.savedItem.id,
                     categoryId = categoryRepository.getCategoryByType(CategoryType.TMDB_MOVIES)?.id ?: 0,
                     title = movie.title,
                 ))
-                _state.update { it.copy(savedItemId = null) }
+                _state.update { it.copy(savedItem = null) }
             } else {
                 val cat = categoryRepository.getCategoryByType(CategoryType.TMDB_MOVIES)
                     ?: categoryRepository.addCategory(
@@ -92,7 +91,8 @@ class TmdbMovieDetailViewModel(
                     ).let { id -> CategoryRegistry.forType(CategoryType.TMDB_MOVIES)!!.copy(id = id) }
 
                 val id = itemRepository.save(movie.toRateItem(cat.id))
-                _state.update { it.copy(savedItemId = id) }
+                val item = itemRepository.getById(id)
+                _state.update { it.copy(savedItem = item) }
             }
         }
     }

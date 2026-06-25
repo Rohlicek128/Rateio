@@ -78,7 +78,7 @@ fun RateItemDetailScreen(
     onBackClick: () -> Unit,
     modifier: Modifier = Modifier,
     categoryName: String? = null,
-    ratingLabel: String? = "N/A",
+    ratingLabel: String? = null,
     ratingVotes: Int? = null,
     showNullRating: Boolean = true,
     ratingColorBucketsOverride: RatingColorBuckets = getCurrentRatingColorBuckets(),
@@ -130,6 +130,7 @@ fun RateItemDetailScreen(
                     backdropImageUrl = backdropImageUrl,
                     rating = rating,
                     ratingVotes = ratingVotes,
+                    ratingLabel = ratingLabel,
                     showNullRating = showNullRating,
                     onRatingSaved = onRatingSaved,
                     colorBucketsOverride = ratingColorBucketsOverride,
@@ -262,6 +263,7 @@ private fun DetailHeader(
     backdropImageUrl: String?,
     rating: Float?,
     ratingVotes: Int?,
+    ratingLabel: String? = null,
     showNullRating: Boolean = true,
     colorBucketsOverride: RatingColorBuckets,
     onRatingSaved: ((Float?) -> Unit)? = null,
@@ -331,6 +333,7 @@ private fun DetailHeader(
             placeholderRatio = placeholderRatio,
             rating = rating,
             ratingVotes = ratingVotes,
+            ratingLabel = ratingLabel,
             colorBucketsOverride = colorBucketsOverride,
             showNullRating = showNullRating,
             onRatingSaved = onRatingSaved,
@@ -366,6 +369,7 @@ private fun PosterWithRating(
     ratingVotes: Int?,
     colorBucketsOverride: RatingColorBuckets,
     modifier: Modifier = Modifier,
+    ratingLabel: String? = null,
     showNullRating: Boolean = true,
     placeholderRatio: Float = 2f / 3f,
     onRatingSaved: ((Float?) -> Unit)? = null,
@@ -470,9 +474,13 @@ private fun PosterWithRating(
                     }.takeIf { onRatingSaved != null }
                 )
 
-                if (ratingVotes != null && ratingVotes > 0) {
+                val labelText = if (ratingVotes != null && ratingVotes > 0) "${formatCompact(ratingVotes.toLong())} votes"
+                else null
+                //else ratingLabel
+
+                if (labelText != null) {
                     Text(
-                        text = "${formatCompact(ratingVotes)} votes",
+                        text = labelText,
                         style = MaterialTheme.typography.bodyMedium,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onSurfaceVariant ,

@@ -44,6 +44,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.rateio.data.db.RateioDatabase
 import com.example.rateio.data.repository.CategoryRepository
 import com.example.rateio.data.repository.RateItemRepository
+import com.example.rateio.model.CategoryType
 import com.example.rateio.model.ItemStatus
 import com.example.rateio.model.RateItem
 import com.example.rateio.presentation.components.ExpressiveScrollBar
@@ -84,7 +85,8 @@ fun EnhancedCategoryScreen(
     val inProgressItems = remember(state.items) {
         state.items
             .filter { it.status == ItemStatus.IN_PROGRESS || it.status == ItemStatus.WATCHLIST }
-            .sortedBy { it.updatedAt }
+            .sortedByDescending { it.updatedAt }
+            .sortedByDescending { it.status }
     }
 
     // Filter and sort the main list based on user selection
@@ -147,6 +149,9 @@ fun EnhancedCategoryScreen(
                 contentPadding = PaddingValues(bottom = 80.dp),
                 state = listState,
             ) {
+                //if (state.category?.type == CategoryType.TMDB_MOVIES) {
+                //    viewModel.editAll()
+                //}
                 // --- SECTION 1: IN PROGRESS CAROUSEL ---
                 if (inProgressItems.isNotEmpty()) {
                     item {
@@ -162,7 +167,6 @@ fun EnhancedCategoryScreen(
                             horizontalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
                             items(inProgressItems) { item ->
-                                // Use a more compact or square version of your RateItemCard for the carousel
                                 RateItemGridCard(
                                     title = item.title,
                                     subtitle = item.subtitle,
@@ -170,6 +174,7 @@ fun EnhancedCategoryScreen(
                                     rating = item.rating,
                                     placeholderRatio = 2f / 3f,
                                     padding = PaddingValues(horizontal = 0.dp, vertical = 6.dp),
+                                    showNullRatings = item.status != ItemStatus.WATCHLIST,
                                     onClick = { onItemClick(item) },
                                 )
                             }

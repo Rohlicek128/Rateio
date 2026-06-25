@@ -130,7 +130,6 @@ fun TmdbPersonDetailScreen(
 
                     // Movies
                     if (person.combinedCredits != null && person.combinedCredits.cast.isNotEmpty()) {
-                        item { SectionHeader("Movies") }
                         person.combinedCredits.cast
                             .groupBy { it.mediaType }
                             .forEach { (media, credits) ->
@@ -141,16 +140,18 @@ fun TmdbPersonDetailScreen(
                                     .forEach { (year, credits) ->
                                         item { SectionHeader(if (year.isNullOrBlank()) "Unknown" else year) }
                                         items(credits, key = { it.creditId }) { credit ->
-                                            RateItemCard(
-                                                title = credit.originalTitle ?: credit.originalName ?: "N/A",
-                                                subtitle = "${credit.character}",
-                                                coverImagePath = credit.posterPath?.let { "https://image.tmdb.org/t/p/w185$it" },
-                                                rating = credit.voteAverage?.let { if (it > 0f) it.div(10f) else null },
-                                                placeholderRatio = 2f / 3f,
-                                                padding = PaddingValues(horizontal = 24.dp, vertical = 6.dp),
-                                                onClick = { },
-                                                colorBucketsOverride = RatingColorBucketConstants.RC_IMDB_MOVIES,
-                                            )
+                                            if (credit.character == null || !credit.character.contains("Self")) {
+                                                RateItemCard(
+                                                    title = credit.originalTitle ?: credit.originalName ?: "N/A",
+                                                    subtitle = credit.character,
+                                                    coverImagePath = credit.posterPath?.let { "https://image.tmdb.org/t/p/w185$it" },
+                                                    rating = credit.voteAverage?.let { if (it > 0f) it.div(10f) else null },
+                                                    placeholderRatio = 2f / 3f,
+                                                    padding = PaddingValues(horizontal = 24.dp, vertical = 6.dp),
+                                                    onClick = { },
+                                                    colorBucketsOverride = RatingColorBucketConstants.RC_IMDB_MOVIES,
+                                                )
+                                            }
                                         }
                                     }
                             }

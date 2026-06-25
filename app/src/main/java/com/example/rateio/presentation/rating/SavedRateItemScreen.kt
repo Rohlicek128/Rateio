@@ -128,6 +128,7 @@ fun SavedRateItemScreen(
                         isSaved = true,
                         customRating = item.rating,
                         onRatingSaved = viewModel::saveRatingAndComplete,
+                        onStatusSaved = viewModel::updateStatus,
                         onBackClick = onBackClick,
                     )
                 }

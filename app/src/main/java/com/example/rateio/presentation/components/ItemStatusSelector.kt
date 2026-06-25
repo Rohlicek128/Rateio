@@ -33,7 +33,9 @@ fun ItemStatusSelector(
     }
 
     if (showSheet) {
-        val sheetState = rememberModalBottomSheetState()
+        val sheetState = rememberModalBottomSheetState(
+            skipPartiallyExpanded = true
+        )
 
         ModalBottomSheet(
             onDismissRequest = { showSheet = false },
