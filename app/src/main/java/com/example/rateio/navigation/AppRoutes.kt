@@ -11,6 +11,13 @@ sealed interface Route {
         @Serializable data object Profile : TopLevel()
     }
 
+    @Serializable sealed class SettingsLevel : Route {
+        @Serializable data object SettingsTop : SettingsLevel()
+        @Serializable data object Rating : SettingsLevel()
+        @Serializable data object Categories : SettingsLevel()
+    }
+
+
     @Serializable data class CategoryDetail(val categoryId: Long) : Route
 
     @Serializable data class RateItemDetail(val itemId: Long) : Route

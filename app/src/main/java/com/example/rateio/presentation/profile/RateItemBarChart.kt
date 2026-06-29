@@ -50,7 +50,7 @@ fun RatingsBarChart(
 ) {
     Card(
         shape = RoundedCornerShape(28.dp),
-        //colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.45f)),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.25f)),
         modifier = modifier,
     ) {
         Column(
@@ -83,8 +83,8 @@ fun BarChart(
     val trackColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.10f)
 
     val spacing = 6.dp
-    val minItemWidth = 22.dp
-    val maxItemWidth = 68.dp
+    val minItemWidth = 20.dp
+    val maxItemWidth = 88.dp
     val chartHeight = 236.dp
     val labelMaxLines = 1
     val horizontalContentPadding = 16.dp
@@ -139,7 +139,8 @@ fun BarChart(
                             Text(
                                 text = entry.itemCount.toString(),
                                 style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                color = if (entry.itemCount > 0) MaterialTheme.colorScheme.onSurfaceVariant
+                                    else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.25f),
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis
                             )

@@ -84,9 +84,13 @@ fun ProfileScreen(
 
     val haptic = LocalHapticFeedback.current
 
+    CategoryType.entries.forEach { state.selectedCategories.add(it) }
+
 
     val rtf = getCurrentRatingTransformations()
-    val barChartGroups = state.items.groupBy { if (it.rating != null) getTransformedRating(it.rating) else null }
+    val barChartGroups = state.items
+        .filter { it.externalSource in state.selectedCategories }
+        .groupBy { if (it.rating != null) getTransformedRating(it.rating) else null }
     val barChartEntries = barChartGroups.mapValues {
             BarChartEntry(
                 label = it.key ?: "Null",
@@ -196,8 +200,8 @@ fun ProfileScreen(
 
                     item {
                         StatCardRow(
-                            itemCount = state.items.size,
-                            categoryCount = 3,
+                            itemCount = barChartGroups.values.sumOf { it.size },
+                            categoryCount = state.selectedCategories.size,
                             modifier = Modifier.padding(horizontal = 20.dp, vertical = 10.dp),
                         )
                     }

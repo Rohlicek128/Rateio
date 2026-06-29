@@ -31,6 +31,7 @@ import kotlin.reflect.KClass
 fun SavedRateItemScreen(
     itemId: Long,
     onChildClick: (childId: Long, parentId: Long) -> Unit,
+    onPersonClick: (Int) -> Unit,
     onBackClick: () -> Unit,
 ) {
     val context = LocalContext.current
@@ -129,6 +130,7 @@ fun SavedRateItemScreen(
                         customRating = item.rating,
                         onRatingSaved = viewModel::saveRatingAndComplete,
                         onStatusSaved = viewModel::updateStatus,
+                        onPersonClick = onPersonClick,
                         onBackClick = onBackClick,
                     )
                 }

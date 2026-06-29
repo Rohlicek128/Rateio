@@ -254,7 +254,7 @@ fun TmdbShowDetailScreen(
                 subtitle = buildString {
                     show.firstAirDate?.take(4)?.let { append(it) }
                     show.lastAirDate?.take(4)?.let { append(" - $it") }
-                    if (show.status != null) append("  |  ${show.status}")
+                    if (show.status != null && show.status != "Ended") append("  |  ${show.status}")
                 }.ifBlank { null },
                 categoryName = CategoryRegistry.forType(CategoryType.TMDB_SHOWS)?.name,
                 description = show.overview,
@@ -421,7 +421,7 @@ fun TmdbShowDetailScreen(
                                     )
                                     RateItemCard(
                                         title = episode.name,
-                                        subtitle = "S${episode.seasonNumber}E${episode.episodeNumber}  |  ${formatDate(episode.airDate)}",
+                                        subtitle = "S${episode.seasonNumber}E${episode.episodeNumber}  |  ${formatDate(episode.airDate, pattern = "MMM. d")}",
                                         coverImagePath = if (!episode.stillPath.isNullOrBlank())
                                             "https://image.tmdb.org/t/p/w300${episode.stillPath}" else null,
                                         rating = ratings[episode.seasonNumber]?.get(episode.episodeNumber),

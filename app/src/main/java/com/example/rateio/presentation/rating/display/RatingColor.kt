@@ -19,8 +19,9 @@ data class RatingColorBuckets(
 
 fun getRatingColor(rating: Float?, buckets: RatingColorBuckets = getCurrentRatingColorBuckets()): RatingColor {
     if (rating == null) return buckets.nullBucket
+    val transformedRating = getRoundedRating(rating)!!
 
-    buckets.buckets.forEach { if (it.equalOrGreaterThen != null && rating >= it.equalOrGreaterThen) return it }
+    buckets.buckets.forEach { if (it.equalOrGreaterThen != null && transformedRating >= it.equalOrGreaterThen) return it }
     return buckets.nullBucket
 }
 

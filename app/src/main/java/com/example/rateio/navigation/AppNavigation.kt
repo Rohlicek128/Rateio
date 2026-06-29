@@ -31,7 +31,6 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.zIndex
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
@@ -44,7 +43,6 @@ import com.example.rateio.features.home.HomeScreen
 import com.example.rateio.model.CategoryType
 import com.example.rateio.presentation.browse.BrowseScreen
 import com.example.rateio.presentation.category.EnhancedCategoryScreen
-import com.example.rateio.presentation.category.LibraryCategoryScreen
 import com.example.rateio.presentation.leaderboard.LeaderboardScreen
 import com.example.rateio.presentation.profile.ProfileScreen
 import com.example.rateio.presentation.rating.SavedRateItemScreen
@@ -53,6 +51,9 @@ import com.example.rateio.presentation.rating.tmdb.TmdbEpisodeDetailScreen
 import com.example.rateio.presentation.rating.tmdb.TmdbMovieDetailScreen
 import com.example.rateio.presentation.rating.tmdb.TmdbPersonDetailScreen
 import com.example.rateio.presentation.rating.tmdb.TmdbShowDetailScreen
+import com.example.rateio.presentation.settings.SettingsCategoriesScreen
+import com.example.rateio.presentation.settings.SettingsRatingScreen
+import com.example.rateio.presentation.settings.SettingsScreen
 
 
 @Composable
@@ -161,8 +162,34 @@ fun AppNavigation(navController: NavHostController = rememberNavController()) {
                 composable<Route.TopLevel.Profile> {
                     ProfileScreen(
                         onOpenSettings = {
-
+                            navController.navigate(Route.SettingsLevel.SettingsTop)
                         }
+                    )
+                }
+
+                composable<Route.SettingsLevel.SettingsTop> {
+                    SettingsScreen(
+                        onRatingClick = {
+                            navController.navigate(Route.SettingsLevel.Rating) {
+                                popUpTo<Route.SettingsLevel.SettingsTop>()
+                            }
+                        },
+                        onCategoriesClick = {
+                            navController.navigate(Route.SettingsLevel.Categories) {
+                                popUpTo<Route.SettingsLevel.SettingsTop>()
+                            }
+                        },
+                        onBackClick = { navController.popBackStack() },
+                    )
+                }
+                composable<Route.SettingsLevel.Rating> {
+                    SettingsRatingScreen(
+                        onBackClick = { navController.popBackStack() },
+                    )
+                }
+                composable<Route.SettingsLevel.Categories> {
+                    SettingsCategoriesScreen(
+                        onBackClick = { navController.popBackStack() },
                     )
                 }
 
@@ -252,6 +279,9 @@ fun AppNavigation(navController: NavHostController = rememberNavController()) {
                             navController.navigate(Route.RateItemDetail(childId)) {
                                 popUpTo(Route.RateItemDetail(parentId))
                             }
+                        },
+                        onPersonClick = { personId ->
+                            navController.navigate(Route.TmdbPersonDetail(personId))
                         },
                         onBackClick = { navController.popBackStack() },
                     )

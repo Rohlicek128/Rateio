@@ -1,11 +1,13 @@
 package com.example.rateio.presentation.profile
 
+import androidx.compose.runtime.mutableStateSetOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.example.rateio.data.repository.CategoryRepository
 import com.example.rateio.data.repository.RateItemRepository
+import com.example.rateio.model.CategoryType
 import com.example.rateio.model.RateItem
 import com.example.rateio.presentation.leaderboard.LeaderboardState
 import kotlinx.coroutines.Dispatchers
@@ -22,6 +24,8 @@ import kotlinx.coroutines.launch
 
 data class ProfileItemState(
     val items: List<RateItem> = emptyList(),
+    val selectedCategories: MutableSet<CategoryType> = mutableStateSetOf(),
+
     val isLoading: Boolean = false,
     val error: String? = null,
 )

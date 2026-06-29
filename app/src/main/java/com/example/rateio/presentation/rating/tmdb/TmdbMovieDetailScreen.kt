@@ -103,7 +103,7 @@ fun TmdbMovieDetailScreen(
                 title = movie.title,
                 subtitle = buildString {
                     append(formatDate(movie.releaseDate))
-                    if (movie.status != null) append("  |  ${movie.status}")
+                    if (movie.status != null && movie.status != "Released") append("  |  ${movie.status}")
                 }.ifBlank { null },
                 categoryName = CategoryRegistry.forType(CategoryType.TMDB_MOVIES)?.name,
                 description = movie.overview,

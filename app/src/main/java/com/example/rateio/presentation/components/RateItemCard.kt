@@ -1,6 +1,8 @@
 package com.example.rateio.presentation.components
 
+import android.graphics.Bitmap
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -19,10 +21,16 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.ListItem
+import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.blur
@@ -36,8 +44,13 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
+import androidx.palette.graphics.Palette
+import coil3.toBitmap
 import com.example.rateio.presentation.rating.display.RatingColorBuckets
 import com.example.rateio.presentation.rating.display.getCurrentRatingColorBuckets
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 
 @Composable
@@ -66,151 +79,153 @@ fun RateItemCard(
     val haptic = LocalHapticFeedback.current
     val offset = (-6).dp
 
-    Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(padding),
-        verticalAlignment = Alignment.Top,
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-    ) {
-        /*AnimatedVisibility(visible = rank != null) {
-            Text(
-                text = "${rank}.",
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.ExtraBold,
+    //val scope = rememberCoroutineScope()
+    //var glowColor by remember { mutableStateOf(Color.Transparent) }
+
+    ListItem(
+        headlineContent = {
+            Column(
+                verticalArrangement = Arrangement.Bottom,
+            ) {
+                if (rank != null && overlineText == null) {
+                    Text(
+                        text = "${rank}.",
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.ExtraBold,
+                        color = MaterialTheme.colorScheme.secondaryFixedDim,
+                        modifier = Modifier.offset(x = (-6).dp)
+                    )
+                }
+
+                Text(
+                    title,
+                    modifier = Modifier
+                        .offset(x = offset)
+                        .then(if (!spoilers && !spoilName)
+                            Modifier
+                                .clip(RoundedCornerShape(6.dp))
+                                .blur(12.dp)
+                        else Modifier
+                        ),
+                    style = if (biggerTitle) MaterialTheme.typography.headlineSmall else MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    lineHeight = 1.em,
+                    maxLines = when {
+                        overlineText != null -> 2
+                        rank != null -> 2
+                        else -> 3
+                    },
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
+        },
+        overlineContent = {
+            overlineText?.let { Text(
+                it,
+                modifier = Modifier.offset(x = offset),
+                color = Color(0xFFF4D03F),
+                fontWeight = FontWeight.Bold,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            ) }
+        },
+        supportingContent = {
+            subtitle?.let { Text(
+                it,
+                modifier = Modifier.offset(x = offset),
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.width(rankWidth).offset(y = 12.dp),
-                textAlign = TextAlign.End,
-            )
-        }*/
-
-
-        ListItem(
-            headlineContent = {
-                Column(
-                    verticalArrangement = Arrangement.Bottom,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            ) }
+        },
+        leadingContent = {
+            if (coverImagePath != null) {
+                Box (
+                    modifier = Modifier.offset(x = offset),
                 ) {
-                    if (rank != null && overlineText == null) {
-                        Text(
-                            text = "${rank}.",
-                            style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.ExtraBold,
-                            color = MaterialTheme.colorScheme.secondaryFixedDim,
-                            modifier = Modifier.offset(x = (-6).dp)
+                    Card(
+                        shape = MaterialTheme.shapes.medium,
+                    ) {
+                        AdaptiveAsyncImage(
+                            model = coverImagePath,
+                            contentDescription = "Cover image",
+                            maxWidth = 120.dp,
+                            maxHeight = 120.dp,
+                            placeholderRatio = placeholderRatio,
+                            blurred = !spoilers,
+                            /*onSuccess = { state ->
+                                scope.launch(Dispatchers.IO) {
+                                    val hardwareBitmap = state.result.image.toBitmap()
+                                    val bitmap = hardwareBitmap.copy(Bitmap.Config.ARGB_8888, false)
+
+                                    val palette = Palette.from(bitmap).generate()
+                                    val argb = palette.dominantSwatch?.rgb
+                                        ?: palette.vibrantSwatch?.rgb
+                                        ?: palette.mutedSwatch?.rgb
+                                        ?: palette.lightVibrantSwatch?.rgb
+
+                                    withContext(Dispatchers.Main) {
+                                        glowColor = argb?.let { Color(it) } ?: Color.Transparent
+                                    }
+                                }
+                            }*/
                         )
                     }
 
-                    Text(
-                        title,
-                        modifier = Modifier
-                            .offset(x = offset)
-                            .then(if (!spoilers && !spoilName)
-                                Modifier
-                                    .clip(RoundedCornerShape(6.dp))
-                                    .blur(12.dp)
-                            else Modifier
-                            ),
-                        style = if (biggerTitle) MaterialTheme.typography.headlineSmall else MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        lineHeight = 1.em,
-                        maxLines = when {
-                            overlineText != null -> 2
-                            rank != null -> 2
-                            else -> 3
-                        },
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                }
-            },
-            overlineContent = {
-                overlineText?.let { Text(
-                    it,
-                    modifier = Modifier.offset(x = offset),
-                    color = Color(0xFFF4D03F),
-                    fontWeight = FontWeight.Bold,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                ) }
-            },
-            supportingContent = {
-                subtitle?.let { Text(
-                    it,
-                    modifier = Modifier.offset(x = offset),
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                ) }
-            },
-            leadingContent = {
-                if (coverImagePath != null) {
-                    Box (
-                        modifier = Modifier.offset(x = offset),
-                    ) {
-                        Card(
-                            shape = MaterialTheme.shapes.medium,
+                    if (bubbleText != null) {
+                        Surface(
+                            color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f),
+                            contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                            shape = RoundedCornerShape(16.dp),
+                            border = null,
+                            modifier = Modifier
+                                .padding(4.dp)
+                                .align(Alignment.BottomStart),
                         ) {
-                            AdaptiveAsyncImage(
-                                model = coverImagePath,
-                                contentDescription = "Cover image",
-                                maxWidth = 120.dp,
-                                maxHeight = 120.dp,
-                                placeholderRatio = placeholderRatio,
-                                blurred = !spoilers,
+                            Text(
+                                bubbleText,
+                                modifier = Modifier.padding(horizontal = 7.dp, vertical = 1.dp),
+                                style = MaterialTheme.typography.labelMedium,
+                                maxLines = 1,
                             )
                         }
-
-                        if (bubbleText != null) {
-                            Surface(
-                                color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f),
-                                contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                                shape = RoundedCornerShape(16.dp),
-                                border = null,
-                                modifier = Modifier
-                                    .padding(4.dp)
-                                    .align(Alignment.BottomStart),
-                            ) {
-                                Text(
-                                    bubbleText,
-                                    modifier = Modifier.padding(horizontal = 7.dp, vertical = 1.dp),
-                                    style = MaterialTheme.typography.labelMedium,
-                                    maxLines = 1,
-                                )
-                            }
-                        }
-
                     }
 
                 }
-            },
-            trailingContent = {
-                Row(
-                    horizontalArrangement = Arrangement.End,
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.offset(y = if (overlineText == null) 0.dp else 16.dp),
-                ) {
-                    leadingRateBoxContent?.invoke()
-                    RateBox(
-                        rating = rating,
-                        roundedCorners = 12.dp,
-                        width = 12.dp,
-                        minWidth = 36.dp,
-                        height = 4.dp,
-                        textStyle = MaterialTheme.typography.headlineSmall,
-                        isLoading = isLoading,
-                        decimalOffset = if (preciseRatings) 1u else 0u,
-                        colorBucketsOverride = colorBucketsOverride,
-                    )
-                }
-            },
-            modifier = Modifier
-                .clip(MaterialTheme.shapes.largeIncreased)
-                .clickable(onClick = {
-                    haptic.performHapticFeedback(HapticFeedbackType.Confirm)
-                    onClick()
-                }),
-            tonalElevation = tonalElevation
-        )
-    }
+
+            }
+        },
+        trailingContent = {
+            Row(
+                horizontalArrangement = Arrangement.End,
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.offset(y = if (overlineText == null) 0.dp else 16.dp),
+            ) {
+                leadingRateBoxContent?.invoke()
+                RateBox(
+                    rating = rating,
+                    roundedCorners = 12.dp,
+                    width = 12.dp,
+                    minWidth = 36.dp,
+                    height = 4.dp,
+                    textStyle = MaterialTheme.typography.headlineSmall,
+                    isLoading = isLoading,
+                    decimalOffset = if (preciseRatings) 1u else 0u,
+                    colorBucketsOverride = colorBucketsOverride,
+                )
+            }
+        },
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(padding)
+            .clip(MaterialTheme.shapes.largeIncreased)
+            .clickable(onClick = {
+                haptic.performHapticFeedback(HapticFeedbackType.Confirm)
+                onClick()
+            }),
+        tonalElevation = tonalElevation,
+        //colors = ListItemDefaults.colors().copy(containerColor = glowColor),
+    )
 }
 
 @Composable

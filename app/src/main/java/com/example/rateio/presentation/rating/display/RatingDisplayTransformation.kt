@@ -20,19 +20,23 @@ data class RatingTransformations(
     val legendaryPart: Float = 0.96f
 )
 
-fun RatingTransformations.getMinValue(): Float {
+fun RatingTransformations.getMinValue(): String {
     val rtf = getCurrentRatingTransformations()
 
     val transformed = (rtf.offset) / (rtf.divider)
     val decimalPow = 10f.pow((rtf.decimalPlaces).toInt())
-    return round(transformed * decimalPow) / decimalPow
+    val rounded = round(transformed * decimalPow) / decimalPow
+
+    return rtf.leadingString + ("%.${rtf.decimalPlaces}f").format(rtf.locale, rounded) + rtf.trailingString
 }
-fun RatingTransformations.getMaxValue(): Float {
+fun RatingTransformations.getMaxValue(): String {
     val rtf = getCurrentRatingTransformations()
 
     val transformed = (rtf.stepCount.toInt() + rtf.offset) / (rtf.divider)
     val decimalPow = 10f.pow((rtf.decimalPlaces).toInt())
-    return round(transformed * decimalPow) / decimalPow
+    val rounded = round(transformed * decimalPow) / decimalPow
+
+    return rtf.leadingString + ("%.${rtf.decimalPlaces}f").format(rtf.locale, rounded) + rtf.trailingString
 }
 
 fun getTransformedRating(rating: Float?, decimalOffset: UInt = 0u): String {
@@ -55,7 +59,7 @@ fun getRoundedRating(rating: Float?): Float? {
 }
 
 fun getCurrentRatingTransformations(): RatingTransformations {
-    return RatingTransformationsConstants.TF_IMDB
+    return RatingTransformationsConstants.currentTransformation
 }
 
 object RatingTransformationsConstants {
@@ -84,12 +88,26 @@ object RatingTransformationsConstants {
         trailingString = "%",
         majorTickFrequency = 10,
     )
-    val TF_STARS = RatingTransformations(
+    val TF_TEN_STARS = RatingTransformations(
+        stepCount = 20u,
+        divider = 2f,
+        decimalPlaces = 1u,
+        majorTickFrequency = 2,
+    )
+    val TF_FIVE_STARS = RatingTransformations(
         stepCount = 8u,
         offset = 2f,
         divider = 2f,
         decimalPlaces = 1u,
         majorTickFrequency = 2,
+    )
+    val TF_THOUSAND = RatingTransformations(
+        stepCount = 1000u,
+        majorTickFrequency = 10,
+    )
+    val TF_ELEVEN = RatingTransformations(
+        stepCount = 10u,
+        majorTickFrequency = 1,
     )
     val TF_TEN = RatingTransformations(
         stepCount = 9u,
@@ -101,4 +119,17 @@ object RatingTransformationsConstants {
         offset = 1f,
         majorTickFrequency = 1,
     )
+    val TF_RECOMMEND = RatingTransformations(
+        stepCount = 1u,
+        majorTickFrequency = 1,
+    )
+    val TF_FLOAT = RatingTransformations(
+        stepCount = 100u,
+        divider = 100f,
+        decimalPlaces = 2u,
+        majorTickFrequency = 5,
+        legendaryPart = 0.96f,
+        trailingString = "",
+    )
+    var currentTransformation = TF_IMDB
 }
