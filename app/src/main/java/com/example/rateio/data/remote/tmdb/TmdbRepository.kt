@@ -1,10 +1,9 @@
-package com.example.rateio.data.remote
+package com.example.rateio.data.remote.tmdb
 
 import android.util.Log
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
-
 
 class TmdbRepository {
     suspend fun getAllEpisodes(

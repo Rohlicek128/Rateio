@@ -17,7 +17,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -35,7 +34,7 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.example.rateio.data.remote.TmdbEpisodeSummary
+import com.example.rateio.data.remote.tmdb.TmdbEpisodeSummary
 import com.example.rateio.presentation.components.RateItemCard
 import com.example.rateio.presentation.rating.display.getRatingColor
 import com.example.rateio.presentation.rating.display.getRoundedRating

@@ -59,8 +59,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.rateio.data.CategoryRegistry
 import com.example.rateio.data.db.RateioDatabase
-import com.example.rateio.data.remote.TmdbShowMetadata
-import com.example.rateio.data.remote.toCarouselImage
+import com.example.rateio.data.remote.tmdb.TmdbShowMetadata
+import com.example.rateio.data.remote.tmdb.toCarouselImage
 import com.example.rateio.data.repository.CategoryRepository
 import com.example.rateio.data.repository.RateItemRepository
 import com.example.rateio.model.CategoryType

@@ -1,11 +1,10 @@
-package com.example.rateio.data.remote
+package com.example.rateio.data.remote.tmdb
 
 import com.example.rateio.data.remote.imdb.ImdbService
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
-
 
 object TmdbClient {
     private const val TMDB_BASE_URL = "https://api.themoviedb.org/3/"

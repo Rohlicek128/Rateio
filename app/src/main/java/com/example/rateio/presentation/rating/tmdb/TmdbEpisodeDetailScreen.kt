@@ -34,8 +34,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.rateio.data.remote.steam.toCarouselImage
-import com.example.rateio.data.remote.toCarouselImage
+import com.example.rateio.data.remote.tmdb.toCarouselImage
 import com.example.rateio.presentation.components.AdaptiveImageCarousel
 import com.example.rateio.presentation.components.PersonCard
 import com.example.rateio.presentation.components.SectionHeader

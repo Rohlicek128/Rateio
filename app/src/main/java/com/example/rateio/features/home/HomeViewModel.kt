@@ -4,26 +4,13 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
-import com.example.rateio.data.CategoryRegistry
-import com.example.rateio.data.remote.TmdbClient
-import com.example.rateio.data.remote.TmdbImageResponse
-import com.example.rateio.data.remote.TmdbShowDetail
-import com.example.rateio.data.remote.imdb.ImdbRating
-import com.example.rateio.data.remote.imdb.ImdbRatingFetcher
-import com.example.rateio.data.remote.toRateItem
 import com.example.rateio.data.repository.CategoryRepository
 import com.example.rateio.data.repository.RateItemRepository
 import com.example.rateio.model.Category
-import com.example.rateio.model.CategoryType
-import com.example.rateio.model.RateItem
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.launch
 
 
 data class HomeState(

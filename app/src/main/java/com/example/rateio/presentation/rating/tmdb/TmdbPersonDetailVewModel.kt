@@ -5,10 +5,9 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.example.rateio.data.CategoryRegistry
-import com.example.rateio.data.remote.TmdbClient
-import com.example.rateio.data.remote.TmdbMovieDetail
-import com.example.rateio.data.remote.TmdbPersonDetail
-import com.example.rateio.data.remote.toRateItem
+import com.example.rateio.data.remote.tmdb.TmdbClient
+import com.example.rateio.data.remote.tmdb.TmdbPersonDetail
+import com.example.rateio.data.remote.tmdb.toRateItem
 import com.example.rateio.data.repository.CategoryRepository
 import com.example.rateio.data.repository.RateItemRepository
 import com.example.rateio.model.CategoryType

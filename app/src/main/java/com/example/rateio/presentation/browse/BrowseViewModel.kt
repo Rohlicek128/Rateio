@@ -3,10 +3,10 @@ package com.example.rateio.presentation.browse
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.rateio.data.CategoryRegistry
-import com.example.rateio.data.remote.TmdbClient
+import com.example.rateio.data.remote.tmdb.TmdbClient
 import com.example.rateio.data.remote.steam.SteamClient
 import com.example.rateio.data.remote.steam.toRateItem
-import com.example.rateio.data.remote.toRateItem
+import com.example.rateio.data.remote.tmdb.toRateItem
 import com.example.rateio.model.Category
 import com.example.rateio.model.CategoryType
 import com.example.rateio.model.RateItem

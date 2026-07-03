@@ -4,7 +4,7 @@ import com.example.rateio.data.db.RateItemDao
 import com.example.rateio.data.db.RateItemEntity
 import com.example.rateio.data.db.toDomain
 import com.example.rateio.data.db.toEntity
-import com.example.rateio.data.remote.TmdbEpisodeMetadata
+import com.example.rateio.data.remote.tmdb.TmdbEpisodeMetadata
 import com.example.rateio.model.CategoryType
 import com.example.rateio.model.ItemStatus
 import com.example.rateio.model.RateItem

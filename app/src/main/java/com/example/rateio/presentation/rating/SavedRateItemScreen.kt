@@ -14,17 +14,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.rateio.data.db.RateioDatabase
-import com.example.rateio.data.remote.TmdbEpisodeMetadata
+import com.example.rateio.data.remote.tmdb.TmdbEpisodeMetadata
 import com.example.rateio.data.repository.CategoryRepository
 import com.example.rateio.data.repository.RateItemRepository
 import com.example.rateio.model.CategoryType
-import com.example.rateio.navigation.Route
 import com.example.rateio.presentation.rating.steam.SteamGameDetailScreen
 import com.example.rateio.presentation.rating.tmdb.TmdbEpisodeDetailScreen
 import com.example.rateio.presentation.rating.tmdb.TmdbMovieDetailScreen
 import com.example.rateio.presentation.rating.tmdb.TmdbShowDetailScreen
 import kotlinx.serialization.json.Json
-import kotlin.reflect.KClass
 
 
 @Composable

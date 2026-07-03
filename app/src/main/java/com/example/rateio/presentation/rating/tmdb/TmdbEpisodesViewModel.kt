@@ -4,8 +4,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
-import com.example.rateio.data.remote.TmdbEpisodeSummary
-import com.example.rateio.data.remote.TmdbRepository
+import com.example.rateio.data.remote.tmdb.TmdbEpisodeSummary
+import com.example.rateio.data.remote.tmdb.TmdbRepository
 import com.example.rateio.data.remote.imdb.ImdbRatingFetcher
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow

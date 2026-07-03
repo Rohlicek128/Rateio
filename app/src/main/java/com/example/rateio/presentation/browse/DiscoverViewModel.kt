@@ -4,11 +4,10 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
-import com.example.rateio.data.remote.TmdbClient
-import com.example.rateio.data.remote.TmdbService
+import com.example.rateio.data.remote.tmdb.TmdbClient
 import com.example.rateio.data.remote.steam.SteamClient
 import com.example.rateio.data.remote.steam.toRateItem
-import com.example.rateio.data.remote.toRateItem
+import com.example.rateio.data.remote.tmdb.toRateItem
 import com.example.rateio.model.Category
 import com.example.rateio.model.CategoryType
 import com.example.rateio.model.RateItem

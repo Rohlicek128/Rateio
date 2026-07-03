@@ -1,11 +1,10 @@
-package com.example.rateio.data.remote
+package com.example.rateio.data.remote.tmdb
 
 import com.example.rateio.BuildConfig
 import retrofit2.http.GET
 import retrofit2.http.Header
 import retrofit2.http.Path
 import retrofit2.http.Query
-
 
 interface TmdbService {
     // Shows

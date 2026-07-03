@@ -1,4 +1,4 @@
-package com.example.rateio.data.remote
+package com.example.rateio.data.remote.tmdb
 
 import com.example.rateio.model.CategoryType
 import com.example.rateio.model.RateItem

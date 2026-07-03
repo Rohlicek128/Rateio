@@ -1,18 +1,18 @@
 package com.example.rateio.presentation.rating.tmdb
 
 import androidx.compose.runtime.mutableStateSetOf
-import com.example.rateio.data.remote.TmdbMovieDetail
+import com.example.rateio.data.remote.tmdb.TmdbMovieDetail
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.example.rateio.data.CategoryRegistry
-import com.example.rateio.data.remote.TmdbClient
-import com.example.rateio.data.remote.TmdbImageResponse
-import com.example.rateio.data.remote.TmdbReviews
+import com.example.rateio.data.remote.tmdb.TmdbClient
+import com.example.rateio.data.remote.tmdb.TmdbImageResponse
+import com.example.rateio.data.remote.tmdb.TmdbReviews
 import com.example.rateio.data.remote.imdb.ImdbRating
 import com.example.rateio.data.remote.imdb.ImdbRatingFetcher
-import com.example.rateio.data.remote.toRateItem
+import com.example.rateio.data.remote.tmdb.toRateItem
 import com.example.rateio.data.repository.CategoryRepository
 import com.example.rateio.data.repository.RateItemRepository
 import com.example.rateio.model.CategoryType

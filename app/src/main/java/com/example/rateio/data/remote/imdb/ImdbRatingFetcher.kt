@@ -3,7 +3,7 @@ package com.example.rateio.data.remote.imdb
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
-import com.example.rateio.data.remote.TmdbClient
+import com.example.rateio.data.remote.tmdb.TmdbClient
 import kotlinx.coroutines.Dispatchers
 
 
