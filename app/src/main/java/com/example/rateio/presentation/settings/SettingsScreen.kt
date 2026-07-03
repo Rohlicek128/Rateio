@@ -43,6 +43,7 @@ fun SettingsScreen(
                     description = "Colors, Rating transformations",
                     icon = Icons.Default.Transform,
                     onClick = onRatingClick,
+                    position = ListItemPosition.MIDDLE,
                 )
             }
             item {
@@ -51,6 +52,7 @@ fun SettingsScreen(
                     description = "Shows, Movies, Games...",
                     icon = Icons.Default.Category,
                     onClick = onCategoriesClick,
+                    position = ListItemPosition.MIDDLE,
                 )
             }
             item {

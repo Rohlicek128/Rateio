@@ -1,7 +1,9 @@
 package com.example.rateio.utils
 
+import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalDateTime
+import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
 import java.util.Locale
@@ -9,7 +11,16 @@ import java.util.Locale
 
 fun parseDate(dateString: String?): LocalDate? {
     if (dateString.isNullOrBlank()) return null
-    return runCatching { LocalDate.parse(dateString) }.getOrNull()
+    val local = runCatching {
+        LocalDate.parse(dateString)
+    }.getOrNull()
+
+    if (local != null) return local
+
+    val instant = runCatching {
+        Instant.parse(dateString)
+    }.getOrNull()
+    return instant?.atZone(ZoneId.systemDefault())?.toLocalDate()
 }
 
 fun daysUntil(targetDate: LocalDate): Long {

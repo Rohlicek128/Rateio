@@ -78,6 +78,15 @@ interface TmdbService {
         @Header("Authorization") bearer: String = "Bearer " + BuildConfig.TMDB_API_KEY,
     ): TmdbEpisodeImageResponse
 
+    @GET("tv/{id}/reviews")
+    suspend fun getShowReviews(
+        @Path("id") id: Int,
+        @Query("language") language: String = "en-US",
+        @Query("page") page: Int = 1,
+        @Header("accept") accept: String = "application/json",
+        @Header("Authorization") bearer: String = "Bearer " + BuildConfig.TMDB_API_KEY,
+    ): TmdbReviews
+
 
 
     // Movies
@@ -118,6 +127,25 @@ interface TmdbService {
         @Header("accept") accept: String = "application/json",
         @Header("Authorization") bearer: String = "Bearer " + BuildConfig.TMDB_API_KEY,
     ): TmdbImageResponse
+
+    @GET("movie/{id}/reviews")
+    suspend fun getMovieReviews(
+        @Path("id") id: Int,
+        @Query("language") language: String = "en-US",
+        @Query("page") page: Int = 1,
+        @Header("accept") accept: String = "application/json",
+        @Header("Authorization") bearer: String = "Bearer " + BuildConfig.TMDB_API_KEY,
+    ): TmdbReviews
+
+    @GET("movie/{id}/recommendations")
+    suspend fun getMovieRecommendations(
+        @Path("id") id: Int,
+        @Query("language") language: String = "en-US",
+        @Query("page") page: Int = 1,
+        @Header("accept") accept: String = "application/json",
+        @Header("Authorization") bearer: String = "Bearer " + BuildConfig.TMDB_API_KEY,
+    ): TmdbMovieSearchResponse
+
 
 
     // People

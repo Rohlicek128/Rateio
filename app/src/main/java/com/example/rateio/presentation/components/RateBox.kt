@@ -15,7 +15,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.TextStyle
@@ -23,17 +22,14 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.example.rateio.presentation.rating.display.RatingColorBuckets
-import com.example.rateio.presentation.rating.display.RatingTransformations
+import com.example.rateio.presentation.rating.display.RatingTransformation
 import com.example.rateio.presentation.rating.display.getCurrentRatingColorBuckets
 import com.example.rateio.presentation.rating.display.getCurrentRatingTransformations
 import com.example.rateio.presentation.rating.display.getRatingColor
 import com.example.rateio.presentation.rating.display.getRoundedRating
 import com.example.rateio.presentation.rating.display.getTransformedRating
 import com.example.rateio.ui.theme.GoogleSans
-import com.example.rateio.ui.theme.GoogleSansTypography
-import kotlin.math.roundToInt
 
 
 @Composable
@@ -50,13 +46,14 @@ fun RateBox(
     loadingSize: Dp = 28.dp,
     decimalOffset: UInt = 0u,
     colorBucketsOverride: RatingColorBuckets = getCurrentRatingColorBuckets(),
+    transformationOverride: RatingTransformation = getCurrentRatingTransformations(),
     isLoading: Boolean = false,
     onClick: (() -> Unit)? = null,
 ) {
     val haptic = LocalHapticFeedback.current
 
     val colors = getRatingColor(getRoundedRating(rating), colorBucketsOverride)
-    val display = getTransformedRating(rating, decimalOffset)
+    val display = getTransformedRating(rating, decimalOffset, transformationOverride)
 
     Surface(
         color = colors.backgroundColor,

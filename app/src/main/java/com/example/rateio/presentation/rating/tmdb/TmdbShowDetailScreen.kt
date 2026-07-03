@@ -77,6 +77,7 @@ import com.example.rateio.presentation.components.ItemStatusSelector
 import com.example.rateio.presentation.components.LibraryToggle
 import com.example.rateio.presentation.components.PersonCard
 import com.example.rateio.presentation.components.RateItemCard
+import com.example.rateio.presentation.components.ReviewCard
 import com.example.rateio.presentation.components.SectionHeader
 import com.example.rateio.presentation.components.SortBySelectionButton
 import com.example.rateio.presentation.components.rating.EpisodeRatingGraph
@@ -455,7 +456,7 @@ fun TmdbShowDetailScreen(
                                 }
                             ) {
                                 LazyRow(
-                                    modifier = Modifier.height(120.dp),
+                                    modifier = Modifier.height(150.dp),
                                     contentPadding = PaddingValues(horizontal = 16.dp),
                                     horizontalArrangement = Arrangement.spacedBy(12.dp),
                                 ) {
@@ -465,7 +466,7 @@ fun TmdbShowDetailScreen(
                                             position = null,
                                             profilePath = member.profilePath?.let { "https://image.tmdb.org/t/p/w185$it" },
                                             width = 80.dp,
-                                            height = 80.dp,
+                                            height = 100.dp,
                                         )
                                     }
                                 }
@@ -486,9 +487,9 @@ fun TmdbShowDetailScreen(
                                 }
                             ) {
                                 LazyRow(
-                                    modifier = Modifier.height(150.dp),
+                                    modifier = Modifier.height(200.dp),
                                     contentPadding = PaddingValues(horizontal = 16.dp),
-                                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                    horizontalArrangement = Arrangement.spacedBy(10.dp),
                                 ) {
                                     show.credits?.cast?.takeIf { it.isNotEmpty() }?.let { cast ->
                                         items(cast.take(10), key = { it.creditId }) { member ->
@@ -884,6 +885,36 @@ fun TmdbShowDetailScreen(
                                 }
                             }
 
+                        }
+                    }
+
+                    state.reviews?.results?.takeIf { it.isNotEmpty() }?.let { reviews ->
+                        item {
+                            val headerName = "Reviews"
+                            CollapsibleHeader(
+                                headerName,
+                                isOpened = headerName !in state.collapsedHeaders,
+                                onClick = {
+                                    if (it) state.collapsedHeaders.remove(headerName)
+                                    else state.collapsedHeaders.add(headerName)
+                                }
+                            ) {
+                                LazyRow(
+                                    contentPadding = PaddingValues(horizontal = 16.dp),
+                                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                ) {
+                                    items(reviews, key = { it.id }) { review ->
+                                        ReviewCard(
+                                            modifier = Modifier.size(width = 320.dp, height = 190.dp),
+                                            name = review.author,
+                                            supportingText = formatDate(review.updatedAt),
+                                            avatarPath = "https://image.tmdb.org/t/p/w92${review.authorDetails?.avatarPath}",
+                                            rating = review.authorDetails?.rating?.div(10f),
+                                            content = review.content,
+                                        )
+                                    }
+                                }
+                            }
                         }
                     }
 

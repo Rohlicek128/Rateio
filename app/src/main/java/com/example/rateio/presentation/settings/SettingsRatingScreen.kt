@@ -107,7 +107,7 @@ fun SettingsRatingScreen(
                         currentTransformation = when (it) {
                             1 -> RatingTransformationsConstants.TF_PERCENTAGE
                             2 -> RatingTransformationsConstants.TF_TEN_STARS
-                            3 -> RatingTransformationsConstants.TF_FIVE_STARS
+                            3 -> RatingTransformationsConstants.TF_FIVE_STARS_ZERO
                             4 -> RatingTransformationsConstants.TF_ELEVEN
                             5 -> RatingTransformationsConstants.TF_THOUSAND
                             6 -> RatingTransformationsConstants.TF_FIVE

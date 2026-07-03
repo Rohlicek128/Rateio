@@ -40,6 +40,7 @@ data class TmdbShowDetail(
     @SerializedName("number_of_seasons") val numberOfSeasons: Int,
 
     @SerializedName("vote_average") val voteAverage: Float?,
+    @SerializedName("vote_count") val voteCount: Int?,
     @SerializedName("popularity") val popularity: Float?,
 
     @SerializedName("status") val status: String?,
@@ -186,6 +187,7 @@ data class TmdbMovieDetail(
     @SerializedName("poster_path") val posterPath: String?,
     @SerializedName("backdrop_path") val backdropPath: String?,
     @SerializedName("vote_average") val voteAverage: Float?,
+    @SerializedName("vote_count") val voteCount: Int?,
     @SerializedName("genres") val genres: List<TmdbGenre>,
     @SerializedName("runtime") val runtime: Int,
 
@@ -246,6 +248,30 @@ data class TmdbCastDetail(
     @SerializedName("character") val character: String?,
 
     @SerializedName("popularity") val popularity: Float?,
+)
+
+data class TmdbReviews(
+    @SerializedName("id") val id: Int,
+    @SerializedName("page") val page: Int,
+    @SerializedName("total_pages") val totalPages: Int,
+    @SerializedName("total_results") val totalResults: Int,
+    @SerializedName("results") val results: List<TmdbAuthor>,
+)
+
+data class TmdbAuthor(
+    @SerializedName("id") val id: String,
+    @SerializedName("author") val author: String,
+    @SerializedName("author_details") val authorDetails: TmdbAuthorDetail?,
+    @SerializedName("content") val content: String,
+
+    @SerializedName("updated_at") val updatedAt: String,
+    @SerializedName("created_at") val createdAt: String,
+)
+data class TmdbAuthorDetail(
+    @SerializedName("name") val name: String?,
+    @SerializedName("username") val username: String?,
+    @SerializedName("avatar_path") val avatarPath: String?,
+    @SerializedName("rating") val rating: Float?,
 )
 
 
@@ -320,6 +346,7 @@ fun TmdbMovie.toRateItem(categoryId: Long = 0) = RateItem(
     subtitle = releaseDate?.take(4),
     coverImageUrl = posterPath?.let { "https://image.tmdb.org/t/p/original$it" },
     coverImageLowUrl = posterPath?.let { "https://image.tmdb.org/t/p/w342$it" },
+    rating = voteAverage?.div(10f),
     externalId = id.toString(),
     externalSource = CategoryType.TMDB_MOVIES,
 )

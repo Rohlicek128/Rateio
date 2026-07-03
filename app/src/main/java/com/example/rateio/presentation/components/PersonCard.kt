@@ -29,8 +29,8 @@ fun PersonCard(
     position: String?,
     profilePath: String?,
     modifier: Modifier = Modifier,
-    width: Dp = 80.dp,
-    height: Dp = 100.dp,
+    width: Dp = 100.dp,
+    height: Dp = 150.dp,
     roundedCorners: Dp = 16.dp,
     onClick: (() -> Unit)? = null,
 ) {

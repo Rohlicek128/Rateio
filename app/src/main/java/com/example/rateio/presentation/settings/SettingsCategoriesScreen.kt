@@ -40,6 +40,7 @@ import com.example.rateio.presentation.ScreenScaffold
 
 @Composable
 fun SettingsCategoriesScreen(
+    onRatingTransformationClick: () -> Unit,
     onBackClick: () -> Unit,
 ) {
     val haptic = LocalHapticFeedback.current
@@ -95,9 +96,12 @@ fun SettingsCategoriesScreen(
                     supportingContent = {
                         Slider(
                             sliderValue,
-                            onValueChange = { sliderValue = it },
+                            onValueChange = {
+                                haptic.performHapticFeedback(HapticFeedbackType.SegmentTick)
+                                sliderValue = it
+                            },
                             steps = 9,
-                            valueRange = 1f..10f
+                            valueRange = 0f..10f
                         )
                     },
                 )
@@ -137,12 +141,12 @@ fun SettingsCategoriesScreen(
             item { SettingsListHeader("More Options") }
             item {
                 SettingListItem(
-                    title = "Next Screen",
+                    title = "Rating Transformation",
                     //description = "Something, Something important. And is quite long for a setting label/description",
                     description = "Something, Something important",
-                    icon = Icons.Default.AccountCircle,
+                    icon = Icons.Default.Transform,
                     position = ListItemPosition.SINGLE,
-                    onClick = {},
+                    onClick = onRatingTransformationClick,
                 )
             }
         }

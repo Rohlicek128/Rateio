@@ -19,6 +19,8 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.ListItem
+import androidx.compose.material3.ListItemColors
+import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -49,10 +51,11 @@ fun SettingListItem(
     modifier: Modifier = Modifier,
     description: String? = null,
     icon: ImageVector? = null,
+    colors: ListItemColors = ListItemDefaults.colors(),
     supportingContent: @Composable (() -> Unit)? = null,
     trailingContent: @Composable (() -> Unit)? = null,
     onClick: (() -> Unit)? = null,
-    position: ListItemPosition = ListItemPosition.MIDDLE,
+    position: ListItemPosition = ListItemPosition.SINGLE,
     test: Boolean = false,
 ) {
     val haptic = LocalHapticFeedback.current
@@ -113,6 +116,7 @@ fun SettingListItem(
             }
         } else trailingContent,
         tonalElevation = 1.dp,
+        colors = colors,
         modifier = modifier
             .clip(when (position) {
                 ListItemPosition.START -> largeCorner.copy(

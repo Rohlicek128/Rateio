@@ -1,6 +1,7 @@
 package com.example.rateio.presentation.components
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.width
@@ -31,6 +32,7 @@ fun AdaptiveImageCarousel(
     shape: Shape = MaterialTheme.shapes.large,
     itemWidth: Dp = 300.dp,
     itemHeight: Dp = 160.dp,
+    contentPadding: PaddingValues = PaddingValues(16.dp),
     onImageClick: (index: Int) -> Unit = {}
 ) {
     val state = rememberCarouselState { images.size }
@@ -39,6 +41,7 @@ fun AdaptiveImageCarousel(
         state = state,
         itemWidth = itemWidth,
         itemSpacing = 8.dp,
+        contentPadding = contentPadding,
         modifier = modifier,
     ) { index ->
         AsyncImage(

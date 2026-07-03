@@ -8,6 +8,7 @@ import androidx.lifecycle.viewmodel.viewModelFactory
 import com.example.rateio.data.CategoryRegistry
 import com.example.rateio.data.remote.TmdbClient
 import com.example.rateio.data.remote.TmdbImageResponse
+import com.example.rateio.data.remote.TmdbReviews
 import com.example.rateio.data.remote.TmdbShowDetail
 import com.example.rateio.data.remote.imdb.ImdbRating
 import com.example.rateio.data.remote.imdb.ImdbRatingFetcher
@@ -42,6 +43,7 @@ data class TmdbShowDetailState(
     val show: TmdbShowDetail? = null,
     val imdbRating: ImdbRating? = null,
     val images: TmdbImageResponse? = null,
+    val reviews: TmdbReviews? = null,
     val savedItem: RateItem? = null,
 
     val selectedEpisodeMode: Int = 0,
@@ -78,6 +80,11 @@ class TmdbShowDetailViewModel(
                 launch {
                     val images = TmdbClient.tmdb.getShowImages(showId)
                     _state.update { it.copy(images = images) }
+                }
+
+                launch {
+                    val reviews = TmdbClient.tmdb.getShowReviews(showId)
+                    _state.update { it.copy(reviews = reviews) }
                 }
 
                 launch {

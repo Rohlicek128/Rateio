@@ -16,7 +16,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
@@ -26,7 +25,9 @@ import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.example.rateio.presentation.rating.display.RatingTransformationsConstants
+import com.example.rateio.presentation.rating.display.RatingColorBuckets
+import com.example.rateio.presentation.rating.display.RatingTransformation
+import com.example.rateio.presentation.rating.display.getCurrentRatingColorBuckets
 import com.example.rateio.presentation.rating.display.getCurrentRatingTransformations
 
 
@@ -35,6 +36,8 @@ fun RatingBottomSheet(
     rating: Float? = 0f,
     onDismiss: () -> Unit,
     onValueChange: (Float?) -> Unit,
+    colorBucketsOverride: RatingColorBuckets = getCurrentRatingColorBuckets(),
+    transformationOverride: RatingTransformation = getCurrentRatingTransformations(),
 ) {
     val haptic = LocalHapticFeedback.current
     var rackPosition by rememberSaveable { mutableStateOf(rating) }
@@ -61,9 +64,10 @@ fun RatingBottomSheet(
                 fontWeight = FontWeight.Bold,
                 loadingSize = 38.dp,
                 decimalOffset = 1u,
+                colorBucketsOverride = colorBucketsOverride,
+                transformationOverride = transformationOverride,
             )
 
-            val rtf = getCurrentRatingTransformations()
             RackRatingSlider(
                 rating = rackPosition ?: 0.7f,
                 onValueChange = {
@@ -78,9 +82,9 @@ fun RatingBottomSheet(
                 minorTickHeightFraction = 0.5f,
                 majorTickHeightFraction = 0.65f,
                 tickSpacing = 11.dp,
-                stepCount = rtf.stepCount.toInt(),
-                majorTickFrequency = rtf.majorTickFrequency,
-                hardPart = rtf.legendaryPart,
+                stepCount = transformationOverride.stepCount.toInt(),
+                majorTickFrequency = transformationOverride.majorTickFrequency,
+                hardPart = transformationOverride.legendaryPart,
             )
 
             RackRatingSlider(
@@ -97,9 +101,9 @@ fun RatingBottomSheet(
                 minorTickHeightFraction = 0.4f,
                 majorTickHeightFraction = 0.55f,
                 tickSpacing = 8.dp,
-                stepCount = rtf.stepCount.toInt() * 10,
-                majorTickFrequency = rtf.majorTickFrequency * 5,
-                hardPart = rtf.legendaryPart,
+                stepCount = transformationOverride.stepCount.toInt() * 10,
+                majorTickFrequency = transformationOverride.majorTickFrequency * 5,
+                hardPart = transformationOverride.legendaryPart,
             )
 
             Spacer(modifier = Modifier.height(32.dp))

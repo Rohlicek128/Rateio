@@ -18,6 +18,8 @@ import com.example.rateio.model.CategoryType
 import com.example.rateio.model.RateItem
 import com.example.rateio.presentation.components.RateItemGridCard
 import com.example.rateio.presentation.components.SectionHeader
+import com.example.rateio.presentation.rating.display.RatingColorBuckets
+import com.example.rateio.presentation.rating.display.getCurrentRatingColorBuckets
 
 @Composable
 fun ItemListRow(
@@ -29,6 +31,8 @@ fun ItemListRow(
     showNullRatings: Boolean = true,
     showRanking: Boolean = false,
     placeholderRatio: Float = 2f / 3f,
+    contentPadding: PaddingValues = PaddingValues(16.dp),
+    colorBucketsOverride: RatingColorBuckets = getCurrentRatingColorBuckets(),
     itemTrailingContent: (@Composable () -> Unit)? = null,
     emptyContent: (@Composable () -> Unit)? = null,
 ) {
@@ -49,7 +53,8 @@ fun ItemListRow(
             }
             else -> LazyRow (
                 modifier = modifier,
-                horizontalArrangement = Arrangement.spacedBy(10.dp)
+                contentPadding = contentPadding,
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
             ) {
                 itemsIndexed(items) { index, item ->
                     RateItemGridCard(
@@ -63,6 +68,7 @@ fun ItemListRow(
                         onClick = { onItemClick(item) },
                         leadingRateBoxContent = itemTrailingContent,
                         showNullRatings = showNullRatings,
+                        colorBucketsOverride = colorBucketsOverride,
                     )
                 }
             }

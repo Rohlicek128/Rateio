@@ -1,6 +1,7 @@
 package com.example.rateio.presentation
 
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.FilledTonalIconButton
@@ -20,6 +21,7 @@ import androidx.compose.ui.text.font.FontWeight
 fun ScreenScaffold(
     title: String,
     onBackClick: () -> Unit,
+    actions: @Composable (RowScope.() -> Unit) = {},
     content: @Composable ((PaddingValues) -> Unit)
 ) {
     val haptic = LocalHapticFeedback.current
@@ -48,6 +50,7 @@ fun ScreenScaffold(
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, null)
                     }
                 },
+                actions = actions,
             )
         }
     ) { padding ->

@@ -1,5 +1,6 @@
 package com.example.rateio.presentation.rating.tmdb
 
+import androidx.compose.runtime.mutableStateSetOf
 import com.example.rateio.data.remote.TmdbMovieDetail
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -8,6 +9,7 @@ import androidx.lifecycle.viewmodel.viewModelFactory
 import com.example.rateio.data.CategoryRegistry
 import com.example.rateio.data.remote.TmdbClient
 import com.example.rateio.data.remote.TmdbImageResponse
+import com.example.rateio.data.remote.TmdbReviews
 import com.example.rateio.data.remote.imdb.ImdbRating
 import com.example.rateio.data.remote.imdb.ImdbRatingFetcher
 import com.example.rateio.data.remote.toRateItem
@@ -26,7 +28,12 @@ data class TmdbMovieDetailState(
     val movie: TmdbMovieDetail? = null,
     val imdbRating: ImdbRating? = null,
     val images: TmdbImageResponse? = null,
+    val reviews: TmdbReviews? = null,
+    val recommendations: List<RateItem> = emptyList(),
     val savedItem: RateItem? = null,
+
+    val collapsedHeaders: MutableSet<String> = mutableStateSetOf(),
+
     val isLoading: Boolean = false,
     val error: String? = null,
 )
@@ -56,6 +63,17 @@ class TmdbMovieDetailViewModel(
                 launch {
                     val images = TmdbClient.tmdb.getMovieImages(id)
                     _state.update { it.copy(images = images) }
+                }
+
+                launch {
+                    val reviews = TmdbClient.tmdb.getMovieReviews(id)
+                    _state.update { it.copy(reviews = reviews) }
+                }
+
+                launch {
+                    val recommendations = TmdbClient.tmdb.getMovieRecommendations(id).results
+                        .map { it.toRateItem() }
+                    _state.update { it.copy(recommendations = recommendations) }
                 }
 
                 launch {

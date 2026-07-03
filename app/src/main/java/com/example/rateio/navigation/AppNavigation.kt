@@ -46,6 +46,7 @@ import com.example.rateio.presentation.category.EnhancedCategoryScreen
 import com.example.rateio.presentation.leaderboard.LeaderboardScreen
 import com.example.rateio.presentation.profile.ProfileScreen
 import com.example.rateio.presentation.rating.SavedRateItemScreen
+import com.example.rateio.presentation.rating.display.RatingTransformationsConstants
 import com.example.rateio.presentation.rating.steam.SteamGameDetailScreen
 import com.example.rateio.presentation.rating.tmdb.TmdbEpisodeDetailScreen
 import com.example.rateio.presentation.rating.tmdb.TmdbMovieDetailScreen
@@ -54,6 +55,7 @@ import com.example.rateio.presentation.rating.tmdb.TmdbShowDetailScreen
 import com.example.rateio.presentation.settings.SettingsCategoriesScreen
 import com.example.rateio.presentation.settings.SettingsRatingScreen
 import com.example.rateio.presentation.settings.SettingsScreen
+import com.example.rateio.presentation.settings.rating.RatingTransformationSettingsScreen
 
 
 @Composable
@@ -187,8 +189,19 @@ fun AppNavigation(navController: NavHostController = rememberNavController()) {
                         onBackClick = { navController.popBackStack() },
                     )
                 }
+                composable<Route.SettingsLevel.RatingTransformation> {
+                    RatingTransformationSettingsScreen(
+                        onSave = {
+                            RatingTransformationsConstants.currentTransformation = it
+                        },
+                        onBackClick = { navController.popBackStack() },
+                    )
+                }
                 composable<Route.SettingsLevel.Categories> {
                     SettingsCategoriesScreen(
+                        onRatingTransformationClick = {
+                            navController.navigate(Route.SettingsLevel.RatingTransformation)
+                        },
                         onBackClick = { navController.popBackStack() },
                     )
                 }

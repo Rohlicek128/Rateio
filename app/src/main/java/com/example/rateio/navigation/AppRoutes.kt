@@ -14,6 +14,7 @@ sealed interface Route {
     @Serializable sealed class SettingsLevel : Route {
         @Serializable data object SettingsTop : SettingsLevel()
         @Serializable data object Rating : SettingsLevel()
+        @Serializable data object RatingTransformation : SettingsLevel()
         @Serializable data object Categories : SettingsLevel()
     }
 
