@@ -7,6 +7,8 @@ enum class CategoryType {
     TMDB_MOVIES,
     TMDB_PEOPLE,
     STEAM_GAMES,
+    OPEN_LIBRARY_BOOKS,
+    OPEN_LIBRARY_CHAPTER,
     CUSTOM,
 }
 fun CategoryType.label() = when (this) {
@@ -16,6 +18,8 @@ fun CategoryType.label() = when (this) {
     CategoryType.TMDB_MOVIES -> "Movies"
     CategoryType.TMDB_PEOPLE -> "People"
     CategoryType.STEAM_GAMES -> "Games"
+    CategoryType.OPEN_LIBRARY_BOOKS -> "Books"
+    CategoryType.OPEN_LIBRARY_CHAPTER -> "Chapter"
     CategoryType.CUSTOM -> "Custom"
     else -> "Unknown"
 }

@@ -48,6 +48,7 @@ import com.example.rateio.presentation.components.DisplaySelector
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlin.time.Duration.Companion.milliseconds
 
 
 @Composable
@@ -94,7 +95,7 @@ fun BrowseScreen(
                 onItemClick = { item ->
                     collapse()
                     coroutineScope.launch {
-                        delay(165)
+                        delay(165.milliseconds)
                         item.externalId?.let { id ->
                             item.externalSource?.let { type ->
                                 onItemClick(id, type)
@@ -105,7 +106,7 @@ fun BrowseScreen(
                 emptyContent = {
                     Text(
                         if (state.query.isBlank()) "Search for something"
-                        else "No results for \"${state.query}\"",
+                        else "No results for \"${state.error}\"",
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 },

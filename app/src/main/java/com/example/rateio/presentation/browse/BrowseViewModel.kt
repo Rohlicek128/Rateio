@@ -3,6 +3,8 @@ package com.example.rateio.presentation.browse
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.rateio.data.CategoryRegistry
+import com.example.rateio.data.remote.openlibrary.OpenLibraryClient
+import com.example.rateio.data.remote.openlibrary.toRateItem
 import com.example.rateio.data.remote.tmdb.TmdbClient
 import com.example.rateio.data.remote.steam.SteamClient
 import com.example.rateio.data.remote.steam.toRateItem
@@ -17,6 +19,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlin.time.Duration.Companion.milliseconds
 
 
 data class BrowseState(
@@ -57,7 +60,7 @@ class BrowseViewModel : ViewModel() {
         if (query.isBlank()) { _state.update { it.copy(results = emptyList()) }; return }
 
         searchJob = viewModelScope.launch {
-            delay(300)
+            delay(300.milliseconds)
             _state.update { it.copy(isLoading = true) }
             try {
                 val results = when (_state.value.selectedCategory?.type) {
@@ -67,6 +70,8 @@ class BrowseViewModel : ViewModel() {
                         .results.map { it.toRateItem() }
                     CategoryType.STEAM_GAMES -> SteamClient.steamCommunity.searchGames(query)
                         .map { it.toRateItem() }
+                    CategoryType.OPEN_LIBRARY_BOOKS -> OpenLibraryClient.service.searchWorks(query)
+                        .docs.map { it.toRateItem() }
                     else -> emptyList()
                 }
                 _state.update { it.copy(
@@ -129,7 +134,7 @@ class BrowseViewModel : ViewModel() {
                                 current.copy(results = updated)
                             }
 
-                            delay(300L)
+                            delay(300L.milliseconds)
                         }
                     }
 
@@ -148,7 +153,7 @@ class BrowseViewModel : ViewModel() {
     ): T? {
         repeat(times) { attempt ->
             runCatching { return block() }
-            delay(initialDelay * (attempt + 1))
+            delay((initialDelay * (attempt + 1)).milliseconds)
         }
         return null
     }

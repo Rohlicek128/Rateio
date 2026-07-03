@@ -47,6 +47,7 @@ import com.example.rateio.presentation.leaderboard.LeaderboardScreen
 import com.example.rateio.presentation.profile.ProfileScreen
 import com.example.rateio.presentation.rating.SavedRateItemScreen
 import com.example.rateio.presentation.rating.display.RatingTransformationsConstants
+import com.example.rateio.presentation.rating.openlibrary.OLWorkDetailScreen
 import com.example.rateio.presentation.rating.steam.SteamGameDetailScreen
 import com.example.rateio.presentation.rating.tmdb.TmdbEpisodeDetailScreen
 import com.example.rateio.presentation.rating.tmdb.TmdbMovieDetailScreen
@@ -155,6 +156,8 @@ fun AppNavigation(navController: NavHostController = rememberNavController()) {
                                     navController.navigate(Route.TmdbMovieDetail(externalId.toInt()))
                                 CategoryType.STEAM_GAMES ->
                                     navController.navigate(Route.SteamGameDetail(externalId))
+                                CategoryType.OPEN_LIBRARY_BOOKS ->
+                                    navController.navigate(Route.OLWorkDetail(externalId))
                                 else -> {}
                             }
                         }
@@ -267,6 +270,15 @@ fun AppNavigation(navController: NavHostController = rememberNavController()) {
                     val route = back.toRoute<Route.SteamGameDetail>()
                     SteamGameDetailScreen(
                         appId = route.appId,
+                        isSaved = false,
+                        onBackClick = { navController.popBackStack() },
+                    )
+                }
+
+                composable<Route.OLWorkDetail> { back ->
+                    val route = back.toRoute<Route.OLWorkDetail>()
+                    OLWorkDetailScreen(
+                        workId = route.workId,
                         isSaved = false,
                         onBackClick = { navController.popBackStack() },
                     )

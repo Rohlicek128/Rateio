@@ -37,11 +37,13 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedToggleButton
+import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
 import androidx.compose.material3.ToggleButtonDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -59,12 +61,14 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.rateio.data.CategoryRegistry
 import com.example.rateio.data.db.RateioDatabase
+import com.example.rateio.data.remote.tmdb.TmdbEpisodeMetadata
 import com.example.rateio.data.remote.tmdb.TmdbShowMetadata
 import com.example.rateio.data.remote.tmdb.toCarouselImage
 import com.example.rateio.data.repository.CategoryRepository
 import com.example.rateio.data.repository.RateItemRepository
 import com.example.rateio.model.CategoryType
 import com.example.rateio.model.ItemStatus
+import com.example.rateio.model.RateItem
 import com.example.rateio.presentation.components.AdaptiveImageCarousel
 import com.example.rateio.presentation.components.CollapsibleHeader
 import com.example.rateio.presentation.components.DateProgressBar
@@ -80,16 +84,21 @@ import com.example.rateio.presentation.components.RateItemCard
 import com.example.rateio.presentation.components.ReviewCard
 import com.example.rateio.presentation.components.SectionHeader
 import com.example.rateio.presentation.components.SortBySelectionButton
+import com.example.rateio.presentation.components.rating.ChildrenGrid
+import com.example.rateio.presentation.components.rating.ChildrenWrapped
 import com.example.rateio.presentation.components.rating.EpisodeRatingGraph
 import com.example.rateio.presentation.components.rating.ItemProgressBar
 import com.example.rateio.presentation.components.settings.ModalShowsSettingsSheet
 import com.example.rateio.presentation.rating.RateItemDetailScreen
 import com.example.rateio.presentation.rating.display.RatingColorBucketConstants
 import com.example.rateio.presentation.rating.display.getCurrentRatingColorBuckets
+import com.example.rateio.presentation.settings.ListItemPosition
+import com.example.rateio.presentation.settings.SettingListItem
 import com.example.rateio.utils.formatDate
 import com.example.rateio.utils.formatTime
 import kotlinx.serialization.json.Json
 import java.util.Locale
+import kotlin.collections.getValue
 import kotlin.math.round
 
 
@@ -140,7 +149,7 @@ fun TmdbShowDetailScreen(
                 } ?: TmdbShowMetadata()
             }
 
-            val seasons = show.seasons.filter { it.seasonNumber > 0 }
+            val seasons = show.seasons.filter { it.seasonNumber > 0 }.sortedBy { it.seasonNumber }
             val episodesViewModel: TmdbEpisodesViewModel = viewModel(
                 factory = TmdbEpisodesViewModel.factory(
                     showId = showId,
@@ -153,6 +162,7 @@ fun TmdbShowDetailScreen(
 
             var selectedRatings by remember { mutableIntStateOf(if (!isSaved) 0 else 2) }
             var invertedGrid by remember { mutableStateOf(false) }
+            var columnsWrapped by remember { mutableFloatStateOf(4f) }
 
             val userRatings = viewModel.userRatingsState.collectAsStateWithLifecycle()
             val listOfRatings = userRatings.value.values.flatMap { it.values }.filterNotNull()
@@ -165,6 +175,55 @@ fun TmdbShowDetailScreen(
                 2 -> userRatings.value
                 else -> episodesState.imdbRatings
             }
+
+            val childrenGroups: Map<RateItem?, List<RateItem>> = episodesState.seasonEpisodes.entries
+                .associate { (seasonNumber, episodes) ->
+                    val items = episodes.sortedBy { it.episodeNumber }.map { episode ->
+                        RateItem(
+                            id = 0,
+                            categoryId = 0,
+                            title = episode.name,
+                            subtitle = "Episode ${episode.episodeNumber}",
+                            rating = ratings[episode.seasonNumber]?.get(episode.episodeNumber),
+                            coverImageUrl = episode.stillPath?.let { "https://image.tmdb.org/t/p/original$it" },
+                            coverImageLowUrl = episode.stillPath?.let { "https://image.tmdb.org/t/p/w300$it" },
+                            externalId = episode.id.toString(),
+                            externalSource = CategoryType.TMDB_EPISODES,
+                            metadataJSON = Json.encodeToString(TmdbEpisodeMetadata(
+                                showId = showId,
+                                seasonNumber = episode.seasonNumber,
+                                episodeNumber = episode.episodeNumber,
+                            ))
+                        )
+                    }
+                    val season = seasons[seasonNumber - 1]
+                    val seasonItem = RateItem(
+                        id = seasonNumber.toLong(),
+                        categoryId = 0,
+                        title = "Season $seasonNumber",
+                        subtitle = "${(season.airDate ?: "N/A").take(4)} | ${season.episodeCount} episodes",
+                        rating = null,
+                        coverImageUrl = season.posterPath.let { "https://image.tmdb.org/t/p/original$it" },
+                        coverImageLowUrl = season.posterPath.let { "https://image.tmdb.org/t/p/w342$it" },
+                        externalId = season.id.toString(),
+                    )
+                    seasonItem to items
+                }
+            val onChildClick = { child: RateItem ->
+                val metadata = child.metadataJSON?.let {
+                    runCatching {
+                        Json.decodeFromString<TmdbEpisodeMetadata>(it)
+                    }.getOrNull()
+                }
+                if (metadata != null) {
+                    onEpisodeClick(metadata.showId,
+                        metadata.seasonNumber,
+                        metadata.episodeNumber
+                    )
+                }
+            }
+
+
 
             if (listOfRatings.size >= show.numberOfEpisodes)
                 onStatusSaved?.invoke(ItemStatus.COMPLETED)
@@ -665,7 +724,7 @@ fun TmdbShowDetailScreen(
 
                                                 RateItemCard(
                                                     title = "Season ${season.seasonNumber}",
-                                                    biggerTitle = true,
+                                                    titleStyle = MaterialTheme.typography.headlineSmall,
                                                     subtitle = "${(season.airDate ?: "N/A").take(4)} | ${season.episodeCount} episodes",
                                                     coverImagePath = "https://image.tmdb.org/t/p/w342${season.posterPath}",
                                                     rating = if (!episodesState.isLoadingRatings && !flatRatings.isNullOrEmpty())
@@ -829,37 +888,41 @@ fun TmdbShowDetailScreen(
                                         }
                                     }
                                     item {
-                                        EpisodeGrid(
-                                            seasonEpisodes = episodesState.seasonEpisodes,
-                                            imdbRatings = ratings,
-                                            onEpisodeClick = { season, episode ->
-                                                run {
-                                                    onEpisodeClick(
-                                                        show.id,
-                                                        season,
-                                                        episode
-                                                    )
-                                                }
-                                            },
-                                            modifier = Modifier.padding(bottom = 16.dp),
+                                        ChildrenGrid(
+                                            contentPadding = PaddingValues(horizontal = 12.dp),
+                                            childrenGroups = childrenGroups,
+                                            rowText = { "E$it" },
+                                            columnText = { "S$it" },
+                                            onChildClick = onChildClick,
                                         )
                                     }
                                 }
                                 2 -> {
                                     item {
-                                        EpisodeWrapped(
-                                            seasonEpisodes = episodesState.seasonEpisodes,
-                                            imdbRatings = ratings,
-                                            onEpisodeClick = { season, episode ->
-                                                run {
-                                                    onEpisodeClick(
-                                                        show.id,
-                                                        season,
-                                                        episode
-                                                    )
-                                                }
-                                            },
-                                            modifier = Modifier.padding(bottom = 16.dp),
+                                        SettingListItem(
+                                            modifier = Modifier.fillMaxWidth().padding(20.dp),
+                                            title = "Columns",
+                                            description = "Value: ${columnsWrapped.toInt() + 1}",
+                                            position = ListItemPosition.SINGLE,
+                                            supportingContent = {
+                                                Slider(
+                                                    columnsWrapped,
+                                                    onValueChange = { value ->
+                                                        haptic.performHapticFeedback(HapticFeedbackType.SegmentFrequentTick)
+                                                        columnsWrapped = value
+                                                    },
+                                                    steps = 13,
+                                                    valueRange = 0f..14f
+                                                )
+                                            }
+                                        )
+                                    }
+                                    item {
+                                        ChildrenWrapped(
+                                            contentPadding = PaddingValues(horizontal = 20.dp),
+                                            childrenGroups = childrenGroups,
+                                            columns = columnsWrapped.toInt() + 1,
+                                            onChildClick = onChildClick,
                                         )
                                     }
                                 }

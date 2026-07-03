@@ -24,6 +24,12 @@ object CategoryRegistry {
             name = "Games",
             sortOrder = 2,
         ),
+        Category(
+            id = 0,
+            type = CategoryType.OPEN_LIBRARY_BOOKS,
+            name = "Books",
+            sortOrder = 3,
+        ),
     )
 
     fun forType(type: CategoryType): Category? = all.firstOrNull { it.type == type }

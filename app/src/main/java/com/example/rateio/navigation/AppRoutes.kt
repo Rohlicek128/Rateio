@@ -31,4 +31,6 @@ sealed interface Route {
     @Serializable data class TmdbPersonDetail(val personId: Int) : Route
 
     @Serializable data class SteamGameDetail(val appId: String) : Route
+
+    @Serializable data class OLWorkDetail(val workId: String) : Route
 }

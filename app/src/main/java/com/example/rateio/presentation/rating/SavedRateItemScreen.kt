@@ -18,6 +18,7 @@ import com.example.rateio.data.remote.tmdb.TmdbEpisodeMetadata
 import com.example.rateio.data.repository.CategoryRepository
 import com.example.rateio.data.repository.RateItemRepository
 import com.example.rateio.model.CategoryType
+import com.example.rateio.presentation.rating.openlibrary.OLWorkDetailScreen
 import com.example.rateio.presentation.rating.steam.SteamGameDetailScreen
 import com.example.rateio.presentation.rating.tmdb.TmdbEpisodeDetailScreen
 import com.example.rateio.presentation.rating.tmdb.TmdbMovieDetailScreen
@@ -138,6 +139,16 @@ fun SavedRateItemScreen(
                         isSaved = true,
                         customRating = item.rating,
                         onRatingSaved = viewModel::saveRating,
+                        onBackClick = onBackClick,
+                    )
+                }
+                CategoryType.OPEN_LIBRARY_BOOKS -> {
+                    OLWorkDetailScreen (
+                        workId = item.externalId!!,
+                        isSaved = true,
+                        customRating = item.rating,
+                        onRatingSaved = viewModel::saveRatingAndComplete,
+                        onStatusSaved = viewModel::updateStatus,
                         onBackClick = onBackClick,
                     )
                 }
