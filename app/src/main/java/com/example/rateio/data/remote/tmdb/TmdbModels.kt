@@ -286,6 +286,7 @@ data class TmdbEpisodeMetadata(
     val showId: Int,
     val seasonNumber: Int,
     val episodeNumber: Int,
+    val runtime: Int? = null,
     val imdbId: String? = null,
 )
 

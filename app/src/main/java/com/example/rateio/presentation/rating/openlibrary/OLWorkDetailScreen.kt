@@ -32,11 +32,11 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.rateio.data.CategoryRegistry
 import com.example.rateio.data.db.RateioDatabase
 import com.example.rateio.data.remote.openlibrary.OpenLibraryClient
-import com.example.rateio.data.remote.tmdb.toCarouselImage
 import com.example.rateio.data.repository.CategoryRepository
 import com.example.rateio.data.repository.RateItemRepository
 import com.example.rateio.model.CategoryType
 import com.example.rateio.model.ItemStatus
+import com.example.rateio.model.RateItem
 import com.example.rateio.presentation.components.AdaptiveImageCarousel
 import com.example.rateio.presentation.components.CarouselImage
 import com.example.rateio.presentation.components.CollapsibleHeader
@@ -46,7 +46,9 @@ import com.example.rateio.presentation.components.ItemStatusSelector
 import com.example.rateio.presentation.components.LibraryToggle
 import com.example.rateio.presentation.components.RateItemCard
 import com.example.rateio.presentation.components.label
+import com.example.rateio.presentation.components.rating.ChildrenDisplay
 import com.example.rateio.presentation.rating.RateItemDetailScreen
+import kotlin.random.Random
 
 
 @Composable
@@ -96,6 +98,29 @@ fun OLWorkDetailScreen(
             val editionWithContents = if (state.editionsWithContents.isNotEmpty())
                 state.editionsWithContents.first()
             else null
+
+            val chapterItems = mapOf<RateItem?, List<RateItem>>(
+                null to (editionWithContents?.tableOfContents?.mapIndexed { index, chapter ->
+                    RateItem(
+                        id = index.toLong(),
+                        categoryId = 0,
+                        title = when {
+                            !chapter.label.isNullOrBlank() -> chapter.label
+                            //!chapter.title.isNullOrBlank() -> chapter.title
+                            else -> "Chapter ${index + 1}"
+                        },
+                        subtitle = when {
+                            !chapter.title.isNullOrBlank() -> chapter.title
+                            //!chapter.pageNum.isNullOrBlank() -> chapter.pageNum
+                            else -> null
+                        },
+                        coverImageUrl = null,
+                        //rating = Random.nextFloat() * 0.25f + 0.75f,
+                        rating = null,
+                        externalSource = CategoryType.OPEN_LIBRARY_CHAPTER,
+                    )
+                } ?: emptyList())
+            )
 
             var status by remember(state.savedItem?.status) { mutableStateOf(
                 if (state.savedItem == null) ItemStatus.WATCHLIST
@@ -233,8 +258,28 @@ fun OLWorkDetailScreen(
                         }
                     }
 
-
                     item {
+                        val headerName = "Chapters"
+                        CollapsibleHeader(
+                            headerName,
+                            isOpened = headerName !in state.collapsedHeaders,
+                            onClick = {
+                                if (it) state.collapsedHeaders.remove(headerName)
+                                else state.collapsedHeaders.add(headerName)
+                            }
+                        ) {
+                            ChildrenDisplay(
+                                childrenGroups = chapterItems,
+                                onChildClick = { },
+                                selectedMode = state.selectedMode,
+                                onModeSelect = viewModel::onModeSelect,
+                                expandedParents = state.expandedChapters,
+                            )
+                        }
+                    }
+
+
+                    /*item {
                         val headerName = "Chapters"
                         CollapsibleHeader(
                             headerName,
@@ -283,7 +328,7 @@ fun OLWorkDetailScreen(
                                 Text("Nothing")
                             }
                         }
-                    }
+                    }*/
 
                 }
             )

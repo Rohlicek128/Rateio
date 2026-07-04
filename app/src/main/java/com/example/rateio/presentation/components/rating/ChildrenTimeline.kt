@@ -3,6 +3,7 @@ package com.example.rateio.presentation.components.rating
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -13,7 +14,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Slider
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
@@ -32,55 +32,48 @@ import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.example.rateio.data.remote.tmdb.TmdbEpisodeSummary
+import com.example.rateio.model.RateItem
 import com.example.rateio.presentation.components.RateItemCard
 import com.example.rateio.presentation.rating.display.getRatingColor
 import com.example.rateio.presentation.rating.display.getRoundedRating
-import com.example.rateio.utils.formatDateCompact
-import com.example.rateio.utils.formatTime
+import com.example.rateio.presentation.settings.ListItemPosition
+import com.example.rateio.presentation.settings.SettingListItem
 import kotlin.math.abs
 import kotlin.math.max
 
 
-private data class EpisodeRatingPoint(
+private data class ChildPoint(
     val globalIndex: Int,
-    val episode: TmdbEpisodeSummary,
-    val rating: Float?,
+    val child: RateItem,
 )
 
 @Composable
-fun EpisodeRatingGraph(
-    episodes: Map<Int, List<TmdbEpisodeSummary>>,
-    ratings: Map<Int, Map<Int, Float?>>,
-    onEpisodeClick: (season: Int, episode: Int) -> Unit,
+fun ChildrenTimeline(
+    childrenGroups: Map<RateItem?, List<RateItem>>,
+    onChildClick: (RateItem) -> Unit,
     modifier: Modifier = Modifier,
     minEpisodeWidth: Dp = 7.dp,
 ) {
-    val points = remember(episodes, ratings) {
+    val haptic = LocalHapticFeedback.current
+
+    val points = remember(childrenGroups) {
         var globalIdx = 0
-        episodes.entries
-            .sortedBy { it.key }
-            .flatMap { (season, eps) ->
-                eps.sortedBy { it.episodeNumber }.map { ep ->
-                    EpisodeRatingPoint(
+        childrenGroups
+            .mapValues { (_, children) ->
+                children.map { child ->
+                    ChildPoint(
                         globalIndex = globalIdx++,
-                        episode = ep,
-                        rating = ratings[season]?.get(ep.episodeNumber),
+                        child = child,
                     )
                 }
             }
     }
+    val flatPoints = points.flatMap { it.value }
 
-    // Index of first episode of each season (except season 1) for divider lines
-    val seasonDividerIndices = remember(points) {
-        points
-            .filter { it.episode.episodeNumber == 1 && it.episode.seasonNumber > 1 }
-            .map { it.globalIndex }
-    }
-
-    if (points.isEmpty()) return
+    if (flatPoints.isEmpty()) return
 
     val density = LocalDensity.current
     var hoveredIndex by remember { mutableStateOf<Int?>(null) }
@@ -98,14 +91,14 @@ fun EpisodeRatingGraph(
     val lineColor = MaterialTheme.colorScheme.secondaryFixedDim
 
 
-    val minRating = points.minBy { it.rating ?: 1f }.rating ?: 1f
+    val minRating = childrenGroups.values.flatten().minBy { it.rating ?: 1f }.rating ?: 1f
     var plotScale by rememberSaveable { mutableFloatStateOf(getInitialPlotScale(minRating)) }
 
     var episodeWidth by rememberSaveable { mutableFloatStateOf(
-        max(minEpisodeWidth.value, 350f / points.size.toFloat())
+        max(minEpisodeWidth.value, 350f / flatPoints.size.toFloat())
     ) }
 
-    val totalWidth = padL + episodeWidth.dp * points.size + padR
+    val totalWidth = padL + episodeWidth.dp * flatPoints.size + padR
 
     Column(modifier = modifier) {
         Box(
@@ -117,22 +110,22 @@ fun EpisodeRatingGraph(
                 modifier = Modifier
                     .width(totalWidth)
                     .height(250.dp)
-                .pointerInput(points) {
-                    awaitPointerEventScope {
-                        while (true) {
-                            val event = awaitPointerEvent()
-                            val pos = event.changes.firstOrNull()?.position ?: continue
-                            val padLpx = with(density) { padL.toPx() }
-                            val epWpx = with(density) { episodeWidth.dp.toPx() }
+                    .pointerInput(flatPoints) {
+                        awaitPointerEventScope {
+                            while (true) {
+                                val event = awaitPointerEvent()
+                                val pos = event.changes.firstOrNull()?.position ?: continue
+                                val padLpx = with(density) { padL.toPx() }
+                                val epWpx = with(density) { episodeWidth.dp.toPx() }
 
-                            val closest = points.minByOrNull { ep ->
-                                val x = padLpx + (ep.globalIndex + 0.5f) * epWpx
-                                abs(pos.x - x)
+                                val closest = flatPoints.minByOrNull { child ->
+                                    val x = padLpx + (child.globalIndex + 0.5f) * epWpx
+                                    abs(pos.x - x)
+                                }
+                                hoveredIndex = closest?.globalIndex
                             }
-                            hoveredIndex = closest?.globalIndex
                         }
                     }
-                }
             ) {
                 val w = totalWidth.toPx()
                 val h = size.height
@@ -171,7 +164,13 @@ fun EpisodeRatingGraph(
                 }
 
                 // Season divider lines
-                seasonDividerIndices.forEach { divIdx ->
+                var isFirst = true
+                points.forEach { (parent, childPoints) ->
+                    if (isFirst || childPoints.isEmpty()) {
+                        isFirst = false
+                        return@forEach
+                    }
+                    val divIdx = childPoints.first().globalIndex
                     val x = padLpx + divIdx * epWpx   // left edge of slot, not center
                     drawLine(
                         color = dividerColor.copy(alpha = 0.4f),
@@ -182,9 +181,8 @@ fun EpisodeRatingGraph(
                             floatArrayOf(4.dp.toPx(), 3.dp.toPx())
                         ),
                     )
-                    val seasonNum = points.first { it.globalIndex == divIdx }.episode.seasonNumber
                     drawContext.canvas.nativeCanvas.drawText(
-                        "S$seasonNum",
+                        parent?.title ?: "N/A",
                         x + 4.dp.toPx(),
                         padTpx + 12.dp.toPx(),
                         android.graphics.Paint().apply {
@@ -197,7 +195,7 @@ fun EpisodeRatingGraph(
 
                 // S1 label
                 drawContext.canvas.nativeCanvas.drawText(
-                    "S1",
+                    points.keys.first()?.title ?: "N/A",
                     padLpx + 4.dp.toPx(),
                     padTpx + 12.dp.toPx(),
                     android.graphics.Paint().apply {
@@ -208,12 +206,12 @@ fun EpisodeRatingGraph(
                 )
 
                 // Connecting line
-                val ratedPoints = points.filter { it.rating != null }
+                val ratedPoints = flatPoints.filter { it.child.rating != null }
                 if (ratedPoints.size >= 2) {
                     val path = Path()
-                    ratedPoints.forEachIndexed { i, ep ->
-                        val x = xOf(ep.globalIndex)
-                        val y = yOf(ep.rating!!)
+                    ratedPoints.forEachIndexed { i, item ->
+                        val x = xOf(item.globalIndex)
+                        val y = yOf(item.child.rating!!)
                         if (i == 0) path.moveTo(x, y) else path.lineTo(x, y)
                     }
                     drawPath(
@@ -228,23 +226,25 @@ fun EpisodeRatingGraph(
                 }
 
                 // Episode dots
-                points.forEach { ep ->
-                    val rating = ep.rating ?: return@forEach
-                    val x = xOf(ep.globalIndex)
-                    val y = yOf(rating)
-                    val color = ratingColor(rating)
-                    val isHovered = ep.globalIndex == hoveredIndex
-                    val radius = 4.dp.toPx()
+                points.forEach { (_, children) ->
+                    children.forEach { item ->
+                        val rating = item.child.rating ?: return@forEach
+                        val x = xOf(item.globalIndex)
+                        val y = yOf(rating)
+                        val color = ratingColor(rating)
+                        val isHovered = item.globalIndex == hoveredIndex
+                        val radius = 4.dp.toPx()
 
-                    // Glow ring on hover
-                    if (isHovered) {
-                        drawCircle(
-                            color = color.copy(alpha = 0.25f),
-                            radius = radius * 1.75f,
-                            center = Offset(x, y),
-                        )
+                        // Glow ring on hover
+                        if (isHovered) {
+                            drawCircle(
+                                color = color.copy(alpha = 0.25f),
+                                radius = radius * 1.75f,
+                                center = Offset(x, y),
+                            )
+                        }
+                        drawCircle(color = color, radius = radius, center = Offset(x, y))
                     }
-                    drawCircle(color = color, radius = radius, center = Offset(x, y))
                 }
 
                 // X axis labels
@@ -266,43 +266,58 @@ fun EpisodeRatingGraph(
         }
 
         // Tooltip below graph for hovered episode
-        val hovered = hoveredIndex?.let { idx -> points.getOrNull(idx) }
+        val hovered = hoveredIndex?.let { idx -> flatPoints.getOrNull(idx) }
         AnimatedVisibility(visible = hovered != null) {
-            hovered?.let { episodePoint ->
-                val episode = episodePoint.episode
+            hovered?.let { point ->
+                val child = point.child
                 RateItemCard(
-                    title = episode.name,
-                    subtitle = "S${episode.seasonNumber}E${episode.episodeNumber}  |  ${formatDateCompact(episode.airDate)}",
-                    coverImagePath = "https://image.tmdb.org/t/p/w300${episode.stillPath}",
-                    rating = episodePoint.rating,
-                    bubbleText = if (episode.runtime > 0) formatTime(episode.runtime) else null,
+                    title = child.title,
+                    subtitle = child.subtitle,
+                    coverImagePath = child.coverImageUrl,
+                    rating = child.rating,
+                    //bubbleText = if (child.runtime > 0) formatTime(child.runtime) else null,
                     placeholderRatio = 16f / 9f,
-                    padding = PaddingValues(horizontal = 16.dp, vertical = 16.dp),
-                    onClick = { onEpisodeClick(
-                        episode.seasonNumber,
-                        episode.episodeNumber
-                    ) },
+                    padding = PaddingValues(16.dp),
+                    onClick = { onChildClick(child) },
                 )
             }
         }
 
         Column(
-            modifier = Modifier.padding(32.dp)
+            modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp),
+            verticalArrangement = Arrangement.spacedBy(4.dp),
         ) {
-            Text(text = "Scale: " + "%.1f".format(plotScale))
-            Slider(
-                value = plotScale,
-                onValueChange = { plotScale = it },
-                valueRange = 1f..5f,
+            SettingListItem(
+                modifier = Modifier.fillMaxWidth(),
+                title = "Scale",
+                description = "Value: ${"%.1f".format(plotScale)}",
+                position = ListItemPosition.START,
+                supportingContent = {
+                    Slider(
+                        plotScale,
+                        onValueChange = { value ->
+                            //haptic.performHapticFeedback(HapticFeedbackType.SegmentFrequentTick)
+                            plotScale = value
+                        },
+                        valueRange = 1f..5f
+                    )
+                }
             )
-
-            //Spacer(modifier = Modifier.height(4.dp))
-
-            Text(text = "Episode width: " + "%.1f".format(episodeWidth))
-            Slider(
-                value = episodeWidth,
-                onValueChange = { episodeWidth = it },
-                valueRange = 1f..50f,
+            SettingListItem(
+                modifier = Modifier.fillMaxWidth(),
+                title = "Episode width",
+                description = "Value: ${"%.1f".format(episodeWidth)}",
+                position = ListItemPosition.END,
+                supportingContent = {
+                    Slider(
+                        episodeWidth,
+                        onValueChange = { value ->
+                            //haptic.performHapticFeedback(HapticFeedbackType.SegmentFrequentTick)
+                            episodeWidth = value
+                        },
+                        valueRange = 1f..50f
+                    )
+                }
             )
         }
     }

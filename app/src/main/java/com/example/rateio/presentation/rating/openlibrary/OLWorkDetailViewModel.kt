@@ -29,7 +29,9 @@ data class OLWorkDetailState(
     val numberOfPages: Int? = null,
     val savedItem: RateItem? = null,
 
+    val selectedMode: Int = 0,
     val collapsedHeaders: MutableSet<String> = mutableStateSetOf(),
+    val expandedChapters: MutableSet<String?> = mutableStateSetOf(),
 
     val isLoading: Boolean = false,
     val error: String? = null,
@@ -112,6 +114,10 @@ class OLWorkDetailViewModel(
                 _state.update { it.copy(savedItem = item) }
             }
         }
+    }
+
+    fun onModeSelect(selectedMode: Int) {
+        _state.update { it.copy(selectedMode = selectedMode) }
     }
 
     companion object {

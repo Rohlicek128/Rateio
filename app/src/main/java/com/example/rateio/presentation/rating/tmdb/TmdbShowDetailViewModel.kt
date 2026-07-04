@@ -49,7 +49,7 @@ data class TmdbShowDetailState(
     val selectedEpisodeMode: Int = 0,
     val sortMode: SortMode = SortMode.BY_SEASON,
     val collapsedHeaders: MutableSet<String> = mutableStateSetOf(),
-    val expandedSeasons: MutableSet<Int> = mutableStateSetOf(),
+    val expandedSeasons: MutableSet<String?> = mutableStateSetOf(),
 
     val isLoading: Boolean = false,
     val error: String? = null,
