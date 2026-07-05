@@ -44,10 +44,8 @@ class LibraryCategoryViewModel(
 
     fun editAll() {
         viewModelScope.launch {
-            state.value.items.forEach { item ->
-                if (item.status == ItemStatus.NONE) {
-                    itemRepository.setStatus(item.id, ItemStatus.COMPLETED)
-                }
+            state.value.items.sortedByDescending { it.rating }.forEach { item ->
+                println("${item.rating}; ${item.title}; ${item.id}; ${item.externalId}")
             }
         }
     }

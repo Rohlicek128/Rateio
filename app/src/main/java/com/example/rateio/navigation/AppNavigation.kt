@@ -39,6 +39,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
+import com.example.rateio.data.remote.tmdb.TmdbEpisodeMetadata
 import com.example.rateio.features.home.HomeScreen
 import com.example.rateio.model.CategoryType
 import com.example.rateio.presentation.browse.BrowseScreen
@@ -57,6 +58,7 @@ import com.example.rateio.presentation.settings.SettingsCategoriesScreen
 import com.example.rateio.presentation.settings.SettingsRatingScreen
 import com.example.rateio.presentation.settings.SettingsScreen
 import com.example.rateio.presentation.settings.rating.RatingTransformationSettingsScreen
+import kotlinx.serialization.json.Json
 
 
 @Composable
@@ -216,9 +218,20 @@ fun AppNavigation(navController: NavHostController = rememberNavController()) {
                         showId = route.showId,
                         isSaved = false,
                         onBackClick = { navController.popBackStack() },
-                        onEpisodeClick = {showId, seasonNumber, episodeNumber ->
-                            navController.navigate(Route.TmdbEpisodeDetail(showId, seasonNumber, episodeNumber)) {
-                                popUpTo<Route.TmdbShowDetail>()
+                        onEpisodeClick = { _, episodeItem ->
+                            val metadata = episodeItem.metadataJSON?.let {
+                                runCatching {
+                                    Json.decodeFromString<TmdbEpisodeMetadata>(it)
+                                }.getOrNull()
+                            }
+                            if (metadata != null) {
+                                navController.navigate(Route.TmdbEpisodeDetail(
+                                    metadata.showId,
+                                    metadata.seasonNumber,
+                                    metadata.episodeNumber
+                                )) {
+                                    popUpTo<Route.TmdbShowDetail>()
+                                }
                             }
                         }
                     )
@@ -281,6 +294,9 @@ fun AppNavigation(navController: NavHostController = rememberNavController()) {
                         workId = route.workId,
                         isSaved = false,
                         onBackClick = { navController.popBackStack() },
+                        onChapterClick = { partItem, chapterItem ->
+
+                        }
                     )
                 }
 

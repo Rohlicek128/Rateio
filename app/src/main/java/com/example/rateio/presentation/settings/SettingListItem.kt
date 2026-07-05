@@ -2,6 +2,7 @@ package com.example.rateio.presentation.settings
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.indication
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -12,8 +13,12 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.NavigateNext
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Numbers
+import androidx.compose.material.icons.filled.TextFields
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
@@ -22,6 +27,10 @@ import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemColors
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -33,6 +42,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.example.rateio.presentation.rating.display.getRatingColor
 import kotlin.random.Random
@@ -56,7 +66,8 @@ fun SettingListItem(
     trailingContent: @Composable (() -> Unit)? = null,
     onClick: (() -> Unit)? = null,
     position: ListItemPosition = ListItemPosition.SINGLE,
-    test: Boolean = false,
+    showNavigateIconOnClick: Boolean = true,
+    //test: Boolean = false,
 ) {
     val haptic = LocalHapticFeedback.current
 
@@ -107,7 +118,7 @@ fun SettingListItem(
                 supportingContent?.invoke()
             }
         },
-        trailingContent = if (onClick != null) {
+        trailingContent = if (onClick != null && showNavigateIconOnClick) {
             {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.NavigateNext,
@@ -140,4 +151,118 @@ fun SettingListItem(
                 else Modifier
             ),
     )
+}
+
+
+@Composable
+fun SettingsTextField(
+    value: String,
+    onValueChange: (String) -> Unit,
+    modifier: Modifier = Modifier,
+    singleLine: Boolean = true,
+    placeholder: @Composable (() -> Unit)? = null,
+) {
+    OutlinedTextField(
+        modifier = modifier,
+        singleLine = singleLine,
+        shape = MaterialTheme.shapes.medium,
+        value = value,
+        colors = OutlinedTextFieldDefaults.colors().copy(
+            focusedContainerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+            unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+        ),
+        onValueChange = onValueChange,
+        placeholder = placeholder,
+        leadingIcon = {
+            Icon(
+                Icons.Default.TextFields,
+                null,
+            )
+        },
+    )
+}
+
+@Composable
+fun SettingsNumberField(
+    value: Float,
+    onValueChange: (Float) -> Unit,
+    modifier: Modifier = Modifier,
+    placeholder: @Composable (() -> Unit)? = null,
+) {
+    OutlinedTextField(
+        modifier = modifier,
+        singleLine = true,
+        shape = MaterialTheme.shapes.medium,
+        value = value.toString(),
+        colors = OutlinedTextFieldDefaults.colors().copy(
+            focusedContainerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+            unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+        ),
+        onValueChange = {
+            val value = it.toFloatOrNull()
+            if (it.isEmpty() || value != null) {
+                onValueChange(value ?: 1f)
+            }
+        },
+        placeholder = placeholder,
+        leadingIcon = {
+            Icon(
+                Icons.Default.Numbers,
+                null,
+            )
+        },
+        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+    )
+}
+
+@Composable
+fun SettingsSwitch(
+    modifier: Modifier = Modifier,
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit,
+) {
+    val haptic = LocalHapticFeedback.current
+
+    Switch(
+        modifier = modifier,
+        checked = checked,
+        onCheckedChange = {
+            haptic.performHapticFeedback(HapticFeedbackType.ToggleOn)
+            onCheckedChange(it)
+        },
+        thumbContent = if (checked) {
+            {
+                Icon(
+                    imageVector = Icons.Filled.Check,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(SwitchDefaults.IconSize),
+                )
+            }
+        } else {
+            null
+        }
+    )
+}
+
+@Composable
+fun SettingsSelectedEnum(
+    modifier: Modifier = Modifier,
+    name: String,
+) {
+    Card(
+        modifier = modifier,
+        shape = MaterialTheme.shapes.extraLarge,
+        colors = CardDefaults.cardColors().copy(
+            containerColor = MaterialTheme.colorScheme.surfaceContainerLowest,
+            contentColor = MaterialTheme.colorScheme.onSurface,
+        )
+    ) {
+        Text(
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 2.dp),
+            text = name,
+            style = MaterialTheme.typography.titleSmall,
+            fontWeight = FontWeight.Bold
+        )
+    }
 }

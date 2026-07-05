@@ -88,6 +88,7 @@ fun RateItemDetailScreen(
     canAddToLibrary: Boolean = false,
     onRatingSaved: ((Float?) -> Unit)? = null,
     onOpenSettings: (() -> Unit)? = null,
+    debug: String? = null,
 ) {
     var isRefreshing by remember { mutableStateOf(false) }
     val state = rememberPullToRefreshState()
@@ -175,10 +176,25 @@ fun RateItemDetailScreen(
                 }
             }
 
-            // Divider before extra content
-            item { HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp, horizontal = 16.dp)) }
+            // Debug
+            if (debug != null) {
+                item {
+                    Text(
+                        text = debug,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
+                        fontWeight = FontWeight.SemiBold,
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                    )
+                }
+            }
 
-            extraContent()
+            if (extraContent != {}) {
+                // Divider before extra content
+                item { HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp, horizontal = 16.dp)) }
+
+                extraContent()
+            }
 
             item { Spacer(modifier = Modifier.height(200.dp)) }
         }
@@ -387,66 +403,68 @@ private fun PosterWithRating(
             .fillMaxWidth()
             .wrapContentHeight(unbounded = true),
     ) {
-        Box(
-            modifier = Modifier
-                .align(Alignment.Center)
-                .padding(4.dp),
-        ) {
-            Card(
-                onClick = { },
-                shape = MaterialTheme.shapes.extraLarge,
+        if (imageUrl != null) {
+            Box(
                 modifier = Modifier
-                    .drawBehind {
-                        if (glowColor != Color.Transparent) {
-                            drawIntoCanvas { canvas ->
-                                val paint = Paint().apply {
-                                    asFrameworkPaint().apply {
-                                        isAntiAlias = true
-                                        color = glowColor
-                                            .copy(alpha = 0.8f)
-                                            .toArgb()
-                                        maskFilter = BlurMaskFilter(
-                                            55.dp.toPx(),
-                                            BlurMaskFilter.Blur.NORMAL,
-                                        )
-                                    }
-                                }
-                                val inflate = 8.dp.toPx()
-                                canvas.drawRoundRect(
-                                    left = -inflate,
-                                    top = -inflate,
-                                    right = size.width + inflate,
-                                    bottom = size.height + inflate,
-                                    radiusX = 28.dp.toPx(),
-                                    radiusY = 28.dp.toPx(),
-                                    paint = paint,
-                                )
-                            }
-                        }
-                    },
+                    .align(Alignment.Center)
+                    .padding(4.dp),
             ) {
-                AdaptiveAsyncImage(
-                    model = imageUrl,
-                    placeholderRatio = placeholderRatio,
-                    maxHeight = 450.dp,
-                    //minWidth = 200.dp,
-                    onSuccess = { state ->
-                        scope.launch(Dispatchers.IO) {
-                            val hardwareBitmap = state.result.image.toBitmap()
-                            val bitmap = hardwareBitmap.copy(Bitmap.Config.ARGB_8888, false)
+                Card(
+                    onClick = { },
+                    shape = MaterialTheme.shapes.extraLarge,
+                    modifier = Modifier
+                        .drawBehind {
+                            if (glowColor != Color.Transparent) {
+                                drawIntoCanvas { canvas ->
+                                    val paint = Paint().apply {
+                                        asFrameworkPaint().apply {
+                                            isAntiAlias = true
+                                            color = glowColor
+                                                .copy(alpha = 0.8f)
+                                                .toArgb()
+                                            maskFilter = BlurMaskFilter(
+                                                55.dp.toPx(),
+                                                BlurMaskFilter.Blur.NORMAL,
+                                            )
+                                        }
+                                    }
+                                    val inflate = 8.dp.toPx()
+                                    canvas.drawRoundRect(
+                                        left = -inflate,
+                                        top = -inflate,
+                                        right = size.width + inflate,
+                                        bottom = size.height + inflate,
+                                        radiusX = 28.dp.toPx(),
+                                        radiusY = 28.dp.toPx(),
+                                        paint = paint,
+                                    )
+                                }
+                            }
+                        },
+                ) {
+                    AdaptiveAsyncImage(
+                        model = imageUrl,
+                        placeholderRatio = placeholderRatio,
+                        maxHeight = 450.dp,
+                        //minWidth = 200.dp,
+                        onSuccess = { state ->
+                            scope.launch(Dispatchers.IO) {
+                                val hardwareBitmap = state.result.image.toBitmap()
+                                val bitmap = hardwareBitmap.copy(Bitmap.Config.ARGB_8888, false)
 
-                            val palette = Palette.from(bitmap).generate()
-                            val argb = palette.dominantSwatch?.rgb
-                                ?: palette.vibrantSwatch?.rgb
-                                ?: palette.mutedSwatch?.rgb
-                                ?: palette.lightVibrantSwatch?.rgb
+                                val palette = Palette.from(bitmap).generate()
+                                val argb = palette.dominantSwatch?.rgb
+                                    ?: palette.vibrantSwatch?.rgb
+                                    ?: palette.mutedSwatch?.rgb
+                                    ?: palette.lightVibrantSwatch?.rgb
 
-                            withContext(Dispatchers.Main) {
-                                glowColor = argb?.let { Color(it) } ?: Color.Transparent
+                                withContext(Dispatchers.Main) {
+                                    glowColor = argb?.let { Color(it) } ?: Color.Transparent
+                                }
                             }
                         }
-                    }
-                )
+                    )
+                }
             }
         }
 

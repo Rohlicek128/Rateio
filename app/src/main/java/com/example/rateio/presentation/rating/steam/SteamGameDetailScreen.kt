@@ -27,6 +27,8 @@ import com.example.rateio.model.CategoryType
 import com.example.rateio.presentation.components.AdaptiveImageCarousel
 import com.example.rateio.presentation.components.GenreChips
 import com.example.rateio.presentation.components.LibraryToggle
+import com.example.rateio.presentation.components.ScreenError
+import com.example.rateio.presentation.components.ScreenLoading
 import com.example.rateio.presentation.components.SectionHeader
 import com.example.rateio.presentation.rating.RateItemDetailScreen
 
@@ -55,14 +57,10 @@ fun SteamGameDetailScreen(
 
     when {
         state.isLoading -> {
-            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                CircularWavyProgressIndicator()
-            }
+            ScreenLoading()
         }
         state.error != null -> {
-            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text("Error: ${state.error}", color = MaterialTheme.colorScheme.error)
-            }
+            ScreenError(state.error)
         }
         state.game != null -> {
             val game = state.game!!

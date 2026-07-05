@@ -22,6 +22,11 @@ fun parseDate(dateString: String?): LocalDate? {
     }.getOrNull()
     return instant?.atZone(ZoneId.systemDefault())?.toLocalDate()
 }
+fun parseDate(timeMillis: Long): LocalDate? {
+    val instant = Instant.ofEpochMilli(timeMillis)
+    return instant.atZone(ZoneId.systemDefault()).toLocalDate()
+}
+
 
 fun daysUntil(targetDate: LocalDate): Long {
     return ChronoUnit.DAYS.between(

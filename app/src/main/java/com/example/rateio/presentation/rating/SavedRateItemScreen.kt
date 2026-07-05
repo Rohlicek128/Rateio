@@ -76,11 +76,10 @@ fun SavedRateItemScreen(
                         onStatusSaved = viewModel::updateStatus,
                         onMetadataSaved = viewModel::updateMetadata,
                         onBackClick = onBackClick,
-                        onEpisodeClick = {showId, seasonNumber, episodeNumber ->
-                            viewModel.findOrCreateEpisodeAndNavigate(
-                                showId = showId,
-                                seasonNumber = seasonNumber,
-                                episodeNumber = episodeNumber,
+                        onEpisodeClick = { seasonItem, episodeItem ->
+                            viewModel.findOrCreateChildAndNavigate(
+                                parentItem = seasonItem,
+                                childItem = episodeItem,
                                 onNavigate = onChildClick,
                             )
                         }
@@ -142,6 +141,7 @@ fun SavedRateItemScreen(
                         onBackClick = onBackClick,
                     )
                 }
+
                 CategoryType.OPEN_LIBRARY_BOOKS -> {
                     OLWorkDetailScreen (
                         workId = item.externalId!!,
@@ -149,6 +149,23 @@ fun SavedRateItemScreen(
                         customRating = item.rating,
                         onRatingSaved = viewModel::saveRatingAndComplete,
                         onStatusSaved = viewModel::updateStatus,
+                        onMetadataSaved = viewModel::updateMetadata,
+                        onBackClick = onBackClick,
+                        onChapterClick = { partItem, chapterItem ->
+                            viewModel.findOrCreateChildAndNavigate(
+                                parentItem = partItem,
+                                childItem = chapterItem,
+                                onNavigate = onChildClick,
+                            )
+                        }
+                    )
+                }
+                CategoryType.OPEN_LIBRARY_CHAPTER -> {
+                    EditableRateItemDetailScreen(
+                        item = item,
+                        categoryName = "Chapters",
+                        onItemUpdate = viewModel::updateItem,
+                        onRatingSaved = viewModel::saveRatingAndComplete,
                         onBackClick = onBackClick,
                     )
                 }

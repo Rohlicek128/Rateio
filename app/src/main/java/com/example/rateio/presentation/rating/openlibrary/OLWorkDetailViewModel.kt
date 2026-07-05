@@ -15,9 +15,18 @@ import com.example.rateio.data.repository.CategoryRepository
 import com.example.rateio.data.repository.RateItemRepository
 import com.example.rateio.model.CategoryType
 import com.example.rateio.model.RateItem
+import com.example.rateio.presentation.components.rating.DisplayMode
+import com.example.rateio.presentation.rating.tmdb.SortMode
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
@@ -29,7 +38,8 @@ data class OLWorkDetailState(
     val numberOfPages: Int? = null,
     val savedItem: RateItem? = null,
 
-    val selectedMode: Int = 0,
+    val selectedDisplayMode: DisplayMode = DisplayMode.LIST,
+    val selectedSortMode: SortMode = SortMode.BY_SEASON,
     val collapsedHeaders: MutableSet<String> = mutableStateSetOf(),
     val expandedChapters: MutableSet<String?> = mutableStateSetOf(),
 
@@ -93,6 +103,23 @@ class OLWorkDetailViewModel(
         }
     }
 
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val userRatingsState: StateFlow<Map<String?, Map<String?, RateItem>>> = state
+        .map { it.savedItem?.id }
+        .distinctUntilChanged()
+        .flatMapLatest { id ->
+            if (id == null) {
+                flowOf(emptyMap())
+            } else {
+                itemRepository.observeGrandchildrenByChildren(id)
+            }
+        }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = emptyMap()
+        )
+
     fun onToggleSaved(work: OLWorkDetail, author: OLAuthorDetail? = null) {
         viewModelScope.launch {
             val state = _state.value
@@ -116,8 +143,11 @@ class OLWorkDetailViewModel(
         }
     }
 
-    fun onModeSelect(selectedMode: Int) {
-        _state.update { it.copy(selectedMode = selectedMode) }
+    fun onDisplayModeSelect(selectedMode: DisplayMode) {
+        _state.update { it.copy(selectedDisplayMode = selectedMode) }
+    }
+    fun onSortModeSelect(selectedMode: SortMode) {
+        _state.update { it.copy(selectedSortMode = selectedMode) }
     }
 
     companion object {

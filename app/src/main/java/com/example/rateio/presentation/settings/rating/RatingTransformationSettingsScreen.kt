@@ -13,22 +13,13 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.foundation.text.input.TextFieldLineLimits
-import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.LinearScale
-import androidx.compose.material.icons.filled.Numbers
 import androidx.compose.material.icons.filled.Save
-import androidx.compose.material.icons.filled.TextFields
 import androidx.compose.material3.ButtonColors
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
 import androidx.compose.material3.ToggleButtonDefaults
@@ -41,9 +32,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
-import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.rateio.presentation.ScreenScaffold
@@ -51,16 +40,14 @@ import com.example.rateio.presentation.components.RateBox
 import com.example.rateio.presentation.components.RatingBottomSheet
 import com.example.rateio.presentation.rating.display.RatingTransformation
 import com.example.rateio.presentation.rating.display.RatingTransformationsConstants
-import com.example.rateio.presentation.rating.display.getCurrentRatingTransformations
-import com.example.rateio.presentation.rating.display.getMinValue
 import com.example.rateio.presentation.rating.display.getTransformedRating
 import com.example.rateio.presentation.settings.ErrorCard
 import com.example.rateio.presentation.settings.ListItemPosition
 import com.example.rateio.presentation.settings.SettingListItem
 import com.example.rateio.presentation.settings.SettingsListHeader
+import com.example.rateio.presentation.settings.SettingsNumberField
+import com.example.rateio.presentation.settings.SettingsTextField
 import com.example.rateio.presentation.settings.WarningCard
-import java.util.Locale
-import kotlin.math.round
 
 
 @Composable
@@ -313,65 +300,4 @@ fun RatingTransformationSettingsScreen(
 
         }
     }
-}
-
-
-@Composable
-fun SettingsTextField(
-    value: String,
-    onValueChange: (String) -> Unit,
-    modifier: Modifier = Modifier,
-    placeholder: @Composable (() -> Unit)? = null,
-) {
-    OutlinedTextField(
-        modifier = modifier,
-        singleLine = true,
-        shape = MaterialTheme.shapes.medium,
-        value = value,
-        colors = OutlinedTextFieldDefaults.colors().copy(
-            focusedContainerColor = MaterialTheme.colorScheme.surfaceContainerLow,
-            unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainerLow,
-        ),
-        onValueChange = onValueChange,
-        placeholder = placeholder,
-        leadingIcon = {
-            Icon(
-                Icons.Default.TextFields,
-                null,
-            )
-        },
-    )
-}
-
-@Composable
-fun SettingsNumberField(
-    value: Float,
-    onValueChange: (Float) -> Unit,
-    modifier: Modifier = Modifier,
-    placeholder: @Composable (() -> Unit)? = null,
-) {
-    OutlinedTextField(
-        modifier = modifier,
-        singleLine = true,
-        shape = MaterialTheme.shapes.medium,
-        value = value.toString(),
-        colors = OutlinedTextFieldDefaults.colors().copy(
-            focusedContainerColor = MaterialTheme.colorScheme.surfaceContainerLow,
-            unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainerLow,
-        ),
-        onValueChange = {
-            val value = it.toFloatOrNull()
-            if (it.isEmpty() || value != null) {
-                onValueChange(value ?: 1f)
-            }
-        },
-        placeholder = placeholder,
-        leadingIcon = {
-            Icon(
-                Icons.Default.Numbers,
-                null,
-            )
-        },
-        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
-    )
 }

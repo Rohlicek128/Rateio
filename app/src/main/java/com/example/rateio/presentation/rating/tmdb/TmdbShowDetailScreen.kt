@@ -1,54 +1,30 @@
 package com.example.rateio.presentation.rating.tmdb
 
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.List
-import androidx.compose.material.icons.automirrored.filled.WrapText
-import androidx.compose.material.icons.automirrored.outlined.List
-import androidx.compose.material.icons.automirrored.outlined.WrapText
-import androidx.compose.material.icons.filled.GridOn
-import androidx.compose.material.icons.filled.Timeline
-import androidx.compose.material.icons.filled.UnfoldLess
-import androidx.compose.material.icons.filled.UnfoldMore
-import androidx.compose.material.icons.outlined.GridOn
-import androidx.compose.material.icons.outlined.Timeline
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.CircularWavyProgressIndicator
-import androidx.compose.material3.Icon
+import androidx.compose.material.icons.filled.HideImage
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedToggleButton
-import androidx.compose.material3.Slider
-import androidx.compose.material3.Text
-import androidx.compose.material3.ToggleButtonDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -73,25 +49,21 @@ import com.example.rateio.presentation.components.LibraryToggle
 import com.example.rateio.presentation.components.PersonCard
 import com.example.rateio.presentation.components.RateItemCard
 import com.example.rateio.presentation.components.ReviewCard
-import com.example.rateio.presentation.components.SectionHeader
-import com.example.rateio.presentation.components.SortBySelectionButton
-import com.example.rateio.presentation.components.rating.ChildrenGrid
-import com.example.rateio.presentation.components.rating.ChildrenList
-import com.example.rateio.presentation.components.rating.ChildrenTimeline
-import com.example.rateio.presentation.components.rating.ChildrenWrapped
+import com.example.rateio.presentation.components.ScreenError
+import com.example.rateio.presentation.components.ScreenLoading
+import com.example.rateio.presentation.components.rating.ChildrenDisplay
 import com.example.rateio.presentation.components.rating.ItemProgressBar
-import com.example.rateio.presentation.components.rating.RateItemList
-import com.example.rateio.presentation.components.settings.ModalShowsSettingsSheet
 import com.example.rateio.presentation.rating.RateItemDetailScreen
 import com.example.rateio.presentation.rating.display.RatingColorBucketConstants
 import com.example.rateio.presentation.rating.display.getCurrentRatingColorBuckets
 import com.example.rateio.presentation.settings.ListItemPosition
+import com.example.rateio.presentation.settings.ModalSettings
 import com.example.rateio.presentation.settings.SettingListItem
+import com.example.rateio.presentation.settings.SettingsSwitch
 import com.example.rateio.utils.formatDate
 import com.example.rateio.utils.formatTime
 import kotlinx.serialization.json.Json
 import java.util.Locale
-import kotlin.math.round
 
 
 @Composable
@@ -103,7 +75,7 @@ fun TmdbShowDetailScreen(
     onStatusSaved: ((ItemStatus) -> Unit)? = null,
     onMetadataSaved: ((String?) -> Unit)? = null,
     onBackClick: () -> Unit,
-    onEpisodeClick: (showId: Int, seasonNumber: Int, episodeNumber: Int) -> Unit,
+    onEpisodeClick: (seasonItem: RateItem, episodeItem: RateItem) -> Unit,
 ) {
     val context = LocalContext.current
     val itemRepository = remember {
@@ -124,14 +96,10 @@ fun TmdbShowDetailScreen(
 
     when {
         state.isLoading -> {
-            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                CircularWavyProgressIndicator()
-            }
+            ScreenLoading()
         }
         state.error != null -> {
-            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text("Error: ${state.error}", color = MaterialTheme.colorScheme.error)
-            }
+            ScreenError(state.error)
         }
         state.show != null -> {
             val show = state.show!!
@@ -153,8 +121,6 @@ fun TmdbShowDetailScreen(
             val episodesState by episodesViewModel.state.collectAsState()
 
             var selectedRatings by remember { mutableIntStateOf(if (!isSaved) 0 else 2) }
-            var invertedGrid by remember { mutableStateOf(false) }
-            var columnsWrapped by remember { mutableFloatStateOf(4f) }
 
             val userRatings = viewModel.userRatingsState.collectAsStateWithLifecycle()
             val listOfRatings = userRatings.value.values.flatMap { it.values }.filterNotNull()
@@ -173,7 +139,8 @@ fun TmdbShowDetailScreen(
                     val items = episodes.sortedBy { it.episodeNumber }.map { episode ->
                         RateItem(
                             id = 0,
-                            categoryId = 0,
+                            parentId = seasonNumber.toLong(),
+                            categoryId = state.savedItem?.categoryId ?: 0,
                             title = episode.name,
                             subtitle = "Episode ${episode.episodeNumber}",
                             rating = ratings[episode.seasonNumber]?.get(episode.episodeNumber),
@@ -192,7 +159,8 @@ fun TmdbShowDetailScreen(
                     val season = seasons[seasonNumber - 1]
                     val seasonItem = RateItem(
                         id = seasonNumber.toLong(),
-                        categoryId = 0,
+                        parentId = state.savedItem?.id,
+                        categoryId = state.savedItem?.categoryId ?: 0,
                         title = "Season $seasonNumber",
                         subtitle = "${(season.airDate ?: "N/A").take(4)} | ${season.episodeCount} episodes",
                         rating = null,
@@ -203,16 +171,14 @@ fun TmdbShowDetailScreen(
                     seasonItem to items
                 }
             val onChildClick = { child: RateItem ->
-                val metadata = child.metadataJSON?.let {
+                /*val metadata = child.metadataJSON?.let {
                     runCatching {
                         Json.decodeFromString<TmdbEpisodeMetadata>(it)
                     }.getOrNull()
-                }
-                if (metadata != null) {
-                    onEpisodeClick(metadata.showId,
-                        metadata.seasonNumber,
-                        metadata.episodeNumber
-                    )
+                }*/
+                val parent = childrenGroups.keys.find { it?.id == child.parentId }
+                if (parent != null) {
+                    onEpisodeClick(parent, child,)
                 }
             }
 
@@ -238,43 +204,12 @@ fun TmdbShowDetailScreen(
                 unwatchedEpisodes.first() else null
 
             val expandWatchedSeason = true
-            if (show.numberOfSeasons == 1) state.expandedSeasons.add("Season 1")
-            else if (isSaved && expandWatchedSeason && nextToWatchEpisode != null) {
-                state.expandedSeasons.add("Season ${nextToWatchEpisode.seasonNumber}") // TODO: get real season name
+            if (isSaved && expandWatchedSeason && nextToWatchEpisode != null) {
+                state.expandedSeasons.add("Season ${nextToWatchEpisode.seasonNumber}")
             }
 
 
-            val sortedBestEpisodes = remember(childrenGroups) {
-                childrenGroups
-                    .flatMap { (_, episodes) -> episodes }
-                    .sortedByDescending { episode ->
-                        episode.rating ?: -1f
-                    }
-            }
-            val sortedEpisodes = remember(childrenGroups, state.sortMode) {
-                childrenGroups
-                    .flatMap { (_, episodes) -> episodes }
-                    .let { episodes ->
-                        when (state.sortMode) {
-                            SortMode.BY_RATING_WORST -> episodes.sortedBy { episode ->
-                                episode.rating ?: 2f
-                            }
-                            SortMode.BY_RUNTIME -> episodes.sortedByDescending { episode ->
-                                val metadata = episode.metadataJSON?.let {
-                                    runCatching {
-                                        Json.decodeFromString<TmdbEpisodeMetadata>(it)
-                                    }.getOrNull()
-                                }
-                                metadata?.runtime
-                            }
-                            SortMode.BY_NAME -> episodes.sortedBy { episode ->
-                                episode.title
-                            }
-                            else -> sortedBestEpisodes
-                        }
-                    }
-            }
-            val episodesCount = if (selectedRatings == 2) listOfRatings.size else sortedBestEpisodes.size
+            /*val episodesCount = if (selectedRatings == 2) listOfRatings.size else sortedBestEpisodes.size
             val sortedEpisodesTop = when {
                 episodesCount >= 10 -> {
                     sortedBestEpisodes.take(round(episodesCount * 0.1f).toInt().coerceIn(3, 10))
@@ -285,7 +220,7 @@ fun TmdbShowDetailScreen(
                 else -> {
                     emptyList()
                 }
-            }
+            }*/
 
             val spoilers = metadata.showSpoilers || !isSaved
             val spoilName = true
@@ -297,14 +232,31 @@ fun TmdbShowDetailScreen(
             // Settings
             var showSettings by remember { mutableStateOf(false) }
             if (showSettings) {
-                ModalShowsSettingsSheet(
-                    metadata = metadata,
-                    onValueChange = { newMetadata ->
-                        onMetadataSaved?.invoke(Json.encodeToString(newMetadata))
-                        viewModel.updateSavedItem()
-                    },
+                ModalSettings(
+                    title = "${show.name}'s Settings",
                     onDismiss = { showSettings = false }
-                )
+                ) {
+                    item {
+                        SettingListItem(
+                            title = "Hide Spoilers",
+                            description = "Override if episodes will show spoilers",
+                            icon = Icons.Default.HideImage,
+                            position = ListItemPosition.SINGLE,
+                            trailingContent = {
+                                SettingsSwitch(
+                                    checked = !metadata.showSpoilers,
+                                    onCheckedChange = {
+                                        haptic.performHapticFeedback(HapticFeedbackType.ToggleOn)
+                                        onMetadataSaved?.invoke(
+                                            Json.encodeToString(metadata.copy(showSpoilers = !it))
+                                        )
+                                        viewModel.updateSavedItem()
+                                    }
+                                )
+                            }
+                        )
+                    }
+                }
             }
 
             RateItemDetailScreen(
@@ -442,11 +394,13 @@ fun TmdbShowDetailScreen(
                                         placeholderRatio = 16f / 9f,
                                         padding = PaddingValues(horizontal = 16.dp, vertical = 6.dp),
                                         bubbleText = if (nextToWatchEpisode.runtime > 0) formatTime(nextToWatchEpisode.runtime) else null,
-                                        onClick = { onEpisodeClick(
-                                            show.id,
-                                            nextToWatchEpisode.seasonNumber,
-                                            nextToWatchEpisode.episodeNumber
-                                        ) },
+                                        onClick = {
+                                            //onEpisodeClick(
+                                            //    show.id,
+                                            //    nextToWatchEpisode.seasonNumber,
+                                            //    nextToWatchEpisode.episodeNumber
+                                            //)
+                                        },
                                         spoilers = spoilers,
                                         spoilName = spoilName,
                                         //modifier = Modifier.width(260.dp)
@@ -486,11 +440,13 @@ fun TmdbShowDetailScreen(
                                         isLoading = false,
                                         placeholderRatio = 16f / 9f,
                                         padding = PaddingValues(horizontal = 16.dp, vertical = 6.dp),
-                                        onClick = { onEpisodeClick(
-                                            show.id,
-                                            episode.seasonNumber,
-                                            episode.episodeNumber
-                                        ) },
+                                        onClick = {
+                                            //onEpisodeClick(
+                                            //    show.id,
+                                            //    episode.seasonNumber,
+                                            //    episode.episodeNumber
+                                            //)
+                                        },
                                         spoilers = spoilEpisode(episode.seasonNumber, episode.episodeNumber),
                                         spoilName = spoilName,
                                     )
@@ -608,218 +564,47 @@ fun TmdbShowDetailScreen(
                     item { Spacer(modifier = Modifier.height(16.dp)) }
 
                     // Episodes
-                    item { SectionHeader("Episodes") }
                     item {
-                        DisplaySelector(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 8.dp),
-                            selectedIndex = selectedRatings,
-                            onSelectionChanged = {
-                                selectedRatings = it
-                                if (selectedRatings == 0 && episodesState.imdbRatings.isEmpty() &&
-                                    isSaved && !episodesState.isLoadingRatings) {
-                                    episodesViewModel.fetchImdbRatings(imdbId = show.externalIds?.imdbId)
-                                }
-                            },
-                            options = listOf("IMDb", "TMDb", "Yours"),
-                        )
-                    }
-                    item {
-                        DisplaySelector(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 8.dp),
-                            selectedIndex = state.selectedEpisodeMode,
-                            onSelectionChanged = viewModel::onModeSelect,
-                            options = listOf("List", "Grid", "Wrapped", "Timeline"),
-                            unCheckedIcons = listOf(Icons.AutoMirrored.Outlined.List, Icons.Outlined.GridOn, Icons.AutoMirrored.Outlined.WrapText, Icons.Outlined.Timeline),
-                            checkedIcons = listOf(Icons.AutoMirrored.Filled.List, Icons.Filled.GridOn, Icons.AutoMirrored.Filled.WrapText, Icons.Filled.Timeline),
-                        )
-                    }
-
-                    when {
-                        episodesState.isLoadingEpisodes -> item {
-                            Box(Modifier.fillMaxWidth().padding(32.dp), Alignment.Center) {
-                                CircularWavyProgressIndicator()
+                        val headerName = "Episodes"
+                        CollapsibleHeader(
+                            headerName,
+                            isOpened = headerName !in state.collapsedHeaders,
+                            onClick = {
+                                if (it) state.collapsedHeaders.remove(headerName)
+                                else state.collapsedHeaders.add(headerName)
+                            }
+                        ) {
+                            Column {
+                                DisplaySelector(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(horizontal = 8.dp),
+                                    selectedIndex = selectedRatings,
+                                    onSelectionChanged = {
+                                        selectedRatings = it
+                                        if (selectedRatings == 0 && episodesState.imdbRatings.isEmpty() &&
+                                            isSaved && !episodesState.isLoadingRatings) {
+                                            episodesViewModel.fetchImdbRatings(imdbId = show.externalIds?.imdbId)
+                                        }
+                                    },
+                                    options = listOf("IMDb", "TMDb", "Yours"),
+                                )
+                                ChildrenDisplay(
+                                    childrenGroups = childrenGroups,
+                                    onChildClick = onChildClick,
+                                    columnText = { "S$it" },
+                                    rowText = { "E$it" },
+                                    selectedDisplayMode = state.selectedDisplayMode,
+                                    onDisplayModeSelect = viewModel::onDisplayModeSelect,
+                                    selectedSortMode = state.selectedSortMode,
+                                    onSortModeSelect = viewModel::onSortModeSelect,
+                                    expandedParents = state.expandedSeasons,
+                                    isLoading = episodesState.isLoadingEpisodes,
+                                )
                             }
                         }
-                        episodesState.seasonEpisodes.isNotEmpty() -> {
-                            when (state.selectedEpisodeMode) {
-                                0 -> {
-                                    item {
-                                        Row(
-                                            modifier = Modifier
-                                                .fillMaxWidth()
-                                                .padding(horizontal = 8.dp),
-                                            horizontalArrangement = Arrangement.SpaceBetween,
-                                        ) {
-                                            SortBySelectionButton(
-                                                selected = state.sortMode,
-                                                onSelect = viewModel::onSortModeSelect,
-                                            )
-
-                                            AnimatedVisibility(
-                                                visible = state.sortMode == SortMode.BY_SEASON,
-                                            ) {
-                                                Row(
-                                                    horizontalArrangement = Arrangement.End,
-                                                ) {
-                                                    OutlinedButton(
-                                                        onClick = {
-                                                            haptic.performHapticFeedback(HapticFeedbackType.ToggleOn)
-                                                            childrenGroups.keys.forEach { parent ->
-                                                                state.expandedSeasons.add(parent?.title)
-                                                            }
-                                                        },
-                                                        shapes = ButtonDefaults.shapes(),
-                                                    ) {
-                                                        Icon(
-                                                            Icons.Default.UnfoldMore,
-                                                            contentDescription = "Expand",
-                                                            modifier = Modifier.size(ToggleButtonDefaults.IconSize)
-                                                        )
-                                                        Spacer(Modifier.size(ToggleButtonDefaults.IconSpacing))
-                                                        Text(
-                                                            "Expand",
-                                                            style = MaterialTheme.typography.labelMedium,
-                                                            fontWeight = FontWeight.Bold,
-                                                        )
-                                                    }
-                                                    Spacer(modifier = Modifier.width(4.dp))
-                                                    OutlinedButton(
-                                                        onClick = {
-                                                            haptic.performHapticFeedback(HapticFeedbackType.ToggleOn)
-                                                            childrenGroups.keys.forEach { parent ->
-                                                                state.expandedSeasons.remove(parent?.title)
-                                                            }
-                                                        },
-                                                        shapes = ButtonDefaults.shapes(),
-                                                    ) {
-                                                        Icon(
-                                                            Icons.Default.UnfoldLess,
-                                                            contentDescription = "Collapse",
-                                                            modifier = Modifier.size(ToggleButtonDefaults.IconSize)
-                                                        )
-                                                        Spacer(Modifier.size(ToggleButtonDefaults.IconSpacing))
-                                                        Text(
-                                                            "Collapse",
-                                                            style = MaterialTheme.typography.labelMedium,
-                                                            fontWeight = FontWeight.Bold,
-                                                        )
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
-
-                                    when (state.sortMode) {
-                                        SortMode.BY_SEASON -> {
-                                            item {
-                                                ChildrenList(
-                                                    childrenGroups = childrenGroups,
-                                                    onChildClick = onChildClick,
-                                                    expandedParents = state.expandedSeasons,
-                                                    modifier = Modifier.padding(horizontal = 16.dp),
-                                                    displayNotNullCounter = selectedRatings == 2,
-                                                )
-                                            }
-                                        }
-                                        else -> {
-                                            item {
-                                                RateItemList(
-                                                    items = sortedEpisodes,
-                                                    onChildClick = onChildClick,
-                                                    modifier = Modifier.padding(horizontal = 16.dp),
-                                                )
-                                            }
-                                        }
-                                    }
-                                }
-                                1 -> {
-                                    item {
-                                        Row(
-                                            modifier = Modifier
-                                                .fillMaxWidth()
-                                                .padding(horizontal = 8.dp),
-                                            horizontalArrangement = Arrangement.SpaceBetween,
-                                        ) {
-                                            OutlinedToggleButton(
-                                                checked = invertedGrid,
-                                                onCheckedChange = {
-                                                    haptic.performHapticFeedback(HapticFeedbackType.ToggleOn)
-                                                    invertedGrid = it
-                                                },
-                                                shapes = ToggleButtonDefaults.shapes(),
-                                            ) {
-                                                Text(
-                                                    "Inverted",
-                                                    style = MaterialTheme.typography.labelMedium,
-                                                    fontWeight = FontWeight.Bold,
-                                                )
-                                            }
-                                        }
-                                    }
-                                    item {
-                                        ChildrenGrid(
-                                            contentPadding = PaddingValues(horizontal = 12.dp),
-                                            childrenGroups = childrenGroups,
-                                            rowText = { "E$it" },
-                                            columnText = { "S$it" },
-                                            onChildClick = onChildClick,
-                                        )
-                                    }
-                                }
-                                2 -> {
-                                    item {
-                                        SettingListItem(
-                                            modifier = Modifier.fillMaxWidth().padding(20.dp),
-                                            title = "Columns",
-                                            description = "Value: ${columnsWrapped.toInt() + 1}",
-                                            position = ListItemPosition.SINGLE,
-                                            supportingContent = {
-                                                Slider(
-                                                    columnsWrapped,
-                                                    onValueChange = { value ->
-                                                        haptic.performHapticFeedback(HapticFeedbackType.SegmentFrequentTick)
-                                                        columnsWrapped = value
-                                                    },
-                                                    steps = 13,
-                                                    valueRange = 0f..14f
-                                                )
-                                            }
-                                        )
-                                    }
-                                    item {
-                                        ChildrenWrapped(
-                                            contentPadding = PaddingValues(horizontal = 20.dp),
-                                            childrenGroups = childrenGroups,
-                                            columns = columnsWrapped.toInt() + 1,
-                                            onChildClick = onChildClick,
-                                        )
-                                    }
-                                }
-                                3 -> {
-                                    item {
-                                        ChildrenTimeline(
-                                            modifier = Modifier
-                                                .fillMaxWidth()
-                                                .padding(bottom = 16.dp),
-                                            childrenGroups = childrenGroups,
-                                            onChildClick = onChildClick,
-                                        )
-                                    }
-                                }
-                                else -> {
-                                    item {
-                                        Text("Not implemented", modifier = Modifier.padding(horizontal = 16.dp))
-                                        Spacer(modifier = Modifier.padding(vertical = 400.dp))
-                                    }
-                                }
-                            }
-
-                        }
                     }
+
 
                     state.reviews?.results?.takeIf { it.isNotEmpty() }?.let { reviews ->
                         item {

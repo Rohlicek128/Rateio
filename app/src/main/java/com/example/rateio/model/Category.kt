@@ -1,27 +1,20 @@
 package com.example.rateio.model
 
-enum class CategoryType {
-    TMDB_SHOWS,
-    TMDB_SEASONS,
-    TMDB_EPISODES,
-    TMDB_MOVIES,
-    TMDB_PEOPLE,
-    STEAM_GAMES,
-    OPEN_LIBRARY_BOOKS,
-    OPEN_LIBRARY_CHAPTER,
-    CUSTOM,
+interface HasDisplayName {
+    val displayName: String
 }
-fun CategoryType.label() = when (this) {
-    CategoryType.TMDB_SHOWS -> "Shows"
-    CategoryType.TMDB_SEASONS -> "Seasons"
-    CategoryType.TMDB_EPISODES -> "Episodes"
-    CategoryType.TMDB_MOVIES -> "Movies"
-    CategoryType.TMDB_PEOPLE -> "People"
-    CategoryType.STEAM_GAMES -> "Games"
-    CategoryType.OPEN_LIBRARY_BOOKS -> "Books"
-    CategoryType.OPEN_LIBRARY_CHAPTER -> "Chapter"
-    CategoryType.CUSTOM -> "Custom"
-    else -> "Unknown"
+
+enum class CategoryType(override val displayName: String): HasDisplayName {
+    TMDB_SHOWS("Shows"),
+    TMDB_SEASONS("Seasons"),
+    TMDB_EPISODES("Episodes"),
+    TMDB_MOVIES("Movies"),
+    TMDB_PEOPLE("People"),
+    STEAM_GAMES("Games"),
+    OPEN_LIBRARY_BOOKS("Books"),
+    OPEN_LIBRARY_PART("Parts"),
+    OPEN_LIBRARY_CHAPTER("Chapters"),
+    CUSTOM("Custom"),
 }
 
 data class Category(

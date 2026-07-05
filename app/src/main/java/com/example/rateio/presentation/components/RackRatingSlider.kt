@@ -27,7 +27,9 @@ import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.example.rateio.presentation.rating.display.getRatingColor
+import kotlin.math.PI
 import kotlin.math.roundToInt
+import kotlin.math.sin
 
 
 @Composable
@@ -47,7 +49,7 @@ fun RackRatingSlider(
     majorTickWidth: Dp = 2.5.dp,
     indicatorWidth: Dp = 2.dp,
     hardPart: Float = 0.96f,
-    fadeWidthFraction: Float = 0.18f,
+    fadeWidthFraction: Float = 0.3f,
 ) {
     val haptic = LocalHapticFeedback.current
 
@@ -176,10 +178,6 @@ fun RackRatingSlider(
                 val screenX = centerX + (i * pxPerTick - rackOffsetPx)
                 if (screenX < -pxPerTick || screenX > canvasWidth + pxPerTick) continue
 
-                val isMajor = (i % majorTickFrequency == 0)
-                val tickH = if (isMajor) majorH else minorH
-                val tickW = if (isMajor) majorW else minorW
-
                 val isPassed = i <= animatedStep.toInt()
                 //var baseColor = if (isPassed) activeColor else inactiveColor
                 //if (isMajor) baseColor = getColorSchemeImdbEpisodesNC(i / 100f).first
@@ -189,10 +187,17 @@ fun RackRatingSlider(
                 val distFromEdge = minOf(screenX, canvasWidth - screenX)
                 val fadeAlpha = (distFromEdge / fadeWidth).coerceIn(0f, 1f)
 
+                val distanceChange = sin((distFromEdge / fadeWidth + 0.2f).coerceIn(0f, 1f) * (PI / 2)).toFloat()
+
+
                 val tickColor = baseColor.copy(alpha = baseColor.alpha * fadeAlpha * (when {
                     !isPassed -> 0.35f
                     else -> 1f
                 }))
+
+                val isMajor = (i % majorTickFrequency == 0)
+                val tickH = if (isMajor) majorH else minorH
+                val tickW = (if (isMajor) majorW else minorW) * distanceChange
 
                 val topY = (canvasHeight - tickH) / 2f
                 val bottomY = topY + tickH

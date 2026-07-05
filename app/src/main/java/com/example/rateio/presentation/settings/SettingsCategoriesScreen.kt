@@ -65,23 +65,11 @@ fun SettingsCategoriesScreen(
                     //icon = Icons.Default.Palette,
                     position = ListItemPosition.START,
                     trailingContent = {
-                        Switch(
+                        SettingsSwitch(
                             checked = checked,
                             onCheckedChange = {
                                 haptic.performHapticFeedback(HapticFeedbackType.ToggleOn)
                                 checked = it
-                            },
-                            thumbContent = if (checked) {
-                                {
-                                    Icon(
-                                        imageVector = Icons.Filled.Check,
-                                        contentDescription = null,
-                                        tint = MaterialTheme.colorScheme.primary,
-                                        modifier = Modifier.size(SwitchDefaults.IconSize),
-                                    )
-                                }
-                            } else {
-                                null
                             }
                         )
                     }
@@ -115,23 +103,11 @@ fun SettingsCategoriesScreen(
                     icon = Icons.Default.Android,
                     position = ListItemPosition.SINGLE,
                     trailingContent = {
-                        Switch(
+                        SettingsSwitch(
                             checked = checked,
                             onCheckedChange = {
                                 haptic.performHapticFeedback(HapticFeedbackType.ToggleOn)
                                 checked = it
-                            },
-                            thumbContent = if (checked) {
-                                {
-                                    Icon(
-                                        imageVector = Icons.Filled.Check,
-                                        contentDescription = null,
-                                        tint = MaterialTheme.colorScheme.primary,
-                                        modifier = Modifier.size(SwitchDefaults.IconSize),
-                                    )
-                                }
-                            } else {
-                                null
                             }
                         )
                     }

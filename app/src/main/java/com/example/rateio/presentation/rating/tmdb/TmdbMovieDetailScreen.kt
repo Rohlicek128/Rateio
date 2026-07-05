@@ -46,6 +46,8 @@ import com.example.rateio.presentation.components.ItemStatusSelector
 import com.example.rateio.presentation.components.LibraryToggle
 import com.example.rateio.presentation.components.PersonCard
 import com.example.rateio.presentation.components.ReviewCard
+import com.example.rateio.presentation.components.ScreenError
+import com.example.rateio.presentation.components.ScreenLoading
 import com.example.rateio.presentation.components.label
 import com.example.rateio.presentation.rating.RateItemDetailScreen
 import com.example.rateio.presentation.rating.display.RatingColorBucketConstants
@@ -85,14 +87,10 @@ fun TmdbMovieDetailScreen(
 
     when {
         state.isLoading -> {
-            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                CircularWavyProgressIndicator()
-            }
+            ScreenLoading()
         }
         state.error != null -> {
-            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text("Error: ${state.error}", color = MaterialTheme.colorScheme.error)
-            }
+            ScreenError(state.error)
         }
         state.movie != null -> {
             val movie = state.movie!!

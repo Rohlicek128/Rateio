@@ -46,6 +46,20 @@ class RateItemRepository(private val dao: RateItemDao) {
         }
     }
 
+    fun observeGrandchildrenByChildren(id: Long?): Flow<Map<String?, Map<String?, RateItem>>> {
+        if (id == null) return emptyFlow()
+        return dao.observeGrandchildren(id).map { entities ->
+            entities
+                .groupBy { it.parentId }
+                .mapValues { entry ->
+                    entry.value.associate { it.externalId to it.toDomain() }
+                }
+                .mapKeys {
+                    getById(it.key ?: 0)?.externalId
+                }
+        }
+    }
+
     fun observeBySource(source: CategoryType): Flow<List<RateItem>> {
         return dao.observeBySource(source.name).map { it.map(RateItemEntity::toDomain) }
     }
@@ -83,7 +97,7 @@ class RateItemRepository(private val dao: RateItemDao) {
         val existing = dao.getByExternalId(externalId, categoryId)
         if (existing != null) {
             val updated = existing.copy(
-                //parentId = build().parentId,
+                parentId = parentId,
                 title = build().title,
                 subtitle = build().subtitle,
                 coverImageUrl = build().coverImageUrl,
@@ -93,7 +107,7 @@ class RateItemRepository(private val dao: RateItemDao) {
             dao.update(updated)
             return existing.id
         }
-        return dao.insert(build().toEntity())
+        return dao.insert(build().copy(parentId = parentId).toEntity())
     }
 
     suspend fun save(item: RateItem): Long =
@@ -107,6 +121,9 @@ class RateItemRepository(private val dao: RateItemDao) {
 
     suspend fun setMetadata(id: Long, metadata: String?) =
         dao.updateMetadata(id, metadata)
+
+    suspend fun update(item: RateItem) =
+        dao.update(item.toEntity())
 
     suspend fun delete(item: RateItem) =
         dao.delete(item.toEntity())

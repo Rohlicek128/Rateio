@@ -17,6 +17,7 @@ import com.example.rateio.data.repository.CategoryRepository
 import com.example.rateio.data.repository.RateItemRepository
 import com.example.rateio.model.CategoryType
 import com.example.rateio.model.RateItem
+import com.example.rateio.presentation.components.rating.DisplayMode
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -46,8 +47,8 @@ data class TmdbShowDetailState(
     val reviews: TmdbReviews? = null,
     val savedItem: RateItem? = null,
 
-    val selectedEpisodeMode: Int = 0,
-    val sortMode: SortMode = SortMode.BY_SEASON,
+    val selectedDisplayMode: DisplayMode = DisplayMode.LIST,
+    val selectedSortMode: SortMode = SortMode.BY_SEASON,
     val collapsedHeaders: MutableSet<String> = mutableStateSetOf(),
     val expandedSeasons: MutableSet<String?> = mutableStateSetOf(),
 
@@ -154,12 +155,12 @@ class TmdbShowDetailViewModel(
         }
     }
 
-    fun onModeSelect(selectedMode: Int) {
-        _state.update { it.copy(selectedEpisodeMode = selectedMode) }
+    fun onDisplayModeSelect(selectedMode: DisplayMode) {
+        _state.update { it.copy(selectedDisplayMode = selectedMode) }
     }
 
     fun onSortModeSelect(sortMode: SortMode) {
-        _state.update { it.copy(sortMode = sortMode) }
+        _state.update { it.copy(selectedSortMode = sortMode) }
     }
 
     companion object {

@@ -77,6 +77,7 @@ fun EnhancedCategoryScreen(
     )
     val state by viewModel.state.collectAsState()
 
+    viewModel.editAll()
 
     var selectedStatus by remember { mutableStateOf<ItemStatus?>(null) } // null means "All"
     var currentSort by remember { mutableStateOf(SortMode.BY_RATING_BEST) }

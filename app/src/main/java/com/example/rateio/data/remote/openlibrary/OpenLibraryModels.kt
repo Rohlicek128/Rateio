@@ -3,6 +3,7 @@ package com.example.rateio.data.remote.openlibrary
 import com.example.rateio.model.CategoryType
 import com.example.rateio.model.RateItem
 import com.google.gson.annotations.SerializedName
+import kotlinx.serialization.Serializable
 
 
 data class OLWorksSearchResponse(
@@ -80,6 +81,16 @@ data class OLAuthorDetail(
     @SerializedName("bio") val bio: OLTypeValue?,
     @SerializedName("birth_date") val birthDate: String?,
     @SerializedName("photos") val photos: List<Int>?,
+)
+
+
+
+@Serializable
+data class OLWorkMetadata(
+    val numberOfChaptersByPartsAPI: List<Int>? = null,
+    val numberOfChaptersByParts: List<Int>? = null,
+    val numberOfPages: Int? = null,
+    val completedPages: Int = 0,
 )
 
 

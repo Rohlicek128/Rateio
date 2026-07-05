@@ -8,6 +8,7 @@ import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.MaterialTheme
@@ -49,6 +50,7 @@ fun ChildrenList(
             val flatRatings = children.mapNotNull { it.rating }
 
             RateItemCard(
+                modifier = Modifier.heightIn(min = 100.dp),
                 title = parent.title,
                 titleStyle = MaterialTheme.typography.headlineSmall,
                 subtitle = parent.subtitle,

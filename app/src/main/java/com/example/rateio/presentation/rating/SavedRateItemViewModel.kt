@@ -71,6 +71,12 @@ class SavedRateItemViewModel(
         }
     }
 
+    fun updateItem(item: RateItem) {
+        viewModelScope.launch {
+            itemRepository.update(item)
+        }
+    }
+
     fun findOrCreateEpisodeAndNavigate(
         showId: Int,
         seasonNumber: Int,
@@ -127,6 +133,39 @@ class SavedRateItemViewModel(
 
             // Navigate
             onNavigate(episodeId, savedShowId)
+        }
+    }
+
+    fun findOrCreateChildAndNavigate(
+        parentItem: RateItem,
+        childItem: RateItem,
+        onNavigate: (childId: Long, parentId: Long) -> Unit,
+    ) {
+        viewModelScope.launch {
+            // Parent
+            if (parentItem.externalId == null) return@launch
+            val parentId = itemRepository.findOrCreate(
+                externalId = parentItem.externalId,
+                categoryId = parentItem.categoryId,
+                parentId = parentItem.parentId,
+            ) {
+                parentItem
+            }
+
+            // Child
+            if (childItem.externalId == null) return@launch
+            val childId = itemRepository.findOrCreate(
+                externalId = childItem.externalId,
+                categoryId = parentItem.categoryId,
+                parentId = parentId,
+            ) {
+                childItem
+            }
+
+            val grandparentId = itemRepository.getById(parentId)?.parentId ?: 0
+
+            // Navigate
+            onNavigate(childId, grandparentId)
         }
     }
 

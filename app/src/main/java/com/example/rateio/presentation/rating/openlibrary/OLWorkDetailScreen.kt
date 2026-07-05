@@ -1,36 +1,27 @@
 package com.example.rateio.presentation.rating.openlibrary
 
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.CircularWavyProgressIndicator
-import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.rateio.data.CategoryRegistry
 import com.example.rateio.data.db.RateioDatabase
+import com.example.rateio.data.remote.openlibrary.OLTableContent
+import com.example.rateio.data.remote.openlibrary.OLWorkMetadata
 import com.example.rateio.data.remote.openlibrary.OpenLibraryClient
 import com.example.rateio.data.repository.CategoryRepository
 import com.example.rateio.data.repository.RateItemRepository
@@ -44,11 +35,12 @@ import com.example.rateio.presentation.components.GenreChips
 import com.example.rateio.presentation.components.ItemStatCard
 import com.example.rateio.presentation.components.ItemStatusSelector
 import com.example.rateio.presentation.components.LibraryToggle
-import com.example.rateio.presentation.components.RateItemCard
-import com.example.rateio.presentation.components.label
+import com.example.rateio.presentation.components.ScreenError
+import com.example.rateio.presentation.components.ScreenLoading
 import com.example.rateio.presentation.components.rating.ChildrenDisplay
+import com.example.rateio.presentation.components.rating.ItemProgressBar
 import com.example.rateio.presentation.rating.RateItemDetailScreen
-import kotlin.random.Random
+import kotlinx.serialization.json.Json
 
 
 @Composable
@@ -58,7 +50,9 @@ fun OLWorkDetailScreen(
     customRating: Float? = null,
     onRatingSaved: ((Float?) -> Unit)? = null,
     onStatusSaved: ((ItemStatus) -> Unit)? = null,
+    onMetadataSaved: ((String?) -> Unit)? = null,
     onBackClick: () -> Unit,
+    onChapterClick: (partItem: RateItem, chapterItem: RateItem) -> Unit,
 ) {
     val context = LocalContext.current
     val itemRepository = remember {
@@ -83,14 +77,10 @@ fun OLWorkDetailScreen(
 
     when {
         state.isLoading -> {
-            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                CircularWavyProgressIndicator()
-            }
+            ScreenLoading()
         }
         state.error != null -> {
-            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text("Error: ${state.error}", color = MaterialTheme.colorScheme.error)
-            }
+            ScreenError(state.error)
         }
         state.work != null -> {
             val work = state.work!!
@@ -98,29 +88,123 @@ fun OLWorkDetailScreen(
             val editionWithContents = if (state.editionsWithContents.isNotEmpty())
                 state.editionsWithContents.first()
             else null
+            val metadata = state.savedItem?.metadataJSON?.let {
+                runCatching {
+                    Json.decodeFromString<OLWorkMetadata>(it)
+                }.getOrNull()
+            }
 
-            val chapterItems = mapOf<RateItem?, List<RateItem>>(
-                null to (editionWithContents?.tableOfContents?.mapIndexed { index, chapter ->
-                    RateItem(
-                        id = index.toLong(),
-                        categoryId = 0,
-                        title = when {
-                            !chapter.label.isNullOrBlank() -> chapter.label
-                            //!chapter.title.isNullOrBlank() -> chapter.title
-                            else -> "Chapter ${index + 1}"
-                        },
-                        subtitle = when {
-                            !chapter.title.isNullOrBlank() -> chapter.title
-                            //!chapter.pageNum.isNullOrBlank() -> chapter.pageNum
-                            else -> null
-                        },
-                        coverImageUrl = null,
-                        //rating = Random.nextFloat() * 0.25f + 0.75f,
-                        rating = null,
-                        externalSource = CategoryType.OPEN_LIBRARY_CHAPTER,
+            val tableOfContents = when {
+                metadata != null && metadata.numberOfChaptersByParts != null ->
+                    generateTableOfContent(metadata.numberOfChaptersByParts)
+                editionWithContents?.tableOfContents != null ->
+                    editionWithContents.tableOfContents
+                metadata != null && metadata.numberOfChaptersByPartsAPI != null ->
+                    generateTableOfContent(metadata.numberOfChaptersByPartsAPI)
+                else ->
+                    emptyList()
+            }
+            val numberOfPages = metadata?.numberOfPages ?: state.numberOfPages
+
+            val userRatings = viewModel.userRatingsState.collectAsStateWithLifecycle()
+
+            var keyIndex = 0
+            var groupIndex = 0
+            val chaptersGroups = groupChaptersByLowestLevel(tableOfContents)
+                .mapValues {
+                    keyIndex++
+                    it.value.mapIndexed { index, chapter ->
+                        val chapterItem = userRatings.value["${workId}-P${keyIndex}"]?.get("${workId}-P${keyIndex}-C${index}")
+                        RateItem(
+                            id = chapterItem?.id ?: 0,
+                            parentId = keyIndex.toLong(),
+                            categoryId = state.savedItem?.categoryId ?: 0,
+                            title = when {
+                                chapterItem != null -> chapterItem.title
+                                !chapter.label.isNullOrBlank() -> chapter.label
+                                //!chapter.title.isNullOrBlank() -> chapter.title
+                                else -> "Chapter ${index + 1}"
+                            },
+                            subtitle = when {
+                                chapterItem != null -> chapterItem.subtitle
+                                !chapter.title.isNullOrBlank() -> chapter.title
+                                //!chapter.pageNum.isNullOrBlank() -> chapter.pageNum
+                                else -> null
+                            },
+                            coverImageUrl = chapterItem?.coverImageUrl,
+                            coverImageLowUrl = chapterItem?.coverImageLowUrl,
+                            //rating = Random.nextFloat() * 0.25f + 0.75f,
+                            rating = chapterItem?.rating,
+                            externalId = "${workId}-P${keyIndex}-C${index}",
+                            externalSource = CategoryType.OPEN_LIBRARY_CHAPTER,
+                        )
+                    }
+                }
+                .mapKeys { group ->
+                    groupIndex++
+                    if (group.key != null) {
+                        val groupKey = group.key!!
+                        RateItem(
+                            id = 0,
+                            parentId = state.savedItem?.id,
+                            categoryId = state.savedItem?.categoryId ?: 0,
+                            title = when {
+                                !groupKey.title.isNullOrBlank() -> groupKey.title
+                                !groupKey.label.isNullOrBlank() -> groupKey.label
+                                else -> "Part $groupIndex"
+                            },
+                            subtitle = "${group.value.size} chapters",
+                            coverImageUrl = null,
+                            rating = null,
+                            externalId = "${workId}-P${groupIndex}",
+                            externalSource = CategoryType.OPEN_LIBRARY_PART,
+                        )
+                    }
+                    else {
+                        val groupItem: RateItem? = RateItem(
+                            id = 0,
+                            parentId = state.savedItem?.id,
+                            categoryId = state.savedItem?.categoryId ?: 0,
+                            title = work.title ?: "Unknown",
+                            subtitle = "${group.value.size} chapters",
+                            coverImageUrl = work.covers?.takeIf { it.isNotEmpty() }?.let {
+                                OpenLibraryClient.COVERS_BASE_URL + "/ID/${it.first()}-M.jpg"
+                            },
+                            rating = null,
+                            externalId = "${workId}-P${groupIndex}",
+                            externalSource = CategoryType.OPEN_LIBRARY_PART,
+                        )
+                        groupItem
+                    }
+                }
+
+            val numOfChapters = if (editionWithContents?.tableOfContents != null &&
+                (metadata == null || metadata.numberOfChaptersByPartsAPI == null)) {
+                chaptersGroups.values.map { it.size }
+            } else null
+            val numOfPages = if (metadata != null && metadata.numberOfPages == null) {
+                numberOfPages
+            } else null
+            if (numOfChapters != null || numberOfPages != null) {
+                onMetadataSaved?.invoke(Json.encodeToString(
+                    (metadata ?: OLWorkMetadata()).copy(
+                        numberOfChaptersByPartsAPI = numOfChapters,
+                        numberOfPages = numOfPages,
                     )
-                } ?: emptyList())
-            )
+                ))
+            }
+
+
+            val onChildClick = { child: RateItem ->
+                if (child.externalId != null) {
+                    val ids = child.externalId.split("-")
+                    val parentId = "${ids[0]}-${ids[1]}"
+                    val parent = chaptersGroups.keys.find { it?.externalId == parentId }
+                    if (parent != null) {
+                        onChapterClick(parent, child)
+                    }
+                }
+            }
 
             var status by remember(state.savedItem?.status) { mutableStateOf(
                 if (state.savedItem == null) ItemStatus.WATCHLIST
@@ -153,13 +237,11 @@ fun OLWorkDetailScreen(
                         ) {
                             ItemStatCard(
                                 header = "pages",
-                                statistic = if (state.numberOfPages != null)
-                                    "~${state.numberOfPages.toString()} "
-                                else "N/A",
+                                statistic = if (numberOfPages != null) "~${numberOfPages} " else "N/A",
                             )
                             ItemStatCard(
                                 header = "Chapters",
-                                statistic = editionWithContents?.tableOfContents?.size?.toString() ?: "N/A",
+                                statistic = if (tableOfContents.isNotEmpty()) tableOfContents.size.toString() else "N/A",
                             )
                         }
                     }
@@ -194,10 +276,10 @@ fun OLWorkDetailScreen(
                         }
                     }
 
-                    // Status
-                    if (isSaved) {
+                    // Progress Bar
+                    if ((isSaved || userRatings.value.isNotEmpty()) && numberOfPages != null) {
                         item {
-                            val headerName = "Status"
+                            val headerName = "Progress"
                             CollapsibleHeader(
                                 headerName,
                                 isOpened = headerName !in state.collapsedHeaders,
@@ -213,20 +295,23 @@ fun OLWorkDetailScreen(
                                         onStatusSaved?.invoke(it)
                                     }
                                 ) { openSheet ->
-                                    FilledTonalButton(
+                                    val completed = metadata?.completedPages ?: 0
+                                    val remaining = numberOfPages - completed
+                                    ItemProgressBar(
+                                        modifier = Modifier.padding(
+                                            horizontal = 16.dp,
+                                            vertical = 10.dp
+                                        ),
+                                        endString = "${completed}/${numberOfPages} pages",
+                                        endValue = numberOfPages.toFloat(),
+                                        currentString = "Remaining $remaining page${if (remaining == 1) "" else "s"}",
+                                        currentValue = completed.toFloat(),
+                                        status = status,
                                         onClick = {
                                             haptic.performHapticFeedback(HapticFeedbackType.ToggleOn)
                                             openSheet()
-                                        },
-                                        shapes = ButtonDefaults.shapes(),
-                                        modifier = Modifier.padding(horizontal = 16.dp)
-                                    ) {
-                                        Text(
-                                            status.label(),
-                                            style = MaterialTheme.typography.labelMedium,
-                                            fontWeight = FontWeight.Bold,
-                                        )
-                                    }
+                                        }
+                                    )
                                 }
                             }
                         }
@@ -269,69 +354,72 @@ fun OLWorkDetailScreen(
                             }
                         ) {
                             ChildrenDisplay(
-                                childrenGroups = chapterItems,
-                                onChildClick = { },
-                                selectedMode = state.selectedMode,
-                                onModeSelect = viewModel::onModeSelect,
+                                childrenGroups = chaptersGroups,
+                                onChildClick = onChildClick,
+                                rowText = { "C$it" },
+                                columnText = { "P$it" },
+                                selectedDisplayMode = state.selectedDisplayMode,
+                                onDisplayModeSelect = viewModel::onDisplayModeSelect,
+                                selectedSortMode = state.selectedSortMode,
+                                onSortModeSelect = viewModel::onSortModeSelect,
                                 expandedParents = state.expandedChapters,
                             )
                         }
                     }
 
-
-                    /*item {
-                        val headerName = "Chapters"
-                        CollapsibleHeader(
-                            headerName,
-                            isOpened = headerName !in state.collapsedHeaders,
-                            onClick = {
-                                if (it) state.collapsedHeaders.remove(headerName)
-                                else state.collapsedHeaders.add(headerName)
-                            }
-                        ) {
-                            if (editionWithContents != null && editionWithContents.tableOfContents != null) {
-                                Column(
-                                    modifier = Modifier.padding(horizontal = 16.dp)
-                                ) {
-                                    Text(state.editionsWithContents.size.toString())
-                                    state.editionsWithContents.forEach { edition ->
-                                        Text("${edition.languages?.first()?.key} - ${edition.tableOfContents?.size}")
-                                    }
-
-
-                                    editionWithContents.tableOfContents.forEachIndexed { index, chapter ->
-                                        RateItemCard(
-                                            title = when {
-                                                !chapter.label.isNullOrBlank() -> chapter.label
-                                                //!chapter.title.isNullOrBlank() -> chapter.title
-                                                else -> "Chapter ${index + 1}"
-                                            },
-                                            //titleStyle = MaterialTheme.typography.titleLarge,
-                                            subtitle = when {
-                                                !chapter.title.isNullOrBlank() -> chapter.title
-                                                //!chapter.pageNum.isNullOrBlank() -> chapter.pageNum
-                                                else -> null
-                                            },
-                                            //overlineText = if (topIndex != -1) "RATED #${topIndex + 1}" else null,
-                                            coverImagePath = null,
-                                            rating = null,
-                                            //isLoading = selectedRatings == 0 && episodesState.isLoadingRatings && rating == null,
-                                            placeholderRatio = 16f / 9f,
-                                            padding = PaddingValues(horizontal = 10.dp, vertical = 6.dp),
-                                            onClick = { },
-                                        )
-                                    }
-                                    Spacer(modifier = Modifier.height(32.dp))
-                                }
-                            }
-                            else {
-                                Text("Nothing")
-                            }
-                        }
-                    }*/
-
                 }
             )
         }
     }
+}
+
+private fun generateTableOfContent(structure: List<Int>): List<OLTableContent> {
+    val result = mutableListOf<OLTableContent>()
+    structure.forEachIndexed { index, chapters ->
+        if (structure.size > 1) {
+            result.add(OLTableContent(
+                0, "Part ${index + 1}", null, null)
+            )
+        }
+        for (i in 1..chapters) {
+            result.add(OLTableContent(
+                1, "Chapter $i", null, null)
+            )
+        }
+    }
+    return result
+}
+
+private fun groupChaptersByLowestLevel(items: List<OLTableContent>): Map<OLTableContent?, List<OLTableContent>> {
+    if (items.isEmpty()) return emptyMap()
+
+    val minLevel = items.minOf { it.level ?: 0 }
+
+    // Edge Case 1: If all items have the same level, do not group.
+    if (items.all { it.level == minLevel }) {
+        return mapOf(null to items)
+    }
+
+    // Use LinkedHashMap to preserve the "unraveled" chronological order
+    val resultMap = LinkedHashMap<OLTableContent?, List<OLTableContent>>()
+
+    var currentParent: OLTableContent? = null
+    var currentChildren = mutableListOf<OLTableContent>()
+
+    for (item in items) {
+        if (item.level == minLevel) {
+            if (currentParent != null) {
+                resultMap[currentParent] = currentChildren
+            }
+
+            currentParent = item
+            currentChildren = mutableListOf()
+        } else {
+            currentChildren.add(item)
+        }
+    }
+
+    resultMap[currentParent] = currentChildren
+
+    return resultMap
 }

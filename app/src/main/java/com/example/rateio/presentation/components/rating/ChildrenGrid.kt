@@ -41,17 +41,10 @@ fun ChildrenGrid(
             horizontalArrangement = Arrangement.spacedBy(6.dp),
         ) {
             Column(
-                verticalArrangement = Arrangement.spacedBy(20.dp),
+                verticalArrangement = Arrangement.spacedBy(22.3.dp),
                 horizontalAlignment = Alignment.End,
-                modifier = Modifier.width(48.dp),
+                modifier = Modifier.width(48.dp).padding(top = 35.dp),
             ) {
-                Text(
-                    text = "   ",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(horizontal = 10.dp),
-                )
                 val longestSeason = childrenGroups.values.maxBy { it.size }
                 for (i in 1..longestSeason.size) {
                     Text(
