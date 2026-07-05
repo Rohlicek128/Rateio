@@ -23,6 +23,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.StrokeCap
@@ -88,6 +89,7 @@ fun ChildrenTimeline(
     val gridColor = MaterialTheme.colorScheme.surfaceVariant
     val labelColor = MaterialTheme.colorScheme.onSurfaceVariant
     val dividerColor = MaterialTheme.colorScheme.outline
+    val dividerBackColor = MaterialTheme.colorScheme.surfaceContainerLowest
     val lineColor = MaterialTheme.colorScheme.secondaryFixedDim
 
 
@@ -141,6 +143,63 @@ fun ChildrenTimeline(
                 fun yOf(r: Float) = padTpx + plotH * (1f - r) * plotScale
 
 
+                // Season divider lines
+                var isFirst = true
+                var even = true
+                points.forEach { (parent, childPoints) ->
+                    if (isFirst || childPoints.isEmpty()) {
+                        isFirst = false
+                        return@forEach
+                    }
+                    val firstIdx = childPoints.first().globalIndex
+                    val nextIdx = childPoints.last().globalIndex + 1
+                    val x = padLpx + firstIdx * epWpx   // left edge of slot, not center
+
+                    if (even) {
+                        drawRect(
+                            //color = dividerBackColor.copy(alpha = 1f),
+                            color = dividerColor.copy(alpha = 0.05f),
+                            topLeft = Offset(x, padTpx),
+                            size = Size(
+                                (nextIdx - firstIdx) * epWpx,
+                                padTpx + plotH
+                            )
+                        )
+                    }
+                    drawLine(
+                        color = dividerColor.copy(alpha = 0.4f),
+                        start = Offset(x, padTpx),
+                        end = Offset(x, padTpx + plotH),
+                        strokeWidth = 1.dp.toPx(),
+                        pathEffect = PathEffect.dashPathEffect(
+                            floatArrayOf(4.dp.toPx(), 3.dp.toPx())
+                        ),
+                    )
+                    drawContext.canvas.nativeCanvas.drawText(
+                        parent?.title ?: "N/A",
+                        x + 4.dp.toPx(),
+                        padTpx + 12.dp.toPx(),
+                        android.graphics.Paint().apply {
+                            textSize = 10.dp.toPx()
+                            color = labelColor.copy(alpha = 0.5f).toArgb()
+                            isAntiAlias = true
+                        }
+                    )
+                    even = !even
+                }
+
+                // S1 label
+                drawContext.canvas.nativeCanvas.drawText(
+                    points.keys.first()?.title ?: "N/A",
+                    padLpx + 4.dp.toPx(),
+                    padTpx + 12.dp.toPx(),
+                    android.graphics.Paint().apply {
+                        textSize = 10.dp.toPx()
+                        color = labelColor.copy(alpha = 0.5f).toArgb()
+                        isAntiAlias = true
+                    }
+                )
+
                 // Y-axis grid lines
                 for (r in 0..10) {
                     val y = yOf(r / 10f)
@@ -163,47 +222,6 @@ fun ChildrenTimeline(
                     )
                 }
 
-                // Season divider lines
-                var isFirst = true
-                points.forEach { (parent, childPoints) ->
-                    if (isFirst || childPoints.isEmpty()) {
-                        isFirst = false
-                        return@forEach
-                    }
-                    val divIdx = childPoints.first().globalIndex
-                    val x = padLpx + divIdx * epWpx   // left edge of slot, not center
-                    drawLine(
-                        color = dividerColor.copy(alpha = 0.4f),
-                        start = Offset(x, padTpx),
-                        end = Offset(x, padTpx + plotH),
-                        strokeWidth = 1.dp.toPx(),
-                        pathEffect = PathEffect.dashPathEffect(
-                            floatArrayOf(4.dp.toPx(), 3.dp.toPx())
-                        ),
-                    )
-                    drawContext.canvas.nativeCanvas.drawText(
-                        parent?.title ?: "N/A",
-                        x + 4.dp.toPx(),
-                        padTpx + 12.dp.toPx(),
-                        android.graphics.Paint().apply {
-                            textSize = 10.dp.toPx()
-                            color = labelColor.copy(alpha = 0.5f).toArgb()
-                            isAntiAlias = true
-                        }
-                    )
-                }
-
-                // S1 label
-                drawContext.canvas.nativeCanvas.drawText(
-                    points.keys.first()?.title ?: "N/A",
-                    padLpx + 4.dp.toPx(),
-                    padTpx + 12.dp.toPx(),
-                    android.graphics.Paint().apply {
-                        textSize = 10.dp.toPx()
-                        color = labelColor.copy(alpha = 0.5f).toArgb()
-                        isAntiAlias = true
-                    }
-                )
 
                 // Connecting line
                 val ratedPoints = flatPoints.filter { it.child.rating != null }

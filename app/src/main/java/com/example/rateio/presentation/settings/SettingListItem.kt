@@ -7,8 +7,10 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -29,12 +31,14 @@ import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.composed
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
@@ -55,7 +59,7 @@ enum class ListItemPosition {
     SINGLE,
 }
 
-@Composable
+/*@Composable
 fun SettingListItem(
     title: String,
     modifier: Modifier = Modifier,
@@ -151,6 +155,112 @@ fun SettingListItem(
                 else Modifier
             ),
     )
+}*/
+
+@Composable
+fun SettingListItem(
+    title: String,
+    modifier: Modifier = Modifier,
+    description: String? = null,
+    icon: ImageVector? = null,
+    containerColor: Color = MaterialTheme.colorScheme.surfaceContainer,
+    contentColor: Color = MaterialTheme.colorScheme.onSurface,
+    subtitleColor: Color = MaterialTheme.colorScheme.onSurfaceVariant,
+    supportingContent: @Composable (() -> Unit)? = null,
+    trailingContent: @Composable (() -> Unit)? = null,
+    onClick: (() -> Unit)? = null,
+    position: ListItemPosition = ListItemPosition.SINGLE,
+    showNavigateIconOnClick: Boolean = true,
+) {
+    val haptic = LocalHapticFeedback.current
+
+    val largeCorner = MaterialTheme.shapes.extraLarge
+    val smallCorner = MaterialTheme.shapes.medium
+
+    val shape = when (position) {
+        ListItemPosition.START -> largeCorner.copy(
+            bottomStart = smallCorner.bottomStart,
+            bottomEnd = smallCorner.bottomEnd,
+        )
+        ListItemPosition.END -> largeCorner.copy(
+            topStart = smallCorner.topStart,
+            topEnd = smallCorner.topEnd,
+        )
+        ListItemPosition.SINGLE -> largeCorner
+        else -> smallCorner
+    }
+
+    Surface(
+        modifier = modifier
+            .heightIn(min = 70.dp)
+            .clip(shape)
+            .then(
+                if (onClick != null) {
+                    Modifier.clickable(onClick = {
+                        haptic.performHapticFeedback(HapticFeedbackType.ToggleOn)
+                        onClick()
+                    })
+                }
+                else Modifier
+            ),
+        shape = shape,
+        color = containerColor,
+        tonalElevation = 1.dp,
+    ) {
+
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 20.dp, vertical = 12.dp),
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            if (icon != null) {
+                Icon(icon, null, tint = contentColor)
+            }
+
+            Column {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Column(
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Text(
+                            title,
+                            style = MaterialTheme.typography.titleMediumEmphasized,
+                            fontWeight = FontWeight.SemiBold,
+                            color = contentColor,
+                        )
+                        if (description != null) {
+                            Text(
+                                description,
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = subtitleColor,
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.width(6.dp))
+
+                    if (onClick != null && showNavigateIconOnClick) {
+                        Icon(
+                            modifier = Modifier.padding(end = 4.dp),
+                            imageVector = Icons.AutoMirrored.Filled.NavigateNext,
+                            contentDescription = null,
+                            tint = contentColor,
+                        )
+                    }
+                    else trailingContent?.invoke()
+                }
+
+                supportingContent?.invoke()
+            }
+        }
+
+    }
 }
 
 

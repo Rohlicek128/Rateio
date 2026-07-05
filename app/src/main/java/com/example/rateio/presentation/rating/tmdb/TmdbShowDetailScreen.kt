@@ -239,7 +239,7 @@ fun TmdbShowDetailScreen(
                     item {
                         SettingListItem(
                             title = "Hide Spoilers",
-                            description = "Override if episodes will show spoilers",
+                            description = "Override if episodes will show spoilers if if if if if if if if if if if if if if if if if if if if if",
                             icon = Icons.Default.HideImage,
                             position = ListItemPosition.SINGLE,
                             trailingContent = {

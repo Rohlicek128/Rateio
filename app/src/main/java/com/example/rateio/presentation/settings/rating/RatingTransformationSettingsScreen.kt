@@ -116,7 +116,8 @@ fun RatingTransformationSettingsScreen(
                 ) {
                     ErrorCard(
                         title = "Division by zero",
-                        description = "The divider is set to 0.0. Can't divide by zero!"
+                        description = "The divider is set to 0.0. Can't divide by zero!",
+                        darker = true,
                     )
                 }
             }
@@ -184,7 +185,7 @@ fun RatingTransformationSettingsScreen(
             item {
                 SettingListItem(
                     title = "Step Count",
-                    description = "How many rating option to choose from. Value: ${state.stepCount}",
+                    description = "How many rating option to choose from",
                     position = ListItemPosition.START,
                     supportingContent = {
                         Slider(
@@ -195,6 +196,14 @@ fun RatingTransformationSettingsScreen(
                             },
                             steps = 49,
                             valueRange = 0f..500f
+                        )
+                    },
+                    trailingContent = {
+                        Text(
+                            modifier = Modifier.padding(end = 6.dp),
+                            text = state.stepCount.toString(),
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.primary,
                         )
                     }
                 )

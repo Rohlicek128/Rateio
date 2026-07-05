@@ -4,10 +4,14 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Slider
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -15,6 +19,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -40,6 +45,10 @@ import com.example.rateio.presentation.components.ScreenLoading
 import com.example.rateio.presentation.components.rating.ChildrenDisplay
 import com.example.rateio.presentation.components.rating.ItemProgressBar
 import com.example.rateio.presentation.rating.RateItemDetailScreen
+import com.example.rateio.presentation.settings.ListItemPosition
+import com.example.rateio.presentation.settings.ModalSettings
+import com.example.rateio.presentation.settings.SettingListItem
+import com.example.rateio.presentation.settings.SettingsNumberField
 import kotlinx.serialization.json.Json
 
 
@@ -104,7 +113,8 @@ fun OLWorkDetailScreen(
                 else ->
                     emptyList()
             }
-            val numberOfPages = metadata?.numberOfPages ?: state.numberOfPages
+            var numberOfPages by remember(metadata, state.numberOfPages) { mutableStateOf(metadata?.numberOfPages ?: state.numberOfPages) }
+            var completedPages by remember(metadata) { mutableIntStateOf(metadata?.completedPages ?: 0) }
 
             val userRatings = viewModel.userRatingsState.collectAsStateWithLifecycle()
 
@@ -182,17 +192,20 @@ fun OLWorkDetailScreen(
                 (metadata == null || metadata.numberOfChaptersByPartsAPI == null)) {
                 chaptersGroups.values.map { it.size }
             } else null
-            val numOfPages = if (metadata != null && metadata.numberOfPages == null) {
-                numberOfPages
-            } else null
-            if (numOfChapters != null || numberOfPages != null) {
+            val numOfPages = when {
+                metadata == null -> numberOfPages
+                metadata.numberOfPages == null -> numberOfPages
+                else -> null
+            }
+            /*if (numOfChapters != null || numberOfPages != null) {
+                val oldMetadata = metadata ?: OLWorkMetadata()
                 onMetadataSaved?.invoke(Json.encodeToString(
-                    (metadata ?: OLWorkMetadata()).copy(
-                        numberOfChaptersByPartsAPI = numOfChapters,
-                        numberOfPages = numOfPages,
+                    oldMetadata.copy(
+                        numberOfChaptersByPartsAPI = numOfChapters ?: oldMetadata.numberOfChaptersByPartsAPI,
+                        numberOfPages = numOfPages ?: oldMetadata.numberOfPages,
                     )
                 ))
-            }
+            }*/
 
 
             val onChildClick = { child: RateItem ->
@@ -210,6 +223,65 @@ fun OLWorkDetailScreen(
                 if (state.savedItem == null) ItemStatus.WATCHLIST
                 else state.savedItem!!.status
             ) }
+
+            var showPageSettings by remember { mutableStateOf(false) }
+            if (showPageSettings) {
+                ModalSettings(
+                    title = "Page Progress",
+                    onDismiss = {
+                        showPageSettings = false
+                        onMetadataSaved?.invoke(Json.encodeToString(
+                            (metadata ?: OLWorkMetadata()).copy(
+                                numberOfPages = numberOfPages,
+                                completedPages = completedPages,
+                            )
+                        ))
+                    }
+                ) {
+                    item {
+                        SettingListItem(
+                            title = "Total Pages",
+                            description = "Number of total pages the book has",
+                            position = ListItemPosition.START,
+                            supportingContent = {
+                                SettingsNumberField(
+                                    modifier = Modifier.fillMaxWidth().padding(top = 6.dp),
+                                    value = numberOfPages?.toFloat() ?: 0f,
+                                    onValueChange = { value ->
+                                        numberOfPages = value.toInt()
+                                    },
+                                    placeholder = { Text("eg. 512") },
+                                )
+                            }
+                        )
+                    }
+                    item {
+                        SettingListItem(
+                            title = "Pages Completed",
+                            description = "How many pages have you read",
+                            position = ListItemPosition.END,
+                            supportingContent = {
+                                Slider(
+                                    completedPages.toFloat(),
+                                    onValueChange = { value ->
+                                        haptic.performHapticFeedback(HapticFeedbackType.SegmentFrequentTick)
+                                        completedPages = value.toInt()
+                                    },
+                                    valueRange = 0f..(numberOfPages?.toFloat() ?: 1000f)
+                                )
+                            },
+                            trailingContent = {
+                                Text(
+                                    modifier = Modifier.padding(end = 6.dp),
+                                    text = completedPages.toString(),
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.primary,
+                                )
+                            }
+                        )
+                    }
+                }
+            }
 
             RateItemDetailScreen(
                 title = work.title ?: "N/A",
@@ -235,9 +307,11 @@ fun OLWorkDetailScreen(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceEvenly,
                         ) {
+                            val approximation = metadata?.numberOfPages == null
                             ItemStatCard(
                                 header = "pages",
-                                statistic = if (numberOfPages != null) "~${numberOfPages} " else "N/A",
+                                statistic = if (numberOfPages != null)
+                                    "${if (approximation) "~" else ""}${numberOfPages}${if (approximation) " " else ""}" else "N/A",
                             )
                             ItemStatCard(
                                 header = "Chapters",
@@ -295,21 +369,21 @@ fun OLWorkDetailScreen(
                                         onStatusSaved?.invoke(it)
                                     }
                                 ) { openSheet ->
-                                    val completed = metadata?.completedPages ?: 0
-                                    val remaining = numberOfPages - completed
+                                    val remaining = numberOfPages!! - completedPages
                                     ItemProgressBar(
                                         modifier = Modifier.padding(
                                             horizontal = 16.dp,
                                             vertical = 10.dp
                                         ),
-                                        endString = "${completed}/${numberOfPages} pages",
-                                        endValue = numberOfPages.toFloat(),
+                                        endString = "${completedPages}/${numberOfPages} pages",
+                                        endValue = numberOfPages!!.toFloat(),
                                         currentString = "Remaining $remaining page${if (remaining == 1) "" else "s"}",
-                                        currentValue = completed.toFloat(),
+                                        currentValue = completedPages.toFloat(),
                                         status = status,
                                         onClick = {
                                             haptic.performHapticFeedback(HapticFeedbackType.ToggleOn)
-                                            openSheet()
+                                            //openSheet()
+                                            showPageSettings = true
                                         }
                                     )
                                 }

@@ -16,6 +16,7 @@ import com.example.rateio.presentation.ScreenScaffold
 
 @Composable
 fun SettingsScreen(
+    onAppearanceClick: () -> Unit,
     onRatingClick: () -> Unit,
     onCategoriesClick: () -> Unit,
     onBackClick: () -> Unit,
@@ -34,6 +35,7 @@ fun SettingsScreen(
                     title = "Appearance",
                     description = "Theme, style",
                     icon = Icons.Default.Palette,
+                    onClick = onAppearanceClick,
                     position = ListItemPosition.START,
                 )
             }

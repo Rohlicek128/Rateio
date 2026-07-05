@@ -54,15 +54,21 @@ import com.example.rateio.presentation.rating.tmdb.TmdbEpisodeDetailScreen
 import com.example.rateio.presentation.rating.tmdb.TmdbMovieDetailScreen
 import com.example.rateio.presentation.rating.tmdb.TmdbPersonDetailScreen
 import com.example.rateio.presentation.rating.tmdb.TmdbShowDetailScreen
+import com.example.rateio.presentation.settings.SettingsAppearanceScreen
 import com.example.rateio.presentation.settings.SettingsCategoriesScreen
 import com.example.rateio.presentation.settings.SettingsRatingScreen
 import com.example.rateio.presentation.settings.SettingsScreen
 import com.example.rateio.presentation.settings.rating.RatingTransformationSettingsScreen
+import com.example.rateio.ui.theme.AppTheme
 import kotlinx.serialization.json.Json
 
 
 @Composable
-fun AppNavigation(navController: NavHostController = rememberNavController()) {
+fun AppNavigation(
+    currentTheme: AppTheme,
+    onThemeChange: (AppTheme) -> Unit,
+    navController: NavHostController = rememberNavController(),
+) {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = navBackStackEntry?.destination
 
@@ -176,6 +182,11 @@ fun AppNavigation(navController: NavHostController = rememberNavController()) {
 
                 composable<Route.SettingsLevel.SettingsTop> {
                     SettingsScreen(
+                        onAppearanceClick = {
+                            navController.navigate(Route.SettingsLevel.Appearance) {
+                                popUpTo<Route.SettingsLevel.SettingsTop>()
+                            }
+                        },
                         onRatingClick = {
                             navController.navigate(Route.SettingsLevel.Rating) {
                                 popUpTo<Route.SettingsLevel.SettingsTop>()
@@ -191,6 +202,13 @@ fun AppNavigation(navController: NavHostController = rememberNavController()) {
                 }
                 composable<Route.SettingsLevel.Rating> {
                     SettingsRatingScreen(
+                        onBackClick = { navController.popBackStack() },
+                    )
+                }
+                composable<Route.SettingsLevel.Appearance> {
+                    SettingsAppearanceScreen(
+                        currentTheme = currentTheme,
+                        onThemeChange = onThemeChange,
                         onBackClick = { navController.popBackStack() },
                     )
                 }

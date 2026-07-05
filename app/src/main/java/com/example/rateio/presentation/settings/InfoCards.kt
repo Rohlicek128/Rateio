@@ -15,16 +15,17 @@ fun ErrorCard(
     description: String,
     modifier: Modifier = Modifier,
     title: String = "Error",
+    darker: Boolean = false,
 ) {
     SettingListItem(
         modifier = modifier,
         title = title,
         description = description,
         icon = Icons.Default.Error,
-        colors = ListItemDefaults.colors(
-            containerColor = MaterialTheme.colorScheme.onError,
-            contentColor = MaterialTheme.colorScheme.onErrorContainer,
-        )
+        containerColor = if (darker) MaterialTheme.colorScheme.onError
+            else MaterialTheme.colorScheme.errorContainer,
+        contentColor = MaterialTheme.colorScheme.onErrorContainer,
+        subtitleColor = MaterialTheme.colorScheme.onErrorContainer,
     )
 }
 
@@ -39,10 +40,9 @@ fun WarningCard(
         title = title,
         description = description,
         icon = Icons.Default.Warning,
-        colors = ListItemDefaults.colors(
-            containerColor = MaterialTheme.colorScheme.errorContainer,
-            contentColor = MaterialTheme.colorScheme.onErrorContainer,
-        )
+        containerColor = MaterialTheme.colorScheme.errorContainer,
+        contentColor = MaterialTheme.colorScheme.onErrorContainer,
+        subtitleColor = MaterialTheme.colorScheme.onErrorContainer,
     )
 }
 
