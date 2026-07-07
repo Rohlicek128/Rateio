@@ -108,7 +108,7 @@ fun TmdbEpisodeDetailScreen(
                         item { SectionHeader("Crew") }
                         item {
                             LazyRow(
-                                modifier = Modifier.height(130.dp),
+                                modifier = Modifier.height(150.dp),
                                 contentPadding = PaddingValues(horizontal = 16.dp),
                                 horizontalArrangement = Arrangement.spacedBy(12.dp),
                             ) {
@@ -118,7 +118,7 @@ fun TmdbEpisodeDetailScreen(
                                         position = member.job,
                                         profilePath = member.profilePath?.let { "https://image.tmdb.org/t/p/w185$it" },
                                         width = 80.dp,
-                                        height = 80.dp,
+                                        height = 100.dp,
                                     )
                                 }
                             }
@@ -130,7 +130,7 @@ fun TmdbEpisodeDetailScreen(
                         item { SectionHeader("Cast") }
                         item {
                             LazyRow(
-                                modifier = Modifier.height(150.dp),
+                                modifier = Modifier.height(200.dp),
                                 contentPadding = PaddingValues(horizontal = 16.dp),
                                 horizontalArrangement = Arrangement.spacedBy(12.dp),
                             ) {
@@ -150,7 +150,7 @@ fun TmdbEpisodeDetailScreen(
                                             position = member.character,
                                             profilePath = member.profilePath?.let { "https://image.tmdb.org/t/p/w185$it" },
                                             width = 80.dp,
-                                            height = 80.dp,
+                                            height = 100.dp,
                                         )
                                     }
                                 }

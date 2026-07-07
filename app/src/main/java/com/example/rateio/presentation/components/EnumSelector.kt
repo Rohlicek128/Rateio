@@ -3,6 +3,7 @@ package com.example.rateio.presentation.components
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -37,6 +38,7 @@ inline fun <reified T : Enum<T>> ModalEnumSelector(
     selectedOption: T,
     crossinline onOptionSelected: (T) -> Unit,
     noinline onDismiss: () -> Unit,
+    separatedOptions: List<T> = emptyList(),
 ) {
     val haptic = LocalHapticFeedback.current
 
@@ -64,43 +66,30 @@ inline fun <reified T : Enum<T>> ModalEnumSelector(
                     )),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                items(options, key = { it }) { option ->
-                    val selected = option == selectedOption
-                    ListItem(
-                        headlineContent = {
-                            Text(
-                                modifier = Modifier.padding(horizontal = 16.dp, vertical = 16.dp),
-                                text = (option as? HasDisplayName)?.displayName ?: option.name,
-                                style = MaterialTheme.typography.titleLarge,
-                                fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis,
-                            )
+                items(options.filter { it !in separatedOptions }, key = { it }) { option ->
+                    EnumListItem(
+                        option = option,
+                        selected = option == selectedOption,
+                        onClick = {
+                            haptic.performHapticFeedback(HapticFeedbackType.Confirm)
+                            onOptionSelected(option)
+                            onDismiss()
                         },
-                        trailingContent = {
-                            if (selected) {
-                                Icon(
-                                    Icons.Default.Check,
-                                    null,
-                                    tint = MaterialTheme.colorScheme.onPrimary,
-                                    modifier = Modifier.padding(horizontal = 16.dp),
-                                )
-                            }
+                    )
+                }
+
+                item { Spacer(modifier = Modifier.height(6.dp)) }
+
+                items(options.filter { it in separatedOptions }, key = { it }) { option ->
+                    EnumListItem(
+                        option = option,
+                        selected = option == selectedOption,
+                        onClick = {
+                            haptic.performHapticFeedback(HapticFeedbackType.Confirm)
+                            onOptionSelected(option)
+                            onDismiss()
                         },
-                        colors = if (selected) {
-                            ListItemDefaults.colors().copy(
-                                containerColor = MaterialTheme.colorScheme.primary,
-                                contentColor = MaterialTheme.colorScheme.onPrimary,
-                            )
-                        } else ListItemDefaults.colors(),
-                        tonalElevation = if (selected) ListItemDefaults.Elevation else 1.dp,
-                        modifier = Modifier
-                            .clip(MaterialTheme.shapes.extraLarge)
-                            .clickable(onClick = {
-                                haptic.performHapticFeedback(HapticFeedbackType.Confirm)
-                                onOptionSelected(option)
-                                onDismiss()
-                            })
+                        paddingValues = PaddingValues(horizontal = 16.dp, vertical = 12.dp)
                     )
                 }
 
@@ -108,4 +97,46 @@ inline fun <reified T : Enum<T>> ModalEnumSelector(
             }
         }
     }
+}
+
+@Composable
+inline fun <reified T : Enum<T>> EnumListItem(
+    option: T,
+    selected: Boolean,
+    noinline onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    paddingValues: PaddingValues = PaddingValues(horizontal = 16.dp, vertical = 16.dp)
+) {
+    ListItem(
+        headlineContent = {
+            Text(
+                modifier = Modifier.padding(paddingValues),
+                text = (option as? HasDisplayName)?.displayName ?: option.name,
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+        },
+        trailingContent = {
+            if (selected) {
+                Icon(
+                    Icons.Default.Check,
+                    null,
+                    tint = MaterialTheme.colorScheme.onPrimary,
+                    modifier = Modifier.padding(horizontal = 16.dp),
+                )
+            }
+        },
+        colors = if (selected) {
+            ListItemDefaults.colors().copy(
+                containerColor = MaterialTheme.colorScheme.primary,
+                contentColor = MaterialTheme.colorScheme.onPrimary,
+            )
+        } else ListItemDefaults.colors(),
+        tonalElevation = if (selected) ListItemDefaults.Elevation else 1.dp,
+        modifier = modifier
+            .clip(MaterialTheme.shapes.extraLarge)
+            .clickable(onClick = onClick)
+    )
 }

@@ -94,9 +94,9 @@ fun ChildrenTimeline(
 
 
     val minRating = childrenGroups.values.flatten().minBy { it.rating ?: 1f }.rating ?: 1f
-    var plotScale by rememberSaveable { mutableFloatStateOf(getInitialPlotScale(minRating)) }
+    var plotScale by rememberSaveable(childrenGroups) { mutableFloatStateOf(getInitialPlotScale(minRating)) }
 
-    var episodeWidth by rememberSaveable { mutableFloatStateOf(
+    var episodeWidth by rememberSaveable(childrenGroups) { mutableFloatStateOf(
         max(minEpisodeWidth.value, 350f / flatPoints.size.toFloat())
     ) }
 

@@ -4,9 +4,11 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.LazyColumn
@@ -17,6 +19,10 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Save
+import androidx.compose.material3.ButtonColors
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -26,6 +32,7 @@ import androidx.compose.material3.ScrollableTabRow
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
+import androidx.compose.material3.ToggleButtonDefaults
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -36,6 +43,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -47,6 +55,7 @@ import com.example.rateio.data.repository.RateItemRepository
 import com.example.rateio.model.CategoryType
 import com.example.rateio.model.ItemStatus
 import com.example.rateio.model.RateItem
+import com.example.rateio.presentation.ScreenScaffold
 import com.example.rateio.presentation.components.ExpressiveScrollBar
 import com.example.rateio.presentation.components.RateItemCard
 import com.example.rateio.presentation.components.RateItemGridCard
@@ -107,38 +116,30 @@ fun EnhancedCategoryScreen(
 
     val listState = rememberLazyListState()
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text(state.category?.name ?: "") },
-                navigationIcon = {
-                    IconButton(onClick = onBackClick) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, null)
-                    }
-                },
-                actions = {
-                    Surface(
-                        color = MaterialTheme.colorScheme.surfaceVariant,
-                        contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                        shape = RoundedCornerShape(12.dp),
-                        border = null,
-                        modifier = Modifier
-                            .padding(vertical = 4.dp, horizontal = 16.dp)
-                            .widthIn(min = 58.dp)
-                    ) {
-                        Text(
-                            text = state.items.size.toString(),
-                            style = MaterialTheme.typography.headlineSmall,
-                            fontWeight = FontWeight.Bold,
-                            fontFamily = GoogleSans,
-                            maxLines = 1,
-                            modifier = Modifier.wrapContentWidth(unbounded = true),
-                            overflow = TextOverflow.Visible,
-                            softWrap = false,
-                        )
-                    }
-                },
-            )
+    ScreenScaffold(
+        title = state.category?.name ?: "",
+        onBackClick = onBackClick,
+        actions = {
+            Surface(
+                color = MaterialTheme.colorScheme.surfaceVariant,
+                contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                shape = RoundedCornerShape(12.dp),
+                border = null,
+                modifier = Modifier
+                    .padding(vertical = 4.dp, horizontal = 16.dp)
+                    .widthIn(min = 58.dp)
+            ) {
+                Text(
+                    text = state.items.size.toString(),
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold,
+                    fontFamily = GoogleSans,
+                    maxLines = 1,
+                    modifier = Modifier.wrapContentWidth(unbounded = true),
+                    overflow = TextOverflow.Visible,
+                    softWrap = false,
+                )
+            }
         }
     ) { padding ->
         Box(modifier = Modifier.fillMaxSize()) {
@@ -171,7 +172,7 @@ fun EnhancedCategoryScreen(
                                 RateItemGridCard(
                                     title = item.title,
                                     subtitle = item.subtitle,
-                                    coverImagePath = item.coverImageLowUrl,
+                                    coverImagePath = item.coverImageOverride ?: item.coverImageLowUrl,
                                     rating = item.rating,
                                     placeholderRatio = 2f / 3f,
                                     padding = PaddingValues(horizontal = 0.dp, vertical = 6.dp),
@@ -223,7 +224,7 @@ fun EnhancedCategoryScreen(
                             Tab(
                                 selected = selectedStatus == status,
                                 onClick = { selectedStatus = status },
-                                text = { Text(status.label()) }
+                                text = { Text(status.displayName) }
                             )
                         }
                     }
@@ -237,7 +238,7 @@ fun EnhancedCategoryScreen(
                     RateItemCard(
                         title = item.title,
                         subtitle = item.subtitle,
-                        coverImagePath = item.coverImageLowUrl,
+                        coverImagePath = item.coverImageOverride ?: item.coverImageLowUrl,
                         rating = item.rating,
                         placeholderRatio = 2f / 3f,
                         padding = PaddingValues(start = 18.dp, top = 6.dp, bottom = 6.dp),

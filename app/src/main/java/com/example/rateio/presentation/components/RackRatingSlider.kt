@@ -28,6 +28,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.example.rateio.presentation.rating.display.getRatingColor
 import kotlin.math.PI
+import kotlin.math.pow
 import kotlin.math.roundToInt
 import kotlin.math.sin
 
@@ -149,6 +150,8 @@ fun RackRatingSlider(
         SideEffect { tickSpacingPx = tickSpacingPxCapture }
 
         Canvas(modifier = Modifier.fillMaxSize()) {
+            //val smallMultiplier = (30f / stepCount.toFloat().coerceAtLeast(1f)).coerceIn(1f, 3f)
+
             val canvasWidth = size.width
             val canvasHeight = size.height
             val centerX = canvasWidth / 2f
@@ -187,7 +190,7 @@ fun RackRatingSlider(
                 val distFromEdge = minOf(screenX, canvasWidth - screenX)
                 val fadeAlpha = (distFromEdge / fadeWidth).coerceIn(0f, 1f)
 
-                val distanceChange = sin((distFromEdge / fadeWidth + 0.2f).coerceIn(0f, 1f) * (PI / 2)).toFloat()
+                val distanceChange = sin(fadeAlpha * (PI / 2)).toFloat()
 
 
                 val tickColor = baseColor.copy(alpha = baseColor.alpha * fadeAlpha * (when {

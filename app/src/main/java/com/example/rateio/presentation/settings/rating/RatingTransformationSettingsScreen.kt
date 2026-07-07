@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Save
@@ -40,6 +41,7 @@ import com.example.rateio.presentation.components.RateBox
 import com.example.rateio.presentation.components.RatingBottomSheet
 import com.example.rateio.presentation.rating.display.RatingTransformation
 import com.example.rateio.presentation.rating.display.RatingTransformationsConstants
+import com.example.rateio.presentation.rating.display.getCurrentRatingTransformations
 import com.example.rateio.presentation.rating.display.getTransformedRating
 import com.example.rateio.presentation.settings.ErrorCard
 import com.example.rateio.presentation.settings.ListItemPosition
@@ -52,7 +54,7 @@ import com.example.rateio.presentation.settings.WarningCard
 
 @Composable
 fun RatingTransformationSettingsScreen(
-    defaultTransformations: RatingTransformation = RatingTransformationsConstants.TF_IMDB,
+    defaultTransformations: RatingTransformation = getCurrentRatingTransformations(),
     onSave: (RatingTransformation) -> Unit,
     onBackClick: () -> Unit,
 ) {
@@ -132,7 +134,7 @@ fun RatingTransformationSettingsScreen(
                 ) {
                     WarningCard(
                         title = "Getting too long",
-                        description = "Transformed rating is getting too long. This could pose rendering issues, mainly in episode grids!"
+                        description = "Transformed rating is getting too long. This could pose rendering issues, mainly in grid views!"
                     )
                 }
             }
@@ -199,11 +201,14 @@ fun RatingTransformationSettingsScreen(
                         )
                     },
                     trailingContent = {
-                        Text(
-                            modifier = Modifier.padding(end = 6.dp),
-                            text = state.stepCount.toString(),
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.primary,
+                        SettingsNumberField(
+                            modifier = Modifier.width(85.dp),
+                            value = state.stepCount.toFloat(),
+                            icon = false,
+                            onValueChange = { value ->
+                                viewModel.updateTransformations { it.copy(stepCount = value.toUInt()) }
+                            },
+                            placeholder = { Text("eg. 0.0") }
                         )
                     }
                 )

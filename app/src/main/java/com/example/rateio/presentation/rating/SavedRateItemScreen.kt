@@ -74,6 +74,7 @@ fun SavedRateItemScreen(
                         customRating = item.rating,
                         onRatingSaved = viewModel::saveRating,
                         onStatusSaved = viewModel::updateStatus,
+                        onCoverOverrideSaved = viewModel::updateCoverOverride,
                         onMetadataSaved = viewModel::updateMetadata,
                         onBackClick = onBackClick,
                         onEpisodeClick = { seasonItem, episodeItem ->
@@ -128,6 +129,7 @@ fun SavedRateItemScreen(
                         customRating = item.rating,
                         onRatingSaved = viewModel::saveRatingAndComplete,
                         onStatusSaved = viewModel::updateStatus,
+                        onCoverOverrideSaved = viewModel::updateCoverOverride,
                         onPersonClick = onPersonClick,
                         onBackClick = onBackClick,
                     )

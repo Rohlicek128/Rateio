@@ -96,13 +96,15 @@ class RateItemRepository(private val dao: RateItemDao) {
     ): Long {
         val existing = dao.getByExternalId(externalId, categoryId)
         if (existing != null) {
+            val built = build()
             val updated = existing.copy(
                 parentId = parentId,
-                title = build().title,
-                subtitle = build().subtitle,
-                coverImageUrl = build().coverImageUrl,
-                coverImageLowUrl = build().coverImageLowUrl,
-                metadataJSON = build().metadataJSON,
+                title = built.title,
+                subtitle = built.subtitle,
+                length = built.length,
+                coverImageUrl = built.coverImageUrl,
+                coverImageLowUrl = built.coverImageLowUrl,
+                metadataJSON = built.metadataJSON,
             )
             dao.update(updated)
             return existing.id
@@ -118,6 +120,9 @@ class RateItemRepository(private val dao: RateItemDao) {
 
     suspend fun setStatus(id: Long, status: ItemStatus) =
         dao.updateStatus(id, status.name)
+
+    suspend fun setCoverOverride(id: Long, override: String?) =
+        dao.updateCoverOverride(id, override)
 
     suspend fun setMetadata(id: Long, metadata: String?) =
         dao.updateMetadata(id, metadata)

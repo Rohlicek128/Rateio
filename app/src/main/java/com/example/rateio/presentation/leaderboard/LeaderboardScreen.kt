@@ -105,6 +105,7 @@ fun LeaderboardScreen(
                                 onOptionSelected = {
                                     type = it
                                 },
+                                separatedOptions = listOf(CategoryType.CUSTOM),
                                 onDismiss = { showEnumModal = false },
                             )
                         }

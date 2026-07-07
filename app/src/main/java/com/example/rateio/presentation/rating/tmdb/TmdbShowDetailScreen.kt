@@ -1,5 +1,6 @@
 package com.example.rateio.presentation.rating.tmdb
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -12,8 +13,18 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ClosedCaptionDisabled
+import androidx.compose.material.icons.filled.CommentsDisabled
 import androidx.compose.material.icons.filled.HideImage
+import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.ReplayCircleFilled
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.material3.ToggleButtonDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -25,6 +36,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -38,14 +50,15 @@ import com.example.rateio.data.repository.RateItemRepository
 import com.example.rateio.model.CategoryType
 import com.example.rateio.model.ItemStatus
 import com.example.rateio.model.RateItem
+import com.example.rateio.model.computeAggregateRating
 import com.example.rateio.presentation.components.AdaptiveImageCarousel
 import com.example.rateio.presentation.components.CollapsibleHeader
 import com.example.rateio.presentation.components.DateProgressBar
 import com.example.rateio.presentation.components.DisplaySelector
 import com.example.rateio.presentation.components.GenreChips
 import com.example.rateio.presentation.components.ItemStatCard
-import com.example.rateio.presentation.components.ItemStatusSelector
 import com.example.rateio.presentation.components.LibraryToggle
+import com.example.rateio.presentation.components.ModalEnumSelector
 import com.example.rateio.presentation.components.PersonCard
 import com.example.rateio.presentation.components.RateItemCard
 import com.example.rateio.presentation.components.ReviewCard
@@ -59,7 +72,9 @@ import com.example.rateio.presentation.rating.display.getCurrentRatingColorBucke
 import com.example.rateio.presentation.settings.ListItemPosition
 import com.example.rateio.presentation.settings.ModalSettings
 import com.example.rateio.presentation.settings.SettingListItem
+import com.example.rateio.presentation.settings.SettingsListHeader
 import com.example.rateio.presentation.settings.SettingsSwitch
+import com.example.rateio.presentation.settings.SettingsTextField
 import com.example.rateio.utils.formatDate
 import com.example.rateio.utils.formatTime
 import kotlinx.serialization.json.Json
@@ -73,6 +88,7 @@ fun TmdbShowDetailScreen(
     customRating: Float? = null,
     onRatingSaved: ((Float?) -> Unit)? = null,
     onStatusSaved: ((ItemStatus) -> Unit)? = null,
+    onCoverOverrideSaved: ((String?) -> Unit)? = null,
     onMetadataSaved: ((String?) -> Unit)? = null,
     onBackClick: () -> Unit,
     onEpisodeClick: (seasonItem: RateItem, episodeItem: RateItem) -> Unit,
@@ -143,6 +159,7 @@ fun TmdbShowDetailScreen(
                             categoryId = state.savedItem?.categoryId ?: 0,
                             title = episode.name,
                             subtitle = "Episode ${episode.episodeNumber}",
+                            length = if (episode.runtime > 0) episode.runtime.toFloat() else null,
                             rating = ratings[episode.seasonNumber]?.get(episode.episodeNumber),
                             coverImageUrl = episode.stillPath?.let { "https://image.tmdb.org/t/p/original$it" },
                             coverImageLowUrl = episode.stillPath?.let { "https://image.tmdb.org/t/p/w300$it" },
@@ -163,10 +180,12 @@ fun TmdbShowDetailScreen(
                         categoryId = state.savedItem?.categoryId ?: 0,
                         title = "Season $seasonNumber",
                         subtitle = "${(season.airDate ?: "N/A").take(4)} | ${season.episodeCount} episodes",
-                        rating = null,
+                        length = season.episodeCount.toFloat(),
+                        rating = computeAggregateRating(items),
                         coverImageUrl = season.posterPath.let { "https://image.tmdb.org/t/p/original$it" },
                         coverImageLowUrl = season.posterPath.let { "https://image.tmdb.org/t/p/w342$it" },
                         externalId = season.id.toString(),
+                        externalSource = CategoryType.TMDB_SEASONS,
                     )
                     seasonItem to items
                 }
@@ -223,25 +242,29 @@ fun TmdbShowDetailScreen(
             }*/
 
             val spoilers = metadata.showSpoilers || !isSaved
-            val spoilName = true
+            var spoilName by remember { mutableStateOf(true) }
             val spoilEpisode = { seasonNumber: Int, episodeNumber: Int ->
                 spoilers || (selectedRatings == 2 && ratings[seasonNumber]?.get(episodeNumber) != null) || selectedRatings != 2
             }
 
+            var showStatusSelector by remember { mutableStateOf(false) }
 
             // Settings
+            var coverOverride by remember(state.savedItem) { mutableStateOf(state.savedItem?.coverImageOverride) }
+
             var showSettings by remember { mutableStateOf(false) }
             if (showSettings) {
                 ModalSettings(
                     title = "${show.name}'s Settings",
                     onDismiss = { showSettings = false }
                 ) {
+                    item { SettingsListHeader("Content") }
                     item {
                         SettingListItem(
                             title = "Hide Spoilers",
-                            description = "Override if episodes will show spoilers if if if if if if if if if if if if if if if if if if if if if",
+                            description = "Override if unrated episodes will show their thumbnail image",
                             icon = Icons.Default.HideImage,
-                            position = ListItemPosition.SINGLE,
+                            position = ListItemPosition.START,
                             trailingContent = {
                                 SettingsSwitch(
                                     checked = !metadata.showSpoilers,
@@ -253,6 +276,57 @@ fun TmdbShowDetailScreen(
                                         viewModel.updateSavedItem()
                                     }
                                 )
+                            }
+                        )
+                    }
+                    item {
+                        SettingListItem(
+                            title = "Hide Names",
+                            description = "Override if unrated episodes will show their name",
+                            icon = Icons.Default.CommentsDisabled,
+                            position = ListItemPosition.END,
+                            trailingContent = {
+                                SettingsSwitch(
+                                    checked = !spoilName,
+                                    onCheckedChange = {
+                                        haptic.performHapticFeedback(HapticFeedbackType.ToggleOn)
+                                        spoilName = !it
+                                    }
+                                )
+                            }
+                        )
+                    }
+
+                    item { SettingsListHeader("Visuals") }
+                    item {
+                        SettingListItem(
+                            title = "Cover Image Override",
+                            description = "Override the cover image url that will be displayed (ideally 2:3 ratio)",
+                            position = ListItemPosition.SINGLE,
+                            supportingContent = {
+                                SettingsTextField(
+                                    modifier = Modifier.fillMaxWidth().padding(top = 6.dp),
+                                    value = coverOverride ?: "",
+                                    onValueChange = { value ->
+                                        coverOverride = value
+                                        onCoverOverrideSaved?.invoke(value)
+                                    },
+                                    singleLine = false,
+                                    placeholder = { Text("eg. https://example.org/image.jpg") },
+                                )
+                            }
+                            ,
+                            trailingContent = {
+                                AnimatedVisibility(state.savedItem?.coverImageOverride != null) {
+                                    IconButton(
+                                        onClick = {
+                                            coverOverride = null
+                                            onCoverOverrideSaved?.invoke(null)
+                                        }
+                                    ) {
+                                        Icon(Icons.Default.Refresh, null)
+                                    }
+                                }
                             }
                         )
                     }
@@ -268,7 +342,7 @@ fun TmdbShowDetailScreen(
                 }.ifBlank { null },
                 categoryName = CategoryRegistry.forType(CategoryType.TMDB_SHOWS)?.name,
                 description = show.overview,
-                coverImageUrl = show.posterPath?.let {
+                coverImageUrl = coverOverride ?: show.posterPath?.let {
                     "https://image.tmdb.org/t/p/original$it"
                 },
                 backdropImageUrl = show.backdropPath?.let {
@@ -279,9 +353,12 @@ fun TmdbShowDetailScreen(
                 ratingLabel = state.imdbRating?.normalizedRating?.let { "%.1f/10 on IMDb".format(it * 10f) },
                 ratingColorBucketsOverride = if (!isSaved) RatingColorBucketConstants.RC_IMDB_SHOWS else getCurrentRatingColorBuckets(),
                 onRatingSaved = onRatingSaved,
+                review = "",
                 onBackClick = onBackClick,
                 canAddToLibrary = false,
-                onOpenSettings = { showSettings = true },
+                onOpenSettings = if (isSaved) {
+                    { showSettings = true }
+                } else null,
                 headerExtraContent = {
                     //Stats
                     item {
@@ -346,27 +423,32 @@ fun TmdbShowDetailScreen(
                                     else state.collapsedHeaders.add(headerName)
                                 }
                             ) {
-                                ItemStatusSelector(
-                                    selected = status,
-                                    onStatusSelected = {
+                                val remaining = show.numberOfEpisodes - listOfRatings.size
+                                ItemProgressBar(
+                                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
+                                    endString = "${listOfRatings.size}/${show.numberOfEpisodes} episodes",
+                                    endValue = show.numberOfEpisodes.toFloat(),
+                                    currentString = "Remaining $remaining episode${if (remaining == 1) "" else "s"}",
+                                    currentValue = listOfRatings.size.toFloat(),
+                                    status = status,
+                                    onClick = {
+                                        haptic.performHapticFeedback(HapticFeedbackType.ToggleOn)
+                                        showStatusSelector = true
+                                    }
+                                )
+                            }
+
+                            if (showStatusSelector) {
+                                ModalEnumSelector(
+                                    title = "Status",
+                                    selectedOption = status,
+                                    onOptionSelected = {
                                         status = it
                                         onStatusSaved?.invoke(it)
-                                    }
-                                ) { openSheet ->
-                                    val remaining = show.numberOfEpisodes - listOfRatings.size
-                                    ItemProgressBar(
-                                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
-                                        endString = "${listOfRatings.size}/${show.numberOfEpisodes} episodes",
-                                        endValue = show.numberOfEpisodes.toFloat(),
-                                        currentString = "Remaining $remaining episode${if (remaining == 1) "" else "s"}",
-                                        currentValue = listOfRatings.size.toFloat(),
-                                        status = status,
-                                        onClick = {
-                                            haptic.performHapticFeedback(HapticFeedbackType.ToggleOn)
-                                            openSheet()
-                                        }
-                                    )
-                                }
+                                    },
+                                    separatedOptions = listOf(ItemStatus.NONE),
+                                    onDismiss = { showStatusSelector = false },
+                                )
                             }
                         }
 
@@ -536,6 +618,30 @@ fun TmdbShowDetailScreen(
                                     itemWidth = 110.dp,
                                     itemHeight = 180.dp,
                                     shape = MaterialTheme.shapes.large,
+                                    maximizable = true,
+                                    supportingContent = { url, onDismiss ->
+                                        Button(
+                                            onClick = {
+                                                haptic.performHapticFeedback(HapticFeedbackType.Confirm)
+                                                coverOverride = url
+                                                onCoverOverrideSaved?.invoke(url)
+                                                onDismiss()
+                                            },
+                                            shapes = ButtonDefaults.shapes(),
+                                        ) {
+                                            Icon(
+                                                Icons.Default.ReplayCircleFilled,
+                                                contentDescription = "Override",
+                                                modifier = Modifier.size(ToggleButtonDefaults.IconSize)
+                                            )
+                                            Spacer(Modifier.size(ToggleButtonDefaults.IconSpacing))
+                                            Text(
+                                                "Override",
+                                                style = MaterialTheme.typography.labelLarge,
+                                                fontWeight = FontWeight.Bold,
+                                            )
+                                        }
+                                    }
                                 )
                             }
                         }
@@ -556,6 +662,7 @@ fun TmdbShowDetailScreen(
                                     images.sortedBy { -it.voteCount }.map { it.toCarouselImage() },
                                     itemWidth = 240.dp,
                                     shape = MaterialTheme.shapes.large,
+                                    maximizable = true,
                                 )
                             }
                         }

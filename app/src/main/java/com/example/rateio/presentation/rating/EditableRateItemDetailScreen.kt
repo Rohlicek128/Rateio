@@ -132,7 +132,7 @@ fun EditableRateItemDetailScreen(
         subtitle = state.subtitle,
         categoryName = categoryName,
         description = null,
-        coverImageUrl = state.coverImageUrl,
+        coverImageUrl = state.coverImageOverride ?: state.coverImageUrl,
         backdropImageUrl = null,
         placeholderRatio = 16f / 9f,
         rating = state.rating,

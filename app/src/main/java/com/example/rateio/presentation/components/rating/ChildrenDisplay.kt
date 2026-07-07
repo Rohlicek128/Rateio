@@ -34,6 +34,7 @@ import androidx.compose.material3.ToggleButtonDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -113,6 +114,19 @@ fun ChildrenDisplay(
 
     var invertedGrid by remember { mutableStateOf(false) }
     var columnsWrapped by remember { mutableFloatStateOf(4f) }
+
+    val timelineCategories = listOfNotNull(
+        childrenGroups.values.first().first().externalSource,
+        if (childrenGroups.keys.size > 1) childrenGroups.keys.filterNotNull()
+            .first().externalSource else null,
+    )
+    var selectedCategoryIndex by remember { mutableIntStateOf(0) }
+    val parentItem = RateItem(
+        id = 0,
+        categoryId = 0,
+        title = childrenGroups.keys.first()?.externalSource?.displayName ?: "Unknown",
+    )
+    val parentGroups = mapOf<RateItem?, List<RateItem>>(parentItem to childrenGroups.keys.filterNotNull().toList())
 
     Column (
         modifier = modifier,
@@ -248,6 +262,7 @@ fun ChildrenDisplay(
                             rowText = rowText,
                             columnText = columnText,
                             onChildClick = onChildClick,
+                            inverted = invertedGrid,
                         )
                     }
                     DisplayMode.WRAPPED -> {
@@ -276,12 +291,24 @@ fun ChildrenDisplay(
                         )
                     }
                     DisplayMode.TIMELINE -> {
+                        if (timelineCategories.size > 1) {
+                            DisplaySelector(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 8.dp),
+                                selectedIndex = selectedCategoryIndex,
+                                onSelectionChanged = {
+                                    selectedCategoryIndex = it
+                                },
+                                options = timelineCategories.map { it.displayName },
+                            )
+                        }
                         ChildrenTimeline(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(bottom = 16.dp),
-                            childrenGroups = childrenGroups,
-                            onChildClick = onChildClick,
+                            childrenGroups = if (selectedCategoryIndex == 0) childrenGroups else parentGroups,
+                            onChildClick = if (selectedCategoryIndex == 0) onChildClick else { _ -> },
                         )
                     }
                     else -> {

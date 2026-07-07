@@ -21,6 +21,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
 import com.example.rateio.data.remote.tmdb.TmdbEpisodeMetadata
 import com.example.rateio.model.RateItem
+import com.example.rateio.model.computeAggregateRating
 import com.example.rateio.presentation.components.RateItemCard
 import com.example.rateio.utils.formatTime
 import kotlinx.serialization.json.Json
@@ -55,7 +56,7 @@ fun ChildrenList(
                 titleStyle = MaterialTheme.typography.headlineSmall,
                 subtitle = parent.subtitle,
                 coverImagePath = parent.coverImageUrl,
-                rating = if (flatRatings.isNotEmpty()) flatRatings.average().toFloat() else null,
+                rating = computeAggregateRating(children),
                 padding = PaddingValues(vertical = 6.dp),
                 tonalElevation = if (isExpanded) 4.dp else 1.dp,
                 onClick = {
@@ -127,8 +128,7 @@ fun RateItemList(
                 rating = item.rating,
                 placeholderRatio = 16f / 9f,
                 padding = PaddingValues(vertical = 6.dp),
-                bubbleText = if (metadata != null && metadata.runtime != null && metadata.runtime >= 0)
-                    formatTime(metadata.runtime) else null,
+                bubbleText = if (item.length != null) formatTime(item.length.toInt()) else null,
                 onClick = { onChildClick(item) },
                 spoilers = index !in noSpoilIndices,
                 spoilName = spoilName,

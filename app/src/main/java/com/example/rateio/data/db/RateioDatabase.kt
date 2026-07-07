@@ -1,6 +1,7 @@
 package com.example.rateio.data.db
 
 import android.content.Context
+import androidx.room.AutoMigration
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
@@ -11,7 +12,11 @@ import androidx.room.RoomDatabase
         CategoryEntity::class,
         RateItemEntity::class
     ],
-    version = 2
+    version = 3,
+    autoMigrations = [
+        AutoMigration(from = 2, to = 3)
+    ],
+    exportSchema = true,
 )
 abstract class RateioDatabase : RoomDatabase() {
     abstract fun categoryDao(): CategoryDao

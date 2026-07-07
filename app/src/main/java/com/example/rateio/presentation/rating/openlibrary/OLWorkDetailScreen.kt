@@ -4,7 +4,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
@@ -38,8 +37,8 @@ import com.example.rateio.presentation.components.CarouselImage
 import com.example.rateio.presentation.components.CollapsibleHeader
 import com.example.rateio.presentation.components.GenreChips
 import com.example.rateio.presentation.components.ItemStatCard
-import com.example.rateio.presentation.components.ItemStatusSelector
 import com.example.rateio.presentation.components.LibraryToggle
+import com.example.rateio.presentation.components.ModalEnumSelector
 import com.example.rateio.presentation.components.ScreenError
 import com.example.rateio.presentation.components.ScreenLoading
 import com.example.rateio.presentation.components.rating.ChildrenDisplay
@@ -188,25 +187,6 @@ fun OLWorkDetailScreen(
                     }
                 }
 
-            val numOfChapters = if (editionWithContents?.tableOfContents != null &&
-                (metadata == null || metadata.numberOfChaptersByPartsAPI == null)) {
-                chaptersGroups.values.map { it.size }
-            } else null
-            val numOfPages = when {
-                metadata == null -> numberOfPages
-                metadata.numberOfPages == null -> numberOfPages
-                else -> null
-            }
-            /*if (numOfChapters != null || numberOfPages != null) {
-                val oldMetadata = metadata ?: OLWorkMetadata()
-                onMetadataSaved?.invoke(Json.encodeToString(
-                    oldMetadata.copy(
-                        numberOfChaptersByPartsAPI = numOfChapters ?: oldMetadata.numberOfChaptersByPartsAPI,
-                        numberOfPages = numOfPages ?: oldMetadata.numberOfPages,
-                    )
-                ))
-            }*/
-
 
             val onChildClick = { child: RateItem ->
                 if (child.externalId != null) {
@@ -223,6 +203,7 @@ fun OLWorkDetailScreen(
                 if (state.savedItem == null) ItemStatus.WATCHLIST
                 else state.savedItem!!.status
             ) }
+            var showStatusSelector by remember { mutableStateOf(false) }
 
             var showPageSettings by remember { mutableStateOf(false) }
             if (showPageSettings) {
@@ -362,31 +343,36 @@ fun OLWorkDetailScreen(
                                     else state.collapsedHeaders.add(headerName)
                                 }
                             ) {
-                                ItemStatusSelector(
-                                    selected = status,
-                                    onStatusSelected = {
+                                val remaining = numberOfPages!! - completedPages
+                                ItemProgressBar(
+                                    modifier = Modifier.padding(
+                                        horizontal = 16.dp,
+                                        vertical = 10.dp
+                                    ),
+                                    endString = "${completedPages}/${numberOfPages} pages",
+                                    endValue = numberOfPages!!.toFloat(),
+                                    currentString = "Remaining $remaining page${if (remaining == 1) "" else "s"}",
+                                    currentValue = completedPages.toFloat(),
+                                    status = status,
+                                    onClick = {
+                                        haptic.performHapticFeedback(HapticFeedbackType.ToggleOn)
+                                        //showStatusSelector = true
+                                        showPageSettings = true
+                                    }
+                                )
+                            }
+
+                            if (showStatusSelector) {
+                                ModalEnumSelector(
+                                    title = "Status",
+                                    selectedOption = status,
+                                    onOptionSelected = {
                                         status = it
                                         onStatusSaved?.invoke(it)
-                                    }
-                                ) { openSheet ->
-                                    val remaining = numberOfPages!! - completedPages
-                                    ItemProgressBar(
-                                        modifier = Modifier.padding(
-                                            horizontal = 16.dp,
-                                            vertical = 10.dp
-                                        ),
-                                        endString = "${completedPages}/${numberOfPages} pages",
-                                        endValue = numberOfPages!!.toFloat(),
-                                        currentString = "Remaining $remaining page${if (remaining == 1) "" else "s"}",
-                                        currentValue = completedPages.toFloat(),
-                                        status = status,
-                                        onClick = {
-                                            haptic.performHapticFeedback(HapticFeedbackType.ToggleOn)
-                                            //openSheet()
-                                            showPageSettings = true
-                                        }
-                                    )
-                                }
+                                    },
+                                    separatedOptions = listOf(ItemStatus.NONE),
+                                    onDismiss = { showStatusSelector = false },
+                                )
                             }
                         }
                     }

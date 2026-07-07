@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.NavigateNext
@@ -47,6 +48,7 @@ import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import com.example.rateio.presentation.rating.display.getRatingColor
 import kotlin.random.Random
@@ -297,6 +299,7 @@ fun SettingsNumberField(
     value: Float,
     onValueChange: (Float) -> Unit,
     modifier: Modifier = Modifier,
+    icon: Boolean = true,
     placeholder: @Composable (() -> Unit)? = null,
 ) {
     OutlinedTextField(
@@ -315,12 +318,14 @@ fun SettingsNumberField(
             }
         },
         placeholder = placeholder,
-        leadingIcon = {
-            Icon(
-                Icons.Default.Numbers,
-                null,
-            )
-        },
+        leadingIcon = if (icon) {
+            {
+                Icon(
+                    Icons.Default.Numbers,
+                    null,
+                )
+            }
+        } else null,
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
     )
 }

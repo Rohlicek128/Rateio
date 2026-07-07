@@ -1,28 +1,33 @@
 package com.example.rateio.presentation.rating.tmdb
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.ReplayCircleFilled
+import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.CircularWavyProgressIndicator
 import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.ToggleButtonDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalContext
@@ -42,16 +47,19 @@ import com.example.rateio.presentation.components.AdaptiveImageCarousel
 import com.example.rateio.presentation.components.CollapsibleHeader
 import com.example.rateio.presentation.components.GenreChips
 import com.example.rateio.presentation.components.ItemStatCard
-import com.example.rateio.presentation.components.ItemStatusSelector
 import com.example.rateio.presentation.components.LibraryToggle
+import com.example.rateio.presentation.components.ModalEnumSelector
 import com.example.rateio.presentation.components.PersonCard
 import com.example.rateio.presentation.components.ReviewCard
 import com.example.rateio.presentation.components.ScreenError
 import com.example.rateio.presentation.components.ScreenLoading
-import com.example.rateio.presentation.components.label
 import com.example.rateio.presentation.rating.RateItemDetailScreen
 import com.example.rateio.presentation.rating.display.RatingColorBucketConstants
 import com.example.rateio.presentation.rating.display.getCurrentRatingColorBuckets
+import com.example.rateio.presentation.settings.ListItemPosition
+import com.example.rateio.presentation.settings.ModalSettings
+import com.example.rateio.presentation.settings.SettingListItem
+import com.example.rateio.presentation.settings.SettingsTextField
 import com.example.rateio.utils.formatCompact
 import com.example.rateio.utils.formatDate
 import com.example.rateio.utils.formatTime
@@ -65,6 +73,7 @@ fun TmdbMovieDetailScreen(
     customRating: Float? = null,
     onRatingSaved: ((Float?) -> Unit)? = null,
     onStatusSaved: ((ItemStatus) -> Unit)? = null,
+    onCoverOverrideSaved: ((String?) -> Unit)? = null,
     onPersonClick: ((Int) -> Unit)? = null,
     onBackClick: () -> Unit,
 ) {
@@ -100,6 +109,52 @@ fun TmdbMovieDetailScreen(
                 else state.savedItem!!.status
             ) }
 
+            var showStatusSelector by remember { mutableStateOf(false) }
+
+            // Settings
+            var coverOverride by remember(state.savedItem) { mutableStateOf(state.savedItem?.coverImageOverride) }
+
+            var showSettings by remember { mutableStateOf(false) }
+            if (showSettings) {
+                ModalSettings(
+                    title = "${movie.title}'s Settings",
+                    onDismiss = { showSettings = false }
+                ) {
+                    item {
+                        SettingListItem(
+                            title = "Cover Image Override",
+                            description = "Override the cover image url that will be displayed (ideally 2:3 ratio)",
+                            position = ListItemPosition.SINGLE,
+                            supportingContent = {
+                                SettingsTextField(
+                                    modifier = Modifier.fillMaxWidth().padding(top = 6.dp),
+                                    value = coverOverride ?: "",
+                                    onValueChange = { value ->
+                                        coverOverride = value
+                                        onCoverOverrideSaved?.invoke(value)
+                                    },
+                                    singleLine = false,
+                                    placeholder = { Text("eg. https://example.org/image.jpg") },
+                                )
+                            }
+                            ,
+                            trailingContent = {
+                                AnimatedVisibility(state.savedItem?.coverImageOverride != null) {
+                                    IconButton(
+                                        onClick = {
+                                            coverOverride = null
+                                            onCoverOverrideSaved?.invoke(null)
+                                        }
+                                    ) {
+                                        Icon(Icons.Default.Refresh, null)
+                                    }
+                                }
+                            }
+                        )
+                    }
+                }
+            }
+
             RateItemDetailScreen(
                 title = movie.title,
                 subtitle = buildString {
@@ -108,7 +163,7 @@ fun TmdbMovieDetailScreen(
                 }.ifBlank { null },
                 categoryName = CategoryRegistry.forType(CategoryType.TMDB_MOVIES)?.name,
                 description = movie.overview,
-                coverImageUrl = movie.posterPath?.let {
+                coverImageUrl = coverOverride ?: movie.posterPath?.let {
                     "https://image.tmdb.org/t/p/original$it"
                 },
                 backdropImageUrl = movie.backdropPath?.let {
@@ -119,7 +174,11 @@ fun TmdbMovieDetailScreen(
                 ratingLabel = state.imdbRating?.normalizedRating?.let { "%.1f on IMDb".format(Locale.US, it * 10f) },
                 ratingColorBucketsOverride = if (!isSaved) RatingColorBucketConstants.RC_IMDB_MOVIES else getCurrentRatingColorBuckets(),
                 onRatingSaved = onRatingSaved,
+                review = "",
                 onBackClick = onBackClick,
+                onOpenSettings = if (isSaved) {
+                    { showSettings = true }
+                } else null,
                 canAddToLibrary = false,
                 headerExtraContent = {
                     //Stats
@@ -188,28 +247,33 @@ fun TmdbMovieDetailScreen(
                                     else state.collapsedHeaders.add(headerName)
                                 }
                             ) {
-                                ItemStatusSelector(
-                                    selected = status,
-                                    onStatusSelected = {
+                                FilledTonalButton(
+                                    onClick = {
+                                        haptic.performHapticFeedback(HapticFeedbackType.ToggleOn)
+                                        showStatusSelector = true
+                                    },
+                                    shapes = ButtonDefaults.shapes(),
+                                    modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp)
+                                ) {
+                                    Text(
+                                        status.displayName,
+                                        style = MaterialTheme.typography.bodyLarge,
+                                        fontWeight = FontWeight.Bold,
+                                    )
+                                }
+                            }
+
+                            if (showStatusSelector) {
+                                ModalEnumSelector(
+                                    title = "Status",
+                                    selectedOption = status,
+                                    onOptionSelected = {
                                         status = it
                                         onStatusSaved?.invoke(it)
-                                    }
-                                ) { openSheet ->
-                                    FilledTonalButton(
-                                        onClick = {
-                                            haptic.performHapticFeedback(HapticFeedbackType.ToggleOn)
-                                            openSheet()
-                                        },
-                                        shapes = ButtonDefaults.shapes(),
-                                        modifier = Modifier.padding(horizontal = 16.dp)
-                                    ) {
-                                        Text(
-                                            status.label(),
-                                            style = MaterialTheme.typography.labelMedium,
-                                            fontWeight = FontWeight.Bold,
-                                        )
-                                    }
-                                }
+                                    },
+                                    separatedOptions = listOf(ItemStatus.NONE),
+                                    onDismiss = { showStatusSelector = false },
+                                )
                             }
                         }
                     }
@@ -285,6 +349,7 @@ fun TmdbMovieDetailScreen(
                     //Images
                     state.images?.posters?.takeIf { it.isNotEmpty() }?.let { images ->
                         item {
+                            val sortedImages = images.sortedBy { -it.voteCount }
                             val headerName = "Posters"
                             CollapsibleHeader(
                                 headerName,
@@ -296,16 +361,41 @@ fun TmdbMovieDetailScreen(
                             ) {
                                 AdaptiveImageCarousel(
                                     baseUrl = "https://image.tmdb.org/t/p/w500",
-                                    images.sortedBy { -it.voteCount }.map { it.toCarouselImage() },
+                                    sortedImages.map { it.toCarouselImage() },
                                     itemWidth = 110.dp,
                                     itemHeight = 180.dp,
                                     shape = MaterialTheme.shapes.large,
+                                    maximizable = true,
+                                    supportingContent = { url, onDismiss ->
+                                        Button(
+                                            onClick = {
+                                                haptic.performHapticFeedback(HapticFeedbackType.Confirm)
+                                                coverOverride = url
+                                                onCoverOverrideSaved?.invoke(url)
+                                                onDismiss()
+                                            },
+                                            shapes = ButtonDefaults.shapes(),
+                                        ) {
+                                            Icon(
+                                                Icons.Default.ReplayCircleFilled,
+                                                contentDescription = "Override",
+                                                modifier = Modifier.size(ToggleButtonDefaults.IconSize)
+                                            )
+                                            Spacer(Modifier.size(ToggleButtonDefaults.IconSpacing))
+                                            Text(
+                                                "Override",
+                                                style = MaterialTheme.typography.labelLarge,
+                                                fontWeight = FontWeight.Bold,
+                                            )
+                                        }
+                                    }
                                 )
                             }
                         }
                     }
                     state.images?.backdrops?.takeIf { it.isNotEmpty() }?.let { images ->
                         item {
+                            val sortedImages = images.sortedBy { -it.voteCount }
                             val headerName = "Backdrops"
                             CollapsibleHeader(
                                 headerName,
@@ -317,9 +407,10 @@ fun TmdbMovieDetailScreen(
                             ) {
                                 AdaptiveImageCarousel(
                                     baseUrl = "https://image.tmdb.org/t/p/w780",
-                                    images.sortedBy { -it.voteCount }.map { it.toCarouselImage() },
+                                    sortedImages.map { it.toCarouselImage() },
                                     itemWidth = 240.dp,
                                     shape = MaterialTheme.shapes.large,
+                                    maximizable = true
                                 )
                             }
                         }

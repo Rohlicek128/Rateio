@@ -14,12 +14,17 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CornerSize
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.TextFields
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialShapes
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.material3.toShape
@@ -82,6 +87,8 @@ fun ReviewCard(
     rating: Float?,
     content: String,
     modifier: Modifier = Modifier,
+    placeholderContent: String? = null,
+    onEdit: ((String) -> Unit)? = null,
 ) {
     val haptic = LocalHapticFeedback.current
     val scope = rememberCoroutineScope()
@@ -97,11 +104,12 @@ fun ReviewCard(
     }
 
     Card(
-        modifier = modifier.clickable(onClick = {
-            haptic.performHapticFeedback(HapticFeedbackType.ToggleOn)
-            showSheet = true
-        }),
-        shape = MaterialTheme.shapes.extraLarge,
+        modifier = modifier
+            .clip(MaterialTheme.shapes.extraLarge)
+            .clickable(onClick = {
+                haptic.performHapticFeedback(HapticFeedbackType.ToggleOn)
+                showSheet = true
+            }),
         colors = CardDefaults.cardColors().copy(
             containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.25f)
         ),
@@ -113,18 +121,22 @@ fun ReviewCard(
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
             ) {
                 Row(
                     modifier = Modifier.width(200.dp),
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
                 ) {
                     AdaptiveAsyncImage(
                         model = avatarPath,
                         contentDescription = name,
                         modifier = Modifier
                             .size(IconButtonDefaults.extraLargeIconSize)
-                            .clip(if (morphProgress.value < 0.9f) MaterialShapes.Cookie9Sided.toShape()
-                                else MaterialShapes.Circle.toShape()),
+                            .clip(
+                                if (morphProgress.value < 0.9f) MaterialShapes.Cookie9Sided.toShape()
+                                else MaterialShapes.Circle.toShape()
+                            ),
                         placeholderRatio = 1f,
                         contentScale = ContentScale.Crop,
                         onSuccess = {
@@ -163,13 +175,24 @@ fun ReviewCard(
                     textStyle = MaterialTheme.typography.titleLarge,
                 )
             }
-            Text(
-                content,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines = 5,
-                overflow = TextOverflow.Ellipsis,
-            )
+            if (placeholderContent != null && content.isBlank()) {
+                Text(
+                    placeholderContent,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.75f),
+                    maxLines = 5,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
+            else {
+                Text(
+                    content,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 5,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
         }
     }
 
@@ -181,6 +204,7 @@ fun ReviewCard(
             rating = rating,
             content = content,
             onDismiss = { showSheet = false },
+            onEdit = onEdit,
         )
     }
 }
@@ -193,7 +217,9 @@ private fun FullReviewModal(
     rating: Float?,
     content: String,
     onDismiss: () -> Unit,
+    onEdit: ((String) -> Unit)? = null,
 ) {
+    var editedContent by remember { mutableStateOf(content) }
     var imageLoaded by remember { mutableStateOf(false) }
 
     ModalBottomSheet(
@@ -219,8 +245,10 @@ private fun FullReviewModal(
                         contentDescription = name,
                         modifier = Modifier
                             .size(70.dp)
-                            .clip(if (!imageLoaded) MaterialShapes.Cookie9Sided.toShape()
-                            else MaterialShapes.Circle.toShape()),
+                            .clip(
+                                if (!imageLoaded) MaterialShapes.Cookie9Sided.toShape()
+                                else MaterialShapes.Circle.toShape()
+                            ),
                         placeholderRatio = 1f,
                         contentScale = ContentScale.Crop,
                         onSuccess = {
@@ -262,11 +290,34 @@ private fun FullReviewModal(
                 )),
             ) {
                 item {
-                    Text(
-                        content,
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
+                    if (onEdit != null) {
+                        OutlinedTextField(
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = MaterialTheme.shapes.medium,
+                            value = editedContent,
+                            colors = OutlinedTextFieldDefaults.colors().copy(
+                                focusedContainerColor = MaterialTheme.colorScheme.surfaceContainer,
+                                unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainer,
+                                focusedIndicatorColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+                                unfocusedIndicatorColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                            ),
+                            onValueChange = {
+                                editedContent = it
+                                onEdit(it)
+                            },
+                            placeholder = {
+                                Text("Your thoughts")
+                            },
+                            minLines = 4,
+                        )
+                    }
+                    else {
+                        Text(
+                            editedContent,
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
                 }
 
                 item { Spacer(modifier = Modifier.height(150.dp)) }

@@ -48,6 +48,7 @@ import com.example.rateio.presentation.leaderboard.LeaderboardScreen
 import com.example.rateio.presentation.profile.ProfileScreen
 import com.example.rateio.presentation.rating.SavedRateItemScreen
 import com.example.rateio.presentation.rating.display.RatingTransformationsConstants
+import com.example.rateio.presentation.rating.display.getRatingColor
 import com.example.rateio.presentation.rating.openlibrary.OLWorkDetailScreen
 import com.example.rateio.presentation.rating.steam.SteamGameDetailScreen
 import com.example.rateio.presentation.rating.tmdb.TmdbEpisodeDetailScreen

@@ -5,7 +5,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
@@ -17,6 +16,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.rateio.model.RateItem
+import com.example.rateio.model.computeAggregateRating
 import com.example.rateio.presentation.components.RateBox
 
 
@@ -155,12 +155,10 @@ private fun ChildrenColumn(
 private fun AverageRatingBox(
     children: List<RateItem>,
 ) {
-    val flatRatings = children.mapNotNull { it.rating }
-
     val width = 39.dp
     val height = 4.dp
     RateBox(
-        rating = if (flatRatings.isNotEmpty()) flatRatings.average().toFloat() else null,
+        rating = computeAggregateRating(children),
         roundedCorners = 7.dp,
         minWidth = width,
         maxWidth = width,

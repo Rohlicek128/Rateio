@@ -65,6 +65,12 @@ class SavedRateItemViewModel(
         }
     }
 
+    fun updateCoverOverride(override: String?) {
+        viewModelScope.launch {
+            itemRepository.setCoverOverride(id, override)
+        }
+    }
+
     fun updateMetadata(metadata: String?) {
         viewModelScope.launch {
             itemRepository.setMetadata(id, metadata)

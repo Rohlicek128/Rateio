@@ -38,9 +38,9 @@ fun ItemProgressBar(
     val progress = ((currentValue - startValue) / (endValue - startValue)).coerceIn(0f, 1f)
 
     val statusString = when {
-        status == ItemStatus.COMPLETED || progress >= 1f -> ItemStatus.COMPLETED.label()
-        status == ItemStatus.ON_HOLD -> ItemStatus.ON_HOLD.label()
-        status == ItemStatus.DROPPED -> ItemStatus.DROPPED.label()
+        status == ItemStatus.COMPLETED || progress >= 1f -> ItemStatus.COMPLETED.displayName
+        status == ItemStatus.ON_HOLD -> ItemStatus.ON_HOLD.displayName
+        status == ItemStatus.DROPPED -> ItemStatus.DROPPED.displayName
         else -> null
     }
 

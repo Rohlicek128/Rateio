@@ -55,9 +55,11 @@ import androidx.compose.ui.zIndex
 import androidx.palette.graphics.Palette
 import coil3.toBitmap
 import com.example.rateio.presentation.components.AdaptiveAsyncImage
+import com.example.rateio.presentation.components.FullScreenImageModal
 import com.example.rateio.presentation.components.LibraryToggle
 import com.example.rateio.presentation.components.RateBox
 import com.example.rateio.presentation.components.RatingBottomSheet
+import com.example.rateio.presentation.components.ReviewCard
 import com.example.rateio.presentation.rating.display.RatingColorBuckets
 import com.example.rateio.presentation.rating.display.getCurrentRatingColorBuckets
 import com.example.rateio.utils.formatCompact
@@ -65,6 +67,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlin.time.Duration.Companion.milliseconds
 
 
 @Composable
@@ -80,6 +83,7 @@ fun RateItemDetailScreen(
     categoryName: String? = null,
     ratingLabel: String? = null,
     ratingVotes: Int? = null,
+    review: String? = null,
     showNullRating: Boolean = true,
     ratingColorBucketsOverride: RatingColorBuckets = getCurrentRatingColorBuckets(),
     headerExtraContent: LazyListScope.() -> Unit = {},
@@ -87,6 +91,7 @@ fun RateItemDetailScreen(
     placeholderRatio: Float = 2f / 3f,
     canAddToLibrary: Boolean = false,
     onRatingSaved: ((Float?) -> Unit)? = null,
+    onReviewSaved: ((String?) -> Unit)? = null,
     onOpenSettings: (() -> Unit)? = null,
     debug: String? = null,
 ) {
@@ -96,13 +101,15 @@ fun RateItemDetailScreen(
     val onRefresh: () -> Unit = {
         isRefreshing = true
         coroutineScope.launch {
-            delay(2000)
+            delay(2000.milliseconds)
             isRefreshing = false
         }
     }
 
     var isSaved by remember { mutableStateOf(false) }
     var expandDescription by remember { mutableStateOf(false) }
+
+    var editedReview by remember { mutableStateOf(review) }
 
     val haptic = LocalHapticFeedback.current
 
@@ -175,6 +182,26 @@ fun RateItemDetailScreen(
                     )
                 }
             }
+
+            // Review
+            if (editedReview != null) {
+                item {
+                    ReviewCard(
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 12.dp),
+                        name = "You",
+                        avatarPath = null,
+                        supportingText = null,
+                        rating = rating,
+                        content = editedReview!!,
+                        placeholderContent = "Your thoughts",
+                        onEdit = {
+                            editedReview = it
+                            onReviewSaved?.invoke(it)
+                        }
+                    )
+                }
+            }
+
 
             // Debug
             if (debug != null) {
@@ -398,6 +425,15 @@ private fun PosterWithRating(
     val scope = rememberCoroutineScope()
     var glowColor by remember { mutableStateOf(Color.Transparent) }
 
+    var isFullscreen by remember { mutableStateOf(false) }
+    if (isFullscreen && imageUrl != null) {
+        FullScreenImageModal(
+            imageUrl = imageUrl,
+            onDismiss = { isFullscreen = false },
+            supportingContent = { _, _ -> },
+        )
+    }
+
     Box(
         modifier = modifier
             .fillMaxWidth()
@@ -410,7 +446,7 @@ private fun PosterWithRating(
                     .padding(4.dp),
             ) {
                 Card(
-                    onClick = { },
+                    onClick = { isFullscreen = true },
                     shape = MaterialTheme.shapes.extraLarge,
                     modifier = Modifier
                         .drawBehind {
