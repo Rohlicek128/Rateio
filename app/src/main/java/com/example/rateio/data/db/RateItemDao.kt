@@ -39,6 +39,9 @@ interface RateItemDao {
     @Query("SELECT * FROM rate_items WHERE externalSource = :source")
     fun observeBySource(source: String): Flow<List<RateItemEntity>>
 
+    @Query("SELECT * FROM rate_items WHERE externalSource IN (:sources)")
+    fun observeBySources(sources: List<String>): Flow<List<RateItemEntity>>
+
 
 
     @Query("SELECT * FROM rate_items WHERE id = :id")
@@ -64,6 +67,16 @@ interface RateItemDao {
 
     @Query("SELECT COUNT(*) FROM rate_items WHERE rating IS NOT NULL")
     fun observeRatedItemCount(): Int
+
+
+    @Query("""
+    SELECT COUNT(*) + 1 
+    FROM rate_items 
+    WHERE externalSource = :externalSource 
+    AND rating > (SELECT rating FROM rate_items WHERE id = :id)
+    AND rating IS NOT NULL
+""")
+    suspend fun getRankInExternalSource(id: Long, externalSource: String): Int
 
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)

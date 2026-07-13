@@ -34,6 +34,8 @@ fun ChildrenList(
     expandedParents: MutableSet<String?>,
     modifier: Modifier = Modifier,
     displayNotNullCounter: Boolean = false,
+    spoilers: Boolean = true,
+    spoilName: Boolean = true,
 ) {
     Column(
         modifier = modifier,
@@ -96,6 +98,8 @@ fun ChildrenList(
                     items = children,
                     onChildClick = onChildClick,
                     modifier = Modifier.padding(start = 12.dp, end = 12.dp, bottom = 32.dp),
+                    spoilers = spoilers,
+                    spoilName = spoilName,
                 )
             }
         }
@@ -107,18 +111,13 @@ fun RateItemList(
     items: List<RateItem>,
     onChildClick: (RateItem) -> Unit,
     modifier: Modifier = Modifier,
-    noSpoilIndices: Set<Int> = emptySet(),
+    spoilers: Boolean = true,
     spoilName: Boolean = true,
 ) {
     Column(
         modifier = modifier,
     ) {
-        items.forEachIndexed { index, item ->
-            val metadata = item.metadataJSON?.let {
-                runCatching {
-                    Json.decodeFromString<TmdbEpisodeMetadata>(it)
-                }.getOrNull()
-            }
+        items.forEach { item ->
             //val topIndex = sortedEpisodesTop.indexOf(item)
             RateItemCard(
                 title = item.title,
@@ -130,7 +129,7 @@ fun RateItemList(
                 padding = PaddingValues(vertical = 6.dp),
                 bubbleText = if (item.length != null) formatTime(item.length.toInt()) else null,
                 onClick = { onChildClick(item) },
-                spoilers = index !in noSpoilIndices,
+                spoilers = spoilers || item.rating != null,
                 spoilName = spoilName,
             )
         }

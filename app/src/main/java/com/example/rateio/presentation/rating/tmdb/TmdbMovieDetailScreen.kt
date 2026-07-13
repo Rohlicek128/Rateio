@@ -46,6 +46,7 @@ import com.example.rateio.presentation.category.ItemListRow
 import com.example.rateio.presentation.components.AdaptiveImageCarousel
 import com.example.rateio.presentation.components.CollapsibleHeader
 import com.example.rateio.presentation.components.GenreChips
+import com.example.rateio.presentation.components.ImageSize
 import com.example.rateio.presentation.components.ItemStatCard
 import com.example.rateio.presentation.components.LibraryToggle
 import com.example.rateio.presentation.components.ModalEnumSelector
@@ -62,7 +63,9 @@ import com.example.rateio.presentation.settings.SettingListItem
 import com.example.rateio.presentation.settings.SettingsTextField
 import com.example.rateio.utils.formatCompact
 import com.example.rateio.utils.formatDate
+import com.example.rateio.utils.formatItemRankLabel
 import com.example.rateio.utils.formatTime
+import com.example.rateio.utils.parseDate
 import java.util.Locale
 
 
@@ -71,6 +74,7 @@ fun TmdbMovieDetailScreen(
     movieId: Int,
     isSaved: Boolean,
     customRating: Float? = null,
+    savedRank: Int? = null,
     onRatingSaved: ((Float?) -> Unit)? = null,
     onStatusSaved: ((ItemStatus) -> Unit)? = null,
     onCoverOverrideSaved: ((String?) -> Unit)? = null,
@@ -171,7 +175,7 @@ fun TmdbMovieDetailScreen(
                 },
                 rating = if (!isSaved) state.imdbRating?.normalizedRating else customRating,
                 ratingVotes = if (!isSaved) state.imdbRating?.voteCount else null,
-                ratingLabel = state.imdbRating?.normalizedRating?.let { "%.1f on IMDb".format(Locale.US, it * 10f) },
+                ratingLabel = savedRank?.let { formatItemRankLabel(it, CategoryType.TMDB_MOVIES) },
                 ratingColorBucketsOverride = if (!isSaved) RatingColorBucketConstants.RC_IMDB_MOVIES else getCurrentRatingColorBuckets(),
                 onRatingSaved = onRatingSaved,
                 review = "",
@@ -295,7 +299,7 @@ fun TmdbMovieDetailScreen(
                                     contentPadding = PaddingValues(horizontal = 16.dp),
                                     horizontalArrangement = Arrangement.spacedBy(12.dp),
                                 ) {
-                                    items(crew.sortedByDescending { it.popularity }.take(10), key = { it.creditId }) { member ->
+                                    items(crew.sortedByDescending { it.popularity }.take(25), key = { it.creditId }) { member ->
                                         PersonCard(
                                             name = member.name,
                                             position = member.job,
@@ -360,7 +364,12 @@ fun TmdbMovieDetailScreen(
                                 }
                             ) {
                                 AdaptiveImageCarousel(
-                                    baseUrl = "https://image.tmdb.org/t/p/w500",
+                                    urlBuilder = { size, path ->
+                                        "https://image.tmdb.org/t/p/${when(size) {
+                                            ImageSize.MEDIUM -> "w500"
+                                            ImageSize.LARGE -> "original"
+                                        }}${path}"
+                                    },
                                     sortedImages.map { it.toCarouselImage() },
                                     itemWidth = 110.dp,
                                     itemHeight = 180.dp,
@@ -406,7 +415,12 @@ fun TmdbMovieDetailScreen(
                                 }
                             ) {
                                 AdaptiveImageCarousel(
-                                    baseUrl = "https://image.tmdb.org/t/p/w780",
+                                    urlBuilder = { size, path ->
+                                        "https://image.tmdb.org/t/p/${when(size) {
+                                            ImageSize.MEDIUM -> "w780"
+                                            ImageSize.LARGE -> "original"
+                                        }}${path}"
+                                    },
                                     sortedImages.map { it.toCarouselImage() },
                                     itemWidth = 240.dp,
                                     shape = MaterialTheme.shapes.large,
@@ -432,7 +446,7 @@ fun TmdbMovieDetailScreen(
                                     contentPadding = PaddingValues(horizontal = 16.dp),
                                     horizontalArrangement = Arrangement.spacedBy(12.dp),
                                 ) {
-                                    items(reviews, key = { it.id }) { review ->
+                                    items(reviews.sortedByDescending { parseDate(it.updatedAt) }, key = { it.id }) { review ->
                                         ReviewCard(
                                             modifier = Modifier.size(width = 320.dp, height = 190.dp),
                                             name = review.author,

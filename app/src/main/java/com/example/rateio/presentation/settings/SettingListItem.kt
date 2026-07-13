@@ -6,6 +6,7 @@ import androidx.compose.foundation.indication
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -19,11 +20,14 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.NavigateNext
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Numbers
+import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material.icons.filled.TextFields
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.ListItem
@@ -51,6 +55,8 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import com.example.rateio.presentation.rating.display.getRatingColor
+import kotlin.math.max
+import kotlin.math.min
 import kotlin.random.Random
 
 
@@ -282,6 +288,8 @@ fun SettingsTextField(
         colors = OutlinedTextFieldDefaults.colors().copy(
             focusedContainerColor = MaterialTheme.colorScheme.surfaceContainerLow,
             unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+            focusedIndicatorColor = OutlinedTextFieldDefaults.colors().unfocusedIndicatorColor,
+            unfocusedIndicatorColor = MaterialTheme.colorScheme.surfaceContainerHighest,
         ),
         onValueChange = onValueChange,
         placeholder = placeholder,
@@ -299,22 +307,41 @@ fun SettingsNumberField(
     value: Float,
     onValueChange: (Float) -> Unit,
     modifier: Modifier = Modifier,
+    asInt: Boolean = false,
     icon: Boolean = true,
     placeholder: @Composable (() -> Unit)? = null,
 ) {
+    val displayInt = if (value == 0f) "" else value.toInt().toString()
+
     OutlinedTextField(
         modifier = modifier,
         singleLine = true,
         shape = MaterialTheme.shapes.medium,
-        value = value.toString(),
+        value = if (asInt) displayInt else value.toString(),
         colors = OutlinedTextFieldDefaults.colors().copy(
             focusedContainerColor = MaterialTheme.colorScheme.surfaceContainerLow,
             unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+            focusedIndicatorColor = OutlinedTextFieldDefaults.colors().unfocusedIndicatorColor,
+            unfocusedIndicatorColor = MaterialTheme.colorScheme.surfaceContainerHighest,
         ),
-        onValueChange = {
-            val value = it.toFloatOrNull()
-            if (it.isEmpty() || value != null) {
-                onValueChange(value ?: 1f)
+        onValueChange = { input ->
+            if (asInt) {
+                if (input.isEmpty()) {
+                    onValueChange(0f)
+                    return@OutlinedTextField
+                }
+
+                val cleanInput = input.filter { it.isDigit() }
+                val parsedInt = cleanInput.toIntOrNull()
+                if (parsedInt != null) {
+                    onValueChange(parsedInt.toFloat())
+                }
+            }
+            else {
+                val value = input.toFloatOrNull()
+                if (input.isEmpty() || value != null) {
+                    onValueChange(value ?: 1f)
+                }
             }
         },
         placeholder = placeholder,
@@ -361,6 +388,55 @@ fun SettingsSwitch(
 }
 
 @Composable
+fun IntCounter(
+    modifier: Modifier = Modifier,
+    value: Int,
+    onValueChange: (Int) -> Unit,
+    minValue: Int = Int.MIN_VALUE,
+    maxValue: Int = Int.MAX_VALUE,
+) {
+    val haptic = LocalHapticFeedback.current
+
+    Row(
+        modifier = modifier,
+        horizontalArrangement = Arrangement.spacedBy(2.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        FilledTonalIconButton(
+            onClick = {
+                haptic.performHapticFeedback(HapticFeedbackType.ToggleOn)
+                onValueChange(max(minValue, value - 1))
+            },
+            shapes = IconButtonDefaults.shapes(),
+            enabled = value > minValue,
+        ) {
+            Icon(Icons.Default.Remove, "Subtract")
+        }
+
+        SettingsNumberField(
+            modifier = Modifier.width(70.dp),
+            value = value.toFloat(),
+            icon = false,
+            asInt = true,
+            onValueChange = { value ->
+                onValueChange(max(minValue, min(maxValue, value.toInt())))
+            },
+        )
+
+        FilledTonalIconButton(
+            onClick = {
+                haptic.performHapticFeedback(HapticFeedbackType.ToggleOn)
+                onValueChange(min(maxValue, value + 1))
+            },
+            shapes = IconButtonDefaults.shapes(),
+            enabled = value < maxValue,
+        ) {
+            Icon(Icons.Default.Add, "Add")
+        }
+    }
+}
+
+@Composable
 fun SettingsSelectedEnum(
     modifier: Modifier = Modifier,
     name: String,
@@ -379,5 +455,34 @@ fun SettingsSelectedEnum(
             style = MaterialTheme.typography.titleSmall,
             fontWeight = FontWeight.Bold
         )
+    }
+}
+
+@Composable
+fun SettingsSelectedEnums(
+    modifier: Modifier = Modifier,
+    names: List<String>,
+) {
+    FlowRow(
+        modifier = modifier,
+        //horizontalArrangement = Arrangement.spacedBy(4.dp),
+    ) {
+        names.forEach {
+            Card(
+                modifier = Modifier.padding(horizontal = 2.dp, vertical = 2.dp),
+                shape = MaterialTheme.shapes.extraLarge,
+                colors = CardDefaults.cardColors().copy(
+                    containerColor = MaterialTheme.colorScheme.surfaceContainerLowest,
+                    contentColor = MaterialTheme.colorScheme.onSurface,
+                )
+            ) {
+                Text(
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 2.dp),
+                    text = it,
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+        }
     }
 }

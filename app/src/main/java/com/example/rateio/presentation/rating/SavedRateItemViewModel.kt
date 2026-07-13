@@ -22,6 +22,7 @@ import kotlinx.coroutines.launch
 data class SavedRateItemState(
     val item: RateItem? = null,
     val category: Category? = null,
+    val itemRank: Int? = null,
     val isLoading: Boolean = false,
     val error: String? = null,
 )
@@ -40,7 +41,11 @@ class SavedRateItemViewModel(
             try {
                 val item = itemRepository.getById(id)
                 val category = if (item != null) categoryRepository.getCategoryById(item.categoryId) else null
-                _state.update { it.copy(item = item, category = category, isLoading = false) }
+
+                val itemRank = if (item?.externalSource != null && item.rating != null)
+                    itemRepository.getRankInExternalSource(id, item.externalSource)
+                    else null
+                _state.update { it.copy(item = item, category = category, itemRank = itemRank, isLoading = false) }
             } catch (e: Exception) {
                 _state.update { it.copy(error = e.message, isLoading = false) }
             }

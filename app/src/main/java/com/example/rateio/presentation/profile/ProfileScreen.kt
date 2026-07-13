@@ -209,6 +209,7 @@ fun ProfileScreen(
                     item {
                         RatingsBarChart(
                             modifier = Modifier.padding(horizontal = 20.dp, vertical = 10.dp),
+                            title = "All Ratings",
                             entries = barChartEntries.map { it.value }.sortedBy { it.order },
                             onSelect = {
                                 selectedRatingGroup = it

@@ -1,6 +1,8 @@
 package com.example.rateio.navigation
 
+import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutHorizontally
@@ -20,8 +22,10 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -79,6 +83,17 @@ fun AppNavigation(
             !currentDestination.hasRoute<Route.TopLevel.Profile>()
     val isVisible = !isDetailScreen && currentDestination != null
 
+    val transitionMillis = 400
+
+    val rateColors = getRatingColor(1f)
+    val colors = NavigationBarItemDefaults.colors().copy(
+        selectedIndicatorColor = rateColors.backgroundColor,
+        selectedIconColor = rateColors.foregroundColor,
+        selectedTextColor = rateColors.foregroundColor,
+        unselectedTextColor = MaterialTheme.colorScheme.primaryFixedDim,
+        unselectedIconColor = MaterialTheme.colorScheme.primaryFixedDim,
+    )
+
     Scaffold(
         bottomBar = {
             AnimatedVisibility(
@@ -102,28 +117,32 @@ fun AppNavigation(
                         selected = currentDestination?.hasRoute<Route.TopLevel.Home>() == true,
                         onClick = { navController.navigateSingleTop(Route.TopLevel.Home) },
                         icon = { Icon(Icons.Default.LibraryAdd, contentDescription = null) },
-                        label = { Text("Ratings", fontWeight = FontWeight.Bold) }
+                        label = { Text("Ratings", fontWeight = FontWeight.Bold) },
+                        colors = colors,
                     )
                     // Leaderboard
                     NavigationBarItem(
                         selected = currentDestination?.hasRoute<Route.TopLevel.Leaderboard>() == true,
                         onClick = { navController.navigateSingleTop(Route.TopLevel.Leaderboard) },
                         icon = { Icon(Icons.Default.Leaderboard, contentDescription = null) },
-                        label = { Text("Leaderboard", fontWeight = FontWeight.Bold) }
+                        label = { Text("Leaderboard", fontWeight = FontWeight.Bold) },
+                        colors = colors,
                     )
                     // Browse
                     NavigationBarItem(
                         selected = currentDestination?.hasRoute<Route.TopLevel.Browse>() == true,
                         onClick = { navController.navigateSingleTop(Route.TopLevel.Browse) },
                         icon = { Icon(Icons.Default.Search, contentDescription = null) },
-                        label = { Text("Browse", fontWeight = FontWeight.Bold) }
+                        label = { Text("Browse", fontWeight = FontWeight.Bold) },
+                        colors = colors,
                     )
                     // Settings
                     NavigationBarItem(
                         selected = currentDestination?.hasRoute<Route.TopLevel.Profile>() == true,
                         onClick = { navController.navigateSingleTop(Route.TopLevel.Profile) },
                         icon = { Icon(Icons.Default.Person, contentDescription = null) },
-                        label = { Text("Profile", fontWeight = FontWeight.Bold) }
+                        label = { Text("Profile", fontWeight = FontWeight.Bold) },
+                        colors = colors,
                     )
                 }
             }
@@ -135,10 +154,26 @@ fun AppNavigation(
                 navController = navController,
                 startDestination = Route.TopLevel.Home,
                 modifier = Modifier.fillMaxSize(),
-                enterTransition = { slideInHorizontally(initialOffsetX = { it }) },
-                exitTransition = { slideOutHorizontally(targetOffsetX = { -it }) },
-                popEnterTransition = { slideInHorizontally(initialOffsetX = { -it }) },
-                popExitTransition = { slideOutHorizontally(targetOffsetX = { it }) }
+                enterTransition = { slideIntoContainer(
+                    AnimatedContentTransitionScope.SlideDirection.Start, tween(
+                        transitionMillis
+                    )
+                ) },
+                exitTransition = { slideOutOfContainer(
+                    AnimatedContentTransitionScope.SlideDirection.Start, tween(
+                        transitionMillis
+                    )
+                ) },
+                popEnterTransition = { slideIntoContainer(
+                    AnimatedContentTransitionScope.SlideDirection.End, tween(
+                        transitionMillis
+                    )
+                ) },
+                popExitTransition = { slideOutOfContainer(
+                    AnimatedContentTransitionScope.SlideDirection.End, tween(
+                        transitionMillis
+                    )
+                ) }
             ) {
                 composable<Route.TopLevel.Home> {
                     HomeScreen(

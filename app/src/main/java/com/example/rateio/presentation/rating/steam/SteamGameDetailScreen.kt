@@ -26,6 +26,7 @@ import com.example.rateio.data.repository.RateItemRepository
 import com.example.rateio.model.CategoryType
 import com.example.rateio.presentation.components.AdaptiveImageCarousel
 import com.example.rateio.presentation.components.GenreChips
+import com.example.rateio.presentation.components.ImageSize
 import com.example.rateio.presentation.components.LibraryToggle
 import com.example.rateio.presentation.components.ScreenError
 import com.example.rateio.presentation.components.ScreenLoading
@@ -124,11 +125,14 @@ fun SteamGameDetailScreen(
                         item { SectionHeader("Screenshots") }
                         item {
                             AdaptiveImageCarousel(
-                                baseUrl = "",
+                                urlBuilder = { _, path ->
+                                    path
+                                },
                                 screenshots.sortedBy { it.id }.map { it.toCarouselImage() },
                                 itemWidth = 320.dp,
                                 itemHeight = 215.dp,
                                 shape = MaterialTheme.shapes.large,
+                                maximizable = true,
                             )
                         }
                     }

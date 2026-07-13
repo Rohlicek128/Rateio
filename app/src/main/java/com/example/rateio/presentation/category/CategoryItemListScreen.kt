@@ -121,7 +121,7 @@ fun CategoryItemListScreen(
                             RateItemCard(
                                 title = item.title,
                                 subtitle = item.subtitle,
-                                coverImagePath = if (displayCover) item.coverImageLowUrl else null,
+                                coverImagePath = if (displayCover) item.coverImageOverride ?: item.coverImageLowUrl else null,
                                 rating = item.rating,
                                 placeholderRatio = placeholderRatio,
                                 padding = PaddingValues(horizontal = 0.dp, vertical = 6.dp),

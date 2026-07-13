@@ -196,8 +196,8 @@ fun RatingTransformationSettingsScreen(
                                 haptic.performHapticFeedback(HapticFeedbackType.SegmentFrequentTick)
                                 viewModel.updateTransformations { it.copy(stepCount = value.toUInt()) }
                             },
-                            steps = 49,
-                            valueRange = 0f..500f
+                            //steps = 99,
+                            valueRange = 1f..100f
                         )
                     },
                     trailingContent = {

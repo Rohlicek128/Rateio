@@ -56,6 +56,7 @@ import com.example.rateio.presentation.components.CollapsibleHeader
 import com.example.rateio.presentation.components.DateProgressBar
 import com.example.rateio.presentation.components.DisplaySelector
 import com.example.rateio.presentation.components.GenreChips
+import com.example.rateio.presentation.components.ImageSize
 import com.example.rateio.presentation.components.ItemStatCard
 import com.example.rateio.presentation.components.LibraryToggle
 import com.example.rateio.presentation.components.ModalEnumSelector
@@ -76,7 +77,9 @@ import com.example.rateio.presentation.settings.SettingsListHeader
 import com.example.rateio.presentation.settings.SettingsSwitch
 import com.example.rateio.presentation.settings.SettingsTextField
 import com.example.rateio.utils.formatDate
+import com.example.rateio.utils.formatItemRankLabel
 import com.example.rateio.utils.formatTime
+import com.example.rateio.utils.parseDate
 import kotlinx.serialization.json.Json
 import java.util.Locale
 
@@ -86,6 +89,7 @@ fun TmdbShowDetailScreen(
     showId: Int,
     isSaved: Boolean,
     customRating: Float? = null,
+    savedRank: Int? = null,
     onRatingSaved: ((Float?) -> Unit)? = null,
     onStatusSaved: ((ItemStatus) -> Unit)? = null,
     onCoverOverrideSaved: ((String?) -> Unit)? = null,
@@ -147,22 +151,22 @@ fun TmdbShowDetailScreen(
                     episodes.associate { it -> it.episodeNumber to it.voteAverage?.div(10f).takeIf { it != 0f } }
                 }
                 2 -> userRatings.value
-                else -> episodesState.imdbRatings
+                else -> userRatings.value
             }
 
             val childrenGroups: Map<RateItem?, List<RateItem>> = episodesState.seasonEpisodes.entries
                 .associate { (seasonNumber, episodes) ->
                     val items = episodes.sortedBy { it.episodeNumber }.map { episode ->
                         RateItem(
-                            id = 0,
+                            id = -1,
                             parentId = seasonNumber.toLong(),
                             categoryId = state.savedItem?.categoryId ?: 0,
                             title = episode.name,
                             subtitle = "Episode ${episode.episodeNumber}",
                             length = if (episode.runtime > 0) episode.runtime.toFloat() else null,
                             rating = ratings[episode.seasonNumber]?.get(episode.episodeNumber),
-                            coverImageUrl = episode.stillPath?.let { "https://image.tmdb.org/t/p/original$it" },
-                            coverImageLowUrl = episode.stillPath?.let { "https://image.tmdb.org/t/p/w300$it" },
+                            coverImageUrl = episode.stillPath?.let { "https://image.tmdb.org/t/p/original$it" } ?: "",
+                            coverImageLowUrl = episode.stillPath?.let { "https://image.tmdb.org/t/p/w300$it" } ?: "",
                             externalId = episode.id.toString(),
                             externalSource = CategoryType.TMDB_EPISODES,
                             metadataJSON = Json.encodeToString(TmdbEpisodeMetadata(
@@ -190,11 +194,6 @@ fun TmdbShowDetailScreen(
                     seasonItem to items
                 }
             val onChildClick = { child: RateItem ->
-                /*val metadata = child.metadataJSON?.let {
-                    runCatching {
-                        Json.decodeFromString<TmdbEpisodeMetadata>(it)
-                    }.getOrNull()
-                }*/
                 val parent = childrenGroups.keys.find { it?.id == child.parentId }
                 if (parent != null) {
                     onEpisodeClick(parent, child,)
@@ -244,7 +243,7 @@ fun TmdbShowDetailScreen(
             val spoilers = metadata.showSpoilers || !isSaved
             var spoilName by remember { mutableStateOf(true) }
             val spoilEpisode = { seasonNumber: Int, episodeNumber: Int ->
-                spoilers || (selectedRatings == 2 && ratings[seasonNumber]?.get(episodeNumber) != null) || selectedRatings != 2
+                spoilers || (selectedRatings == 2 && userRatings.value[seasonNumber]?.get(episodeNumber) != null) || selectedRatings != 2
             }
 
             var showStatusSelector by remember { mutableStateOf(false) }
@@ -258,10 +257,10 @@ fun TmdbShowDetailScreen(
                     title = "${show.name}'s Settings",
                     onDismiss = { showSettings = false }
                 ) {
-                    item { SettingsListHeader("Content") }
+                    item { SettingsListHeader("Spoilers") }
                     item {
                         SettingListItem(
-                            title = "Hide Spoilers",
+                            title = "Hide Thumbnails",
                             description = "Override if unrated episodes will show their thumbnail image",
                             icon = Icons.Default.HideImage,
                             position = ListItemPosition.START,
@@ -269,7 +268,6 @@ fun TmdbShowDetailScreen(
                                 SettingsSwitch(
                                     checked = !metadata.showSpoilers,
                                     onCheckedChange = {
-                                        haptic.performHapticFeedback(HapticFeedbackType.ToggleOn)
                                         onMetadataSaved?.invoke(
                                             Json.encodeToString(metadata.copy(showSpoilers = !it))
                                         )
@@ -288,10 +286,7 @@ fun TmdbShowDetailScreen(
                             trailingContent = {
                                 SettingsSwitch(
                                     checked = !spoilName,
-                                    onCheckedChange = {
-                                        haptic.performHapticFeedback(HapticFeedbackType.ToggleOn)
-                                        spoilName = !it
-                                    }
+                                    onCheckedChange = { spoilName = !it }
                                 )
                             }
                         )
@@ -350,7 +345,7 @@ fun TmdbShowDetailScreen(
                 },
                 rating = if (!isSaved) state.imdbRating?.normalizedRating else customRating,
                 ratingVotes = if (!isSaved) state.imdbRating?.voteCount else null,
-                ratingLabel = state.imdbRating?.normalizedRating?.let { "%.1f/10 on IMDb".format(it * 10f) },
+                ratingLabel = savedRank?.let { formatItemRankLabel(it, CategoryType.TMDB_SHOWS) },
                 ratingColorBucketsOverride = if (!isSaved) RatingColorBucketConstants.RC_IMDB_SHOWS else getCurrentRatingColorBuckets(),
                 onRatingSaved = onRatingSaved,
                 review = "",
@@ -613,7 +608,12 @@ fun TmdbShowDetailScreen(
                                 }
                             ) {
                                 AdaptiveImageCarousel(
-                                    baseUrl = "https://image.tmdb.org/t/p/w500",
+                                    urlBuilder = { size, path ->
+                                        "https://image.tmdb.org/t/p/${when(size) {
+                                            ImageSize.MEDIUM -> "w500"
+                                            ImageSize.LARGE -> "original"
+                                        }}${path}"
+                                    },
                                     images.sortedBy { -it.voteCount }.map { it.toCarouselImage() },
                                     itemWidth = 110.dp,
                                     itemHeight = 180.dp,
@@ -658,7 +658,12 @@ fun TmdbShowDetailScreen(
                                 }
                             ) {
                                 AdaptiveImageCarousel(
-                                    baseUrl = "https://image.tmdb.org/t/p/w780",
+                                    urlBuilder = { size, path ->
+                                        "https://image.tmdb.org/t/p/${when(size) {
+                                            ImageSize.MEDIUM -> "w780"
+                                            ImageSize.LARGE -> "original"
+                                        }}${path}"
+                                    },
                                     images.sortedBy { -it.voteCount }.map { it.toCarouselImage() },
                                     itemWidth = 240.dp,
                                     shape = MaterialTheme.shapes.large,
@@ -707,6 +712,8 @@ fun TmdbShowDetailScreen(
                                     onSortModeSelect = viewModel::onSortModeSelect,
                                     expandedParents = state.expandedSeasons,
                                     isLoading = episodesState.isLoadingEpisodes,
+                                    spoilers = spoilers,
+                                    spoilName = spoilName,
                                 )
                             }
                         }
@@ -728,7 +735,7 @@ fun TmdbShowDetailScreen(
                                     contentPadding = PaddingValues(horizontal = 16.dp),
                                     horizontalArrangement = Arrangement.spacedBy(12.dp),
                                 ) {
-                                    items(reviews, key = { it.id }) { review ->
+                                    items(reviews.sortedByDescending { parseDate(it.updatedAt) }, key = { it.id }) { review ->
                                         ReviewCard(
                                             modifier = Modifier.size(width = 320.dp, height = 190.dp),
                                             name = review.author,

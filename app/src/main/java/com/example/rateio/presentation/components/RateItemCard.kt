@@ -117,7 +117,8 @@ fun RateItemCard(
                 it,
                 modifier = Modifier.offset(x = offset),
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines = 1,
+                maxLines = 2,
+                lineHeight = 1.em,
                 overflow = TextOverflow.Ellipsis,
             ) }
         },

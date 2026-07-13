@@ -2,6 +2,7 @@ package com.example.rateio.utils
 
 import java.text.NumberFormat
 import java.util.Locale
+import kotlin.math.abs
 
 
 fun formatCompact(number: Long, decimalsKilo: Int = 0, decimalsMillion: Int = 1, decimalsBillion: Int = 1): String {
@@ -15,4 +16,17 @@ fun formatCompact(number: Long, decimalsKilo: Int = 0, decimalsMillion: Int = 1,
 
 fun formatGrouped(number: Int): String {
     return NumberFormat.getNumberInstance(Locale.US).format(number)
+}
+
+fun formatOrderNumber(number: Int): String {
+    val lastTwoDigits = abs(number) % 100
+    val lastDigit = if (lastTwoDigits != 11 && lastTwoDigits != 12 && lastTwoDigits != 13)
+        lastTwoDigits % 10
+    else 0
+    return number.toString() + when (lastDigit) {
+        1 -> "st"
+        2 -> "nd"
+        3 -> "rd"
+        else -> "th"
+    }
 }

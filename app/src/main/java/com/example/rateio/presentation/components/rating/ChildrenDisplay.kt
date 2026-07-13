@@ -52,6 +52,8 @@ import com.example.rateio.presentation.rating.tmdb.SortMode
 import com.example.rateio.presentation.settings.ListItemPosition
 import com.example.rateio.presentation.settings.SettingListItem
 import kotlinx.serialization.json.Json
+import kotlin.collections.component1
+import kotlin.collections.component2
 
 
 enum class DisplayMode {
@@ -74,6 +76,8 @@ fun ChildrenDisplay(
     expandedParents: MutableSet<String?>,
     modifier: Modifier = Modifier,
     isLoading: Boolean = false,
+    spoilers: Boolean = true,
+    spoilName: Boolean = true,
     expandIfSingleGroup: Boolean = true,
 ) {
     val haptic = LocalHapticFeedback.current
@@ -115,16 +119,18 @@ fun ChildrenDisplay(
     var invertedGrid by remember { mutableStateOf(false) }
     var columnsWrapped by remember { mutableFloatStateOf(4f) }
 
-    val timelineCategories = listOfNotNull(
-        childrenGroups.values.first().first().externalSource,
-        if (childrenGroups.keys.size > 1) childrenGroups.keys.filterNotNull()
-            .first().externalSource else null,
-    )
+    val timelineCategories = if (childrenGroups.values.isNotEmpty() && childrenGroups.keys.isNotEmpty()) {
+        listOfNotNull(
+            childrenGroups.values.first().first().externalSource,
+            if (childrenGroups.keys.size > 1) childrenGroups.keys.filterNotNull()
+                .first().externalSource else null,
+        )
+    } else emptyList()
     var selectedCategoryIndex by remember { mutableIntStateOf(0) }
     val parentItem = RateItem(
-        id = 0,
+        id = 100000000,
         categoryId = 0,
-        title = childrenGroups.keys.first()?.externalSource?.displayName ?: "Unknown",
+        title = if (childrenGroups.keys.isNotEmpty()) childrenGroups.keys.first()?.externalSource?.displayName ?: "Unknown" else "Unknown",
     )
     val parentGroups = mapOf<RateItem?, List<RateItem>>(parentItem to childrenGroups.keys.filterNotNull().toList())
 
@@ -223,6 +229,8 @@ fun ChildrenDisplay(
                                     expandedParents = expandedParents,
                                     modifier = Modifier.padding(horizontal = 16.dp),
                                     displayNotNullCounter = true,
+                                    spoilers = spoilers,
+                                    spoilName = spoilName,
                                 )
                             }
                             else -> {
@@ -230,6 +238,8 @@ fun ChildrenDisplay(
                                     items = sortedEpisodes,
                                     onChildClick = onChildClick,
                                     modifier = Modifier.padding(horizontal = 16.dp),
+                                    spoilers = spoilers,
+                                    spoilName = spoilName,
                                 )
                             }
                         }
@@ -256,14 +266,16 @@ fun ChildrenDisplay(
                                 )
                             }
                         }
-                        ChildrenGrid(
-                            contentPadding = PaddingValues(horizontal = 12.dp),
-                            childrenGroups = childrenGroups,
-                            rowText = rowText,
-                            columnText = columnText,
-                            onChildClick = onChildClick,
-                            inverted = invertedGrid,
-                        )
+                        if (childrenGroups.values.isNotEmpty()) {
+                            ChildrenGrid(
+                                contentPadding = PaddingValues(horizontal = 12.dp),
+                                childrenGroups = childrenGroups,
+                                rowText = rowText,
+                                columnText = columnText,
+                                onChildClick = onChildClick,
+                                inverted = invertedGrid,
+                            )
+                        }
                     }
                     DisplayMode.WRAPPED -> {
                         SettingListItem(
@@ -283,12 +295,14 @@ fun ChildrenDisplay(
                                 )
                             }
                         )
-                        ChildrenWrapped(
-                            contentPadding = PaddingValues(horizontal = 20.dp),
-                            childrenGroups = childrenGroups,
-                            columns = columnsWrapped.toInt() + 1,
-                            onChildClick = onChildClick,
-                        )
+                        if (childrenGroups.values.isNotEmpty()) {
+                            ChildrenWrapped(
+                                contentPadding = PaddingValues(horizontal = 20.dp),
+                                childrenGroups = childrenGroups,
+                                columns = columnsWrapped.toInt() + 1,
+                                onChildClick = onChildClick,
+                            )
+                        }
                     }
                     DisplayMode.TIMELINE -> {
                         if (timelineCategories.size > 1) {
@@ -309,6 +323,9 @@ fun ChildrenDisplay(
                                 .padding(bottom = 16.dp),
                             childrenGroups = if (selectedCategoryIndex == 0) childrenGroups else parentGroups,
                             onChildClick = if (selectedCategoryIndex == 0) onChildClick else { _ -> },
+                            placeholderRatio = if (selectedCategoryIndex == 0) 16f / 9f else 2f / 3f,
+                            spoilers = spoilers,
+                            spoilName = spoilName,
                         )
                     }
                     else -> {
@@ -318,6 +335,19 @@ fun ChildrenDisplay(
                 }
 
             }
+        }
+    }
+}
+
+
+fun expandGroupWhenFirstNull(
+    childrenGroups: Map<RateItem?, List<RateItem>>,
+    expandedParents: MutableSet<String?>,
+) {
+    childrenGroups.forEach { (parent, children) ->
+        if (children.find { it.rating == null } != null) {
+            expandedParents.add(parent?.title)
+            return
         }
     }
 }

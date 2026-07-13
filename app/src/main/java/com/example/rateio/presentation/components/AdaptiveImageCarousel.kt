@@ -1,5 +1,6 @@
 package com.example.rateio.presentation.components
 
+import android.content.ClipData
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
@@ -25,12 +26,15 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.ReplayCircleFilled
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButtonDefaults
@@ -46,6 +50,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.ClipEntry
+import androidx.compose.ui.platform.LocalClipboard
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.window.Dialog
@@ -58,9 +65,14 @@ data class CarouselImage(
     val aspectRatio: Float,
 )
 
+enum class ImageSize {
+    MEDIUM,
+    LARGE,
+}
+
 @Composable
 fun AdaptiveImageCarousel(
-    baseUrl: String,
+    urlBuilder: (size: ImageSize, path: String) -> String,
     images:  List<CarouselImage>,
     modifier: Modifier = Modifier,
     shape: Shape = MaterialTheme.shapes.large,
@@ -84,7 +96,7 @@ fun AdaptiveImageCarousel(
         modifier = modifier,
     ) { index ->
         AsyncImage(
-            model = baseUrl + images[index].filePath,
+            model = urlBuilder(ImageSize.MEDIUM, images[index].filePath),
             contentDescription = null,
             modifier = Modifier
                 .heightIn(max = itemHeight)
@@ -92,7 +104,7 @@ fun AdaptiveImageCarousel(
                 .maskClip(shape)
                 .clickable {
                     onImageClick(index)
-                    fullScreenUrl = "https://image.tmdb.org/t/p/original" + images[index].filePath
+                    fullScreenUrl = urlBuilder(ImageSize.LARGE, images[index].filePath)
                     fullScreenIndex = index
                 },
             contentScale = ContentScale.Crop,
@@ -111,7 +123,7 @@ fun AdaptiveImageCarousel(
             onPreviousClick = if (fullScreenIndex!! >= 1 && fullScreenIndex!! < images.size) {
                 {
                     fullScreenIndex = fullScreenIndex!! - 1
-                    fullScreenUrl = "https://image.tmdb.org/t/p/original" + images[fullScreenIndex!!].filePath
+                    fullScreenUrl = urlBuilder(ImageSize.LARGE, images[fullScreenIndex!!].filePath)
                     coroutineScope.launch {
                         carouselState.animateScrollToItem(fullScreenIndex!!)
                     }
@@ -120,13 +132,13 @@ fun AdaptiveImageCarousel(
             onNextClick = if (fullScreenIndex!! >= 0 && fullScreenIndex!! < images.size - 1) {
                 {
                     fullScreenIndex = fullScreenIndex!! + 1
-                    fullScreenUrl = "https://image.tmdb.org/t/p/original" + images[fullScreenIndex!!].filePath
+                    fullScreenUrl = urlBuilder(ImageSize.LARGE, images[fullScreenIndex!!].filePath)
                     coroutineScope.launch {
                         carouselState.animateScrollToItem(fullScreenIndex!!)
                     }
                 }
             } else null,
-            supportingContent = supportingContent ?: { _, _ -> },
+            supportingContent = supportingContent,
         )
     }
 }
@@ -138,8 +150,9 @@ fun FullScreenImageModal(
     onDismiss: () -> Unit,
     onPreviousClick: (() -> Unit)? = null,
     onNextClick: (() -> Unit)? = null,
-    supportingContent: @Composable (RowScope.(url: String?, onDismiss: () -> Unit) -> Unit),
+    supportingContent: @Composable (RowScope.(url: String?, onDismiss: () -> Unit) -> Unit)? = null,
 ) {
+    val context = LocalContext.current
     val haptic = LocalHapticFeedback.current
 
     var isLoading by remember { mutableStateOf(true) }
@@ -172,6 +185,7 @@ fun FullScreenImageModal(
                     modifier = Modifier.clip(MaterialTheme.shapes.large)
                 ){
                     AsyncImage(
+                        modifier = Modifier.fillMaxWidth(),
                         model = imageUrl,
                         contentDescription = "Full screen image",
                         contentScale = ContentScale.Fit,
@@ -223,7 +237,30 @@ fun FullScreenImageModal(
                             }
                         }
 
-                        supportingContent(imageUrl, onDismiss)
+                        if (supportingContent != null) {
+                            supportingContent(imageUrl, onDismiss)
+                        }
+                        else {
+                            FilledTonalButton(
+                                onClick = {
+                                    haptic.performHapticFeedback(HapticFeedbackType.ToggleOn)
+                                    copyTextToClipboard(context, imageUrl)
+                                },
+                                shapes = ButtonDefaults.shapes(),
+                            ) {
+                                Icon(
+                                    Icons.Default.ContentCopy,
+                                    contentDescription = "Copy",
+                                    modifier = Modifier.size(ToggleButtonDefaults.IconSize)
+                                )
+                                Spacer(Modifier.size(ToggleButtonDefaults.IconSpacing))
+                                Text(
+                                    "Copy URL",
+                                    style = MaterialTheme.typography.labelMedium,
+                                    fontWeight = FontWeight.Bold,
+                                )
+                            }
+                        }
                     }
                 }
 

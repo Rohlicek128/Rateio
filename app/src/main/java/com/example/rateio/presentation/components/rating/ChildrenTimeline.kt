@@ -42,6 +42,7 @@ import com.example.rateio.presentation.rating.display.getRatingColor
 import com.example.rateio.presentation.rating.display.getRoundedRating
 import com.example.rateio.presentation.settings.ListItemPosition
 import com.example.rateio.presentation.settings.SettingListItem
+import com.example.rateio.utils.formatTime
 import kotlin.math.abs
 import kotlin.math.max
 
@@ -57,6 +58,9 @@ fun ChildrenTimeline(
     onChildClick: (RateItem) -> Unit,
     modifier: Modifier = Modifier,
     minEpisodeWidth: Dp = 7.dp,
+    placeholderRatio: Float = 16f / 9f,
+    spoilers: Boolean = true,
+    spoilName: Boolean = true,
 ) {
     val haptic = LocalHapticFeedback.current
 
@@ -96,11 +100,11 @@ fun ChildrenTimeline(
     val minRating = childrenGroups.values.flatten().minBy { it.rating ?: 1f }.rating ?: 1f
     var plotScale by rememberSaveable(childrenGroups) { mutableFloatStateOf(getInitialPlotScale(minRating)) }
 
-    var episodeWidth by rememberSaveable(childrenGroups) { mutableFloatStateOf(
+    var childWidth by rememberSaveable(childrenGroups) { mutableFloatStateOf(
         max(minEpisodeWidth.value, 350f / flatPoints.size.toFloat())
     ) }
 
-    val totalWidth = padL + episodeWidth.dp * flatPoints.size + padR
+    val totalWidth = padL + childWidth.dp * flatPoints.size + padR
 
     Column(modifier = modifier) {
         Box(
@@ -118,7 +122,7 @@ fun ChildrenTimeline(
                                 val event = awaitPointerEvent()
                                 val pos = event.changes.firstOrNull()?.position ?: continue
                                 val padLpx = with(density) { padL.toPx() }
-                                val epWpx = with(density) { episodeWidth.dp.toPx() }
+                                val epWpx = with(density) { childWidth.dp.toPx() }
 
                                 val closest = flatPoints.minByOrNull { child ->
                                     val x = padLpx + (child.globalIndex + 0.5f) * epWpx
@@ -136,7 +140,7 @@ fun ChildrenTimeline(
                 val padTpx = padT.toPx()
                 val padBpx = padB.toPx()
                 val plotH = h - padTpx - padBpx
-                val epWpx = episodeWidth.dp.toPx()
+                val epWpx = childWidth.dp.toPx()
 
                 // X center of each episode slot
                 fun xOf(i: Int) = padLpx + (i + 0.5f) * epWpx
@@ -293,10 +297,12 @@ fun ChildrenTimeline(
                     subtitle = child.subtitle,
                     coverImagePath = child.coverImageUrl,
                     rating = child.rating,
-                    //bubbleText = if (child.runtime > 0) formatTime(child.runtime) else null,
-                    placeholderRatio = 16f / 9f,
+                    bubbleText = if (child.length != null && child.length > 0f) formatTime(child.length.toInt()) else null,
+                    placeholderRatio = placeholderRatio,
                     padding = PaddingValues(16.dp),
                     onClick = { onChildClick(child) },
+                    spoilers = spoilers || child.rating != null,
+                    spoilName = spoilName,
                 )
             }
         }
@@ -323,15 +329,15 @@ fun ChildrenTimeline(
             )
             SettingListItem(
                 modifier = Modifier.fillMaxWidth(),
-                title = "Episode width",
-                description = "Value: ${"%.1f".format(episodeWidth)}",
+                title = "Space width",
+                description = "Value: ${"%.1f".format(childWidth)}",
                 position = ListItemPosition.END,
                 supportingContent = {
                     Slider(
-                        episodeWidth,
+                        childWidth,
                         onValueChange = { value ->
                             //haptic.performHapticFeedback(HapticFeedbackType.SegmentFrequentTick)
-                            episodeWidth = value
+                            childWidth = value
                         },
                         valueRange = 1f..50f
                     )

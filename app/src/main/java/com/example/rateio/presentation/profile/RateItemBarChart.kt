@@ -44,8 +44,9 @@ data class BarChartEntry(
 
 @Composable
 fun RatingsBarChart(
-    entries: List<BarChartEntry>,
     modifier: Modifier = Modifier,
+    title: String,
+    entries: List<BarChartEntry>,
     onSelect: ((String) -> Unit)? = null,
 ) {
     Card(
@@ -59,7 +60,7 @@ fun RatingsBarChart(
         ) {
             Text(
                 modifier = Modifier.padding(horizontal = 20.dp),
-                text = "All Ratings",
+                text = title,
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.SemiBold,
                 color = MaterialTheme.colorScheme.onSurface

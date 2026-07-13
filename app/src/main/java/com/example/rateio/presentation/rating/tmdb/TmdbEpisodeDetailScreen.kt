@@ -36,13 +36,16 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.rateio.data.remote.tmdb.toCarouselImage
+import com.example.rateio.model.CategoryType
 import com.example.rateio.presentation.components.AdaptiveImageCarousel
+import com.example.rateio.presentation.components.ImageSize
 import com.example.rateio.presentation.components.PersonCard
 import com.example.rateio.presentation.components.ScreenError
 import com.example.rateio.presentation.components.ScreenLoading
 import com.example.rateio.presentation.components.SectionHeader
 import com.example.rateio.presentation.rating.RateItemDetailScreen
 import com.example.rateio.utils.formatDate
+import com.example.rateio.utils.formatItemRankLabel
 import com.example.rateio.utils.formatTime
 
 
@@ -54,6 +57,7 @@ fun TmdbEpisodeDetailScreen(
     isSaved: Boolean,
     debug: String = "",
     customRating: Float? = null,
+    savedRank: Int? = null,
     onRatingSaved: ((Float?) -> Unit)? = null,
     onNextClick: (season: Int, episode: Int) -> Unit,
     onPreviousClick: (season: Int, episode: Int) -> Unit,
@@ -88,7 +92,7 @@ fun TmdbEpisodeDetailScreen(
                 },
                 rating = if (!isSaved) state.imdbRating?.normalizedRating else customRating,
                 ratingVotes = if (!isSaved) state.imdbRating?.voteCount else null,
-                ratingLabel = state.imdbRating?.normalizedRating?.let { "%.1f/10 on IMDb".format(it * 10f) },
+                ratingLabel = savedRank?.let { formatItemRankLabel(it, CategoryType.TMDB_EPISODES) },
                 onRatingSaved = onRatingSaved,
                 onBackClick = onBackClick,
                 extraContent = {
@@ -163,10 +167,16 @@ fun TmdbEpisodeDetailScreen(
                         item { SectionHeader("Images") }
                         item {
                             AdaptiveImageCarousel(
-                                baseUrl = "https://image.tmdb.org/t/p/w300",
+                                urlBuilder = { size, path ->
+                                    "https://image.tmdb.org/t/p/${when(size) {
+                                        ImageSize.MEDIUM -> "w300"
+                                        ImageSize.LARGE -> "original"
+                                    }}${path}"
+                                },
                                 images.sortedBy { -it.voteCount }.map { it.toCarouselImage() },
                                 itemWidth = 250.dp,
                                 shape = MaterialTheme.shapes.large,
+                                maximizable = true,
                             )
                         }
                     }

@@ -18,11 +18,15 @@ import com.example.rateio.data.remote.tmdb.TmdbEpisodeMetadata
 import com.example.rateio.data.repository.CategoryRepository
 import com.example.rateio.data.repository.RateItemRepository
 import com.example.rateio.model.CategoryType
+import com.example.rateio.presentation.components.ScreenError
+import com.example.rateio.presentation.components.ScreenLoading
 import com.example.rateio.presentation.rating.openlibrary.OLWorkDetailScreen
 import com.example.rateio.presentation.rating.steam.SteamGameDetailScreen
 import com.example.rateio.presentation.rating.tmdb.TmdbEpisodeDetailScreen
 import com.example.rateio.presentation.rating.tmdb.TmdbMovieDetailScreen
 import com.example.rateio.presentation.rating.tmdb.TmdbShowDetailScreen
+import com.example.rateio.utils.formatDate
+import com.example.rateio.utils.parseDate
 import kotlinx.serialization.json.Json
 
 
@@ -50,14 +54,10 @@ fun SavedRateItemScreen(
 
     when {
         state.isLoading -> {
-            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                CircularWavyProgressIndicator()
-            }
+            ScreenLoading()
         }
         state.error != null -> {
-            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text("Error: ${state.error}", color = MaterialTheme.colorScheme.error)
-            }
+            ScreenError(state.error)
         }
         state.item != null -> {
             val item = state.item!!
@@ -72,6 +72,7 @@ fun SavedRateItemScreen(
                         showId = item.externalId!!.toInt(),
                         isSaved = true,
                         customRating = item.rating,
+                        savedRank = state.itemRank,
                         onRatingSaved = viewModel::saveRating,
                         onStatusSaved = viewModel::updateStatus,
                         onCoverOverrideSaved = viewModel::updateCoverOverride,
@@ -101,6 +102,7 @@ fun SavedRateItemScreen(
                             //debug = "  |  ${item.id}, ${item.parentId}",
                             isSaved = true,
                             customRating = item.rating,
+                            savedRank = state.itemRank,
                             onRatingSaved = viewModel::saveRatingAndComplete,
                             onBackClick = onBackClick,
                             onNextClick = { nextSeason, nextEpisode ->
@@ -127,6 +129,7 @@ fun SavedRateItemScreen(
                         movieId = item.externalId!!.toInt(),
                         isSaved = true,
                         customRating = item.rating,
+                        savedRank = state.itemRank,
                         onRatingSaved = viewModel::saveRatingAndComplete,
                         onStatusSaved = viewModel::updateStatus,
                         onCoverOverrideSaved = viewModel::updateCoverOverride,
@@ -151,6 +154,7 @@ fun SavedRateItemScreen(
                         customRating = item.rating,
                         onRatingSaved = viewModel::saveRatingAndComplete,
                         onStatusSaved = viewModel::updateStatus,
+                        onCoverOverrideSaved = viewModel::updateCoverOverride,
                         onMetadataSaved = viewModel::updateMetadata,
                         onBackClick = onBackClick,
                         onChapterClick = { partItem, chapterItem ->
@@ -176,7 +180,7 @@ fun SavedRateItemScreen(
                         title = item.title,
                         subtitle = item.subtitle,
                         categoryName = category?.name,
-                        description = "${item.externalId}, ${item.externalSource}, ${item.updatedAt}, ${item.createdAt}",
+                        description = null,
                         coverImageUrl = item.coverImageUrl,
                         backdropImageUrl = null,
                         placeholderRatio = 2f / 3f,
@@ -185,7 +189,10 @@ fun SavedRateItemScreen(
                         canAddToLibrary = true,
                         extraContent = { },
                         onRatingSaved = viewModel::saveRating,
-                        onOpenSettings = { }
+                        onOpenSettings = { },
+                        debug = "${item.id}, ${item.parentId}, ${item.externalId}, ${item.externalSource}," +
+                                " ${formatDate(parseDate(item.updatedAt))}," +
+                                " ${formatDate(parseDate(item.createdAt))}, ${item.metadataJSON}",
                     )
                 }
             }

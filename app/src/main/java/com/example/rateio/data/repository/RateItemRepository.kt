@@ -10,6 +10,7 @@ import com.example.rateio.model.ItemStatus
 import com.example.rateio.model.RateItem
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.serialization.json.Json
 
@@ -64,11 +65,18 @@ class RateItemRepository(private val dao: RateItemDao) {
         return dao.observeBySource(source.name).map { it.map(RateItemEntity::toDomain) }
     }
 
+    fun observeBySources(sources: List<CategoryType>): Flow<List<RateItem>> {
+        if (sources.isEmpty()) return flowOf(emptyList())
+
+        return dao.observeBySources(sources.map { it.name })
+            .map { entities -> entities.map(RateItemEntity::toDomain) }
+    }
+
 
     suspend fun getById(id: Long): RateItem? =
         dao.getById(id)?.toDomain()
 
-    suspend fun getByExternalId(externalId: String, categoryId: Long, ): RateItem? =
+    suspend fun getByExternalId(externalId: String, categoryId: Long): RateItem? =
         dao.getByExternalId(externalId, categoryId)?.toDomain()
 
     suspend fun getParentById(childId: Long): RateItem? =
@@ -85,6 +93,11 @@ class RateItemRepository(private val dao: RateItemDao) {
 
     fun observeRatedItemCount(): Int =
         dao.observeRatedItemCount()
+
+
+    suspend fun getRankInExternalSource(id: Long, externalSource: CategoryType): Int {
+        return dao.getRankInExternalSource(id, externalSource.name)
+    }
 
 
     /** Finds an existing item by external id or inserts a new skeleton one */
@@ -109,7 +122,7 @@ class RateItemRepository(private val dao: RateItemDao) {
             dao.update(updated)
             return existing.id
         }
-        return dao.insert(build().copy(parentId = parentId).toEntity())
+        return dao.insert(build().copy(parentId = parentId, rating = null).toEntity())
     }
 
     suspend fun save(item: RateItem): Long =

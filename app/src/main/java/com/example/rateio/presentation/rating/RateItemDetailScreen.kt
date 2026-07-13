@@ -529,8 +529,8 @@ private fun PosterWithRating(
                 )
 
                 val labelText = if (ratingVotes != null && ratingVotes > 0) "${formatCompact(ratingVotes.toLong())} votes"
-                else null
-                //else ratingLabel
+                else ratingLabel
+                //else null
 
                 if (labelText != null) {
                     Text(

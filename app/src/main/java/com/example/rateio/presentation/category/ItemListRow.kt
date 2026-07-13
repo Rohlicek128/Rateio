@@ -60,7 +60,7 @@ fun ItemListRow(
                     RateItemGridCard(
                         title = item.title,
                         subtitle = item.subtitle,
-                        coverImagePath = item.coverImageLowUrl,
+                        coverImagePath = item.coverImageOverride ?: item.coverImageLowUrl,
                         rating = item.rating,
                         //placeholderRatio = if (item.externalSource == CategoryType.TMDB_EPISODES) 16f / 9f else 2f / 3f,
                         padding = PaddingValues(0.dp),

@@ -27,6 +27,7 @@ import com.example.rateio.data.repository.CategoryRepository
 import com.example.rateio.data.repository.RateItemRepository
 import com.example.rateio.model.CategoryType
 import com.example.rateio.presentation.components.AdaptiveImageCarousel
+import com.example.rateio.presentation.components.ImageSize
 import com.example.rateio.presentation.components.LibraryToggle
 import com.example.rateio.presentation.components.MajorSectionHeader
 import com.example.rateio.presentation.components.RateItemCard
@@ -111,11 +112,17 @@ fun TmdbPersonDetailScreen(
                         item { SectionHeader("Images") }
                         item {
                             AdaptiveImageCarousel(
-                                baseUrl = "https://image.tmdb.org/t/p/h632",
+                                urlBuilder = { size, path ->
+                                    "https://image.tmdb.org/t/p/${when(size) {
+                                        ImageSize.MEDIUM -> "h632"
+                                        ImageSize.LARGE -> "original"
+                                    }}${path}"
+                                },
                                 images.sortedBy { -it.voteCount }.map { it.toCarouselImage() },
                                 itemWidth = 130.dp,
                                 itemHeight = 200.dp,
                                 shape = MaterialTheme.shapes.large,
+                                maximizable = true,
                             )
                         }
                     }

@@ -32,13 +32,14 @@ import com.example.rateio.model.HasDisplayName
 
 
 @Composable
-inline fun <reified T : Enum<T>> ModalEnumSelector(
+inline fun <reified T : Enum<T>> ModalEnumMultiSelector(
     modifier: Modifier = Modifier,
     title: String,
-    selectedOption: T,
+    selectedOptions: List<T>,
     crossinline onOptionSelected: (T) -> Unit,
     noinline onDismiss: () -> Unit,
     separatedOptions: List<T> = emptyList(),
+    onClickDismiss: Boolean = false,
 ) {
     val haptic = LocalHapticFeedback.current
 
@@ -69,11 +70,11 @@ inline fun <reified T : Enum<T>> ModalEnumSelector(
                 items(options.filter { it !in separatedOptions }, key = { it }) { option ->
                     EnumListItem(
                         option = option,
-                        selected = option == selectedOption,
+                        selected = option in selectedOptions,
                         onClick = {
                             haptic.performHapticFeedback(HapticFeedbackType.Confirm)
                             onOptionSelected(option)
-                            onDismiss()
+                            if (onClickDismiss) onDismiss()
                         },
                     )
                 }
@@ -83,11 +84,11 @@ inline fun <reified T : Enum<T>> ModalEnumSelector(
                 items(options.filter { it in separatedOptions }, key = { it }) { option ->
                     EnumListItem(
                         option = option,
-                        selected = option == selectedOption,
+                        selected = option in selectedOptions,
                         onClick = {
                             haptic.performHapticFeedback(HapticFeedbackType.Confirm)
                             onOptionSelected(option)
-                            onDismiss()
+                            if (onClickDismiss) onDismiss()
                         },
                         paddingValues = PaddingValues(horizontal = 16.dp, vertical = 12.dp)
                     )
@@ -98,6 +99,27 @@ inline fun <reified T : Enum<T>> ModalEnumSelector(
         }
     }
 }
+
+@Composable
+inline fun <reified T : Enum<T>> ModalEnumSelector(
+    modifier: Modifier = Modifier,
+    title: String,
+    selectedOption: T,
+    crossinline onOptionSelected: (T) -> Unit,
+    noinline onDismiss: () -> Unit,
+    separatedOptions: List<T> = emptyList(),
+) {
+    ModalEnumMultiSelector(
+        modifier = modifier,
+        title = title,
+        selectedOptions = listOf(selectedOption),
+        onOptionSelected = onOptionSelected,
+        onDismiss = onDismiss,
+        separatedOptions = separatedOptions,
+        onClickDismiss = true,
+    )
+}
+
 
 @Composable
 inline fun <reified T : Enum<T>> EnumListItem(

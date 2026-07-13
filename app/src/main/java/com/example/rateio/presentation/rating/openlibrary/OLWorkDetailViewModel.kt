@@ -143,6 +143,15 @@ class OLWorkDetailViewModel(
         }
     }
 
+    fun updateSavedItem() {
+        if (_state.value.savedItem != null) {
+            viewModelScope.launch {
+                val item = itemRepository.getById(_state.value.savedItem!!.id)
+                _state.update { it.copy(savedItem = item) }
+            }
+        }
+    }
+
     fun onDisplayModeSelect(selectedMode: DisplayMode) {
         _state.update { it.copy(selectedDisplayMode = selectedMode) }
     }

@@ -1,16 +1,35 @@
 package com.example.rateio.presentation.rating.openlibrary
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.HideImage
+import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.ReplayCircleFilled
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
+import androidx.compose.material3.ToggleButtonDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -36,6 +55,7 @@ import com.example.rateio.presentation.components.AdaptiveImageCarousel
 import com.example.rateio.presentation.components.CarouselImage
 import com.example.rateio.presentation.components.CollapsibleHeader
 import com.example.rateio.presentation.components.GenreChips
+import com.example.rateio.presentation.components.ImageSize
 import com.example.rateio.presentation.components.ItemStatCard
 import com.example.rateio.presentation.components.LibraryToggle
 import com.example.rateio.presentation.components.ModalEnumSelector
@@ -43,12 +63,18 @@ import com.example.rateio.presentation.components.ScreenError
 import com.example.rateio.presentation.components.ScreenLoading
 import com.example.rateio.presentation.components.rating.ChildrenDisplay
 import com.example.rateio.presentation.components.rating.ItemProgressBar
+import com.example.rateio.presentation.components.rating.expandGroupWhenFirstNull
 import com.example.rateio.presentation.rating.RateItemDetailScreen
+import com.example.rateio.presentation.settings.IntCounter
 import com.example.rateio.presentation.settings.ListItemPosition
 import com.example.rateio.presentation.settings.ModalSettings
 import com.example.rateio.presentation.settings.SettingListItem
+import com.example.rateio.presentation.settings.SettingsListHeader
 import com.example.rateio.presentation.settings.SettingsNumberField
+import com.example.rateio.presentation.settings.SettingsSwitch
+import com.example.rateio.presentation.settings.SettingsTextField
 import kotlinx.serialization.json.Json
+import kotlin.math.abs
 
 
 @Composable
@@ -59,6 +85,7 @@ fun OLWorkDetailScreen(
     onRatingSaved: ((Float?) -> Unit)? = null,
     onStatusSaved: ((ItemStatus) -> Unit)? = null,
     onMetadataSaved: ((String?) -> Unit)? = null,
+    onCoverOverrideSaved: ((String?) -> Unit)? = null,
     onBackClick: () -> Unit,
     onChapterClick: (partItem: RateItem, chapterItem: RateItem) -> Unit,
 ) {
@@ -102,15 +129,32 @@ fun OLWorkDetailScreen(
                 }.getOrNull()
             }
 
-            val tableOfContents = when {
-                metadata != null && metadata.numberOfChaptersByParts != null ->
-                    generateTableOfContent(metadata.numberOfChaptersByParts)
-                editionWithContents?.tableOfContents != null ->
-                    editionWithContents.tableOfContents
-                metadata != null && metadata.numberOfChaptersByPartsAPI != null ->
-                    generateTableOfContent(metadata.numberOfChaptersByPartsAPI)
-                else ->
-                    emptyList()
+            var customChapters by remember(metadata) { mutableStateOf(metadata != null && metadata.numberOfChaptersByParts != null) }
+            val initialChaptersPerPart = 5
+            var partsNumber by remember(metadata) { mutableIntStateOf(if (customChapters) metadata?.numberOfChaptersByParts!!.size else 1) }
+            //val partsChapters = remember(metadata) { mutableStateListOf(initialChaptersPerPart) }
+            var partsChapters by remember(metadata) {
+                mutableStateOf(
+                    if (customChapters) {
+                        metadata?.numberOfChaptersByParts!!
+                    }
+                    else listOf(initialChaptersPerPart)
+                )
+            }
+
+            var coverOverride by remember(state.savedItem) { mutableStateOf(state.savedItem?.coverImageOverride) }
+
+            val tableOfContents = remember(metadata, editionWithContents, partsChapters, customChapters) {
+                when {
+                    customChapters ->
+                        generateTableOfContent(partsChapters)
+                    editionWithContents?.tableOfContents != null ->
+                        editionWithContents.tableOfContents
+                    metadata != null && metadata.numberOfChaptersByPartsAPI != null ->
+                        generateTableOfContent(metadata.numberOfChaptersByPartsAPI)
+                    else ->
+                        emptyList()
+                }
             }
             var numberOfPages by remember(metadata, state.numberOfPages) { mutableStateOf(metadata?.numberOfPages ?: state.numberOfPages) }
             var completedPages by remember(metadata) { mutableIntStateOf(metadata?.completedPages ?: 0) }
@@ -179,6 +223,7 @@ fun OLWorkDetailScreen(
                             coverImageUrl = work.covers?.takeIf { it.isNotEmpty() }?.let {
                                 OpenLibraryClient.COVERS_BASE_URL + "/ID/${it.first()}-M.jpg"
                             },
+                            coverImageOverride = coverOverride,
                             rating = null,
                             externalId = "${workId}-P${groupIndex}",
                             externalSource = CategoryType.OPEN_LIBRARY_PART,
@@ -198,6 +243,9 @@ fun OLWorkDetailScreen(
                     }
                 }
             }
+
+            expandGroupWhenFirstNull(chaptersGroups, state.expandedChapters)
+
 
             var status by remember(state.savedItem?.status) { mutableStateOf(
                 if (state.savedItem == null) ItemStatus.WATCHLIST
@@ -226,7 +274,9 @@ fun OLWorkDetailScreen(
                             position = ListItemPosition.START,
                             supportingContent = {
                                 SettingsNumberField(
-                                    modifier = Modifier.fillMaxWidth().padding(top = 6.dp),
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(top = 6.dp),
                                     value = numberOfPages?.toFloat() ?: 0f,
                                     onValueChange = { value ->
                                         numberOfPages = value.toInt()
@@ -264,12 +314,158 @@ fun OLWorkDetailScreen(
                 }
             }
 
+            // Settings
+            var showSettings by remember { mutableStateOf(false) }
+            if (showSettings) {
+                ModalSettings(
+                    title = "${work.title}'s Settings",
+                    onDismiss = {
+                        showSettings = false
+                        onMetadataSaved?.invoke(Json.encodeToString(
+                            (metadata ?: OLWorkMetadata()).copy(
+                                numberOfChaptersByParts = if (customChapters) {
+                                    partsChapters
+                                } else null
+                            )
+                        ))
+                        viewModel.updateSavedItem()
+                    }
+                ) {
+                    item { SettingsListHeader("Visuals") }
+                    item {
+                        SettingListItem(
+                            title = "Cover Image Override",
+                            description = "Override the cover image url that will be displayed (ideally 2:3 ratio)",
+                            position = ListItemPosition.SINGLE,
+                            supportingContent = {
+                                SettingsTextField(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(top = 6.dp),
+                                    value = coverOverride ?: "",
+                                    onValueChange = { value ->
+                                        coverOverride = value
+                                        onCoverOverrideSaved?.invoke(value)
+                                    },
+                                    singleLine = false,
+                                    placeholder = { Text("eg. https://example.org/image.jpg") },
+                                )
+                            }
+                            ,
+                            trailingContent = {
+                                AnimatedVisibility(state.savedItem?.coverImageOverride != null) {
+                                    IconButton(
+                                        onClick = {
+                                            coverOverride = null
+                                            onCoverOverrideSaved?.invoke(null)
+                                        }
+                                    ) {
+                                        Icon(Icons.Default.Refresh, null)
+                                    }
+                                }
+                            }
+                        )
+                    }
+
+                    item { SettingsListHeader("Chapters") }
+                    item {
+                        SettingListItem(
+                            title = "Custom Parts/Chapters",
+                            description = "Enable custom override of the Parts/Chapters",
+                            position = if (customChapters) ListItemPosition.START else ListItemPosition.SINGLE,
+                            trailingContent = {
+                                SettingsSwitch(
+                                    checked = customChapters,
+                                    onCheckedChange = { customChapters = it }
+                                )
+                            }
+                        )
+                    }
+                    item {
+                        AnimatedVisibility(
+                            visible = customChapters,
+                            enter = expandVertically(animationSpec = spring(
+                                dampingRatio = Spring.DampingRatioNoBouncy,
+                                stiffness = Spring.StiffnessMediumLow,
+                            )),
+                            exit = shrinkVertically(animationSpec = spring(
+                                dampingRatio = Spring.DampingRatioNoBouncy,
+                                stiffness = Spring.StiffnessMediumLow,
+                            )),
+                        ) {
+                            Column(
+                                verticalArrangement = Arrangement.spacedBy(4.dp),
+                            ) {
+                                SettingListItem(
+                                    title = "Number of Parts",
+                                    description = "With value of $partsNumber",
+                                    position = ListItemPosition.END,
+                                    trailingContent = {
+                                        IntCounter(
+                                            value = partsNumber,
+                                            onValueChange = {
+                                                val dif = it - partsNumber
+                                                if (dif != 0) {
+                                                    for (i in 1..abs(dif)) {
+                                                        if (dif > 0) {
+                                                            partsChapters = partsChapters.toMutableList().apply {
+                                                                this.add(initialChaptersPerPart)
+                                                            }
+                                                        }
+                                                        else {
+                                                            partsChapters = partsChapters.toMutableList().apply {
+                                                                this.removeLast()
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                                partsNumber = it
+                                            },
+                                            minValue = 1,
+                                            maxValue = 100,
+                                        )
+                                    }
+                                )
+
+                                Spacer(modifier = Modifier.height(8.dp))
+
+                                partsChapters.forEachIndexed { partIndex, numOfChapters ->
+                                    SettingListItem(
+                                        title = "Part ${partIndex + 1}",
+                                        description = "$numOfChapters chapters",
+                                        position = when {
+                                            partsChapters.size == 1 -> ListItemPosition.SINGLE
+                                            partIndex == 0 -> ListItemPosition.START
+                                            partIndex >= partsChapters.size - 1 -> ListItemPosition.END
+                                            partsChapters.size > 1 -> ListItemPosition.MIDDLE
+                                            else -> ListItemPosition.SINGLE
+                                        },
+                                        trailingContent = {
+                                            IntCounter(
+                                                value = numOfChapters,
+                                                onValueChange = {
+                                                    partsChapters = partsChapters.toMutableList().apply {
+                                                        this[partIndex] = it
+                                                    }
+                                                },
+                                                minValue = 1,
+                                            )
+                                        }
+                                    )
+                                }
+                            }
+                        }
+                    }
+
+                }
+            }
+
             RateItemDetailScreen(
                 title = work.title ?: "N/A",
                 subtitle = if (author?.name != null) "by ${author.name}" else null,
                 categoryName = CategoryRegistry.forType(CategoryType.OPEN_LIBRARY_BOOKS)?.name,
                 description = work.description?.value,
-                coverImageUrl = work.covers?.takeIf { it.isNotEmpty() }?.let {
+                coverImageUrl = coverOverride ?: work.covers?.takeIf { it.isNotEmpty() }?.let {
                     OpenLibraryClient.COVERS_BASE_URL + "/ID/${it.first()}-L.jpg"
                 },
                 backdropImageUrl = work.covers?.takeIf { it.isNotEmpty() }?.let {
@@ -281,6 +477,7 @@ fun OLWorkDetailScreen(
                 onRatingSaved = onRatingSaved,
                 onBackClick = onBackClick,
                 canAddToLibrary = false,
+                onOpenSettings = { showSettings = true },
                 headerExtraContent = {
                     //Stats
                     item {
@@ -377,8 +574,8 @@ fun OLWorkDetailScreen(
                         }
                     }
 
-                    //Images
-                    work.covers?.takeIf { it.isNotEmpty() }?.let { images ->
+                    // Covers
+                    work.covers?.takeIf { it.isNotEmpty() }?.filter { it > 0 }?.let { images ->
                         item {
                             val headerName = "Covers"
                             CollapsibleHeader(
@@ -390,14 +587,43 @@ fun OLWorkDetailScreen(
                                 }
                             ) {
                                 AdaptiveImageCarousel(
-                                    baseUrl = OpenLibraryClient.COVERS_BASE_URL,
+                                    urlBuilder = { size, path ->
+                                        "${OpenLibraryClient.COVERS_BASE_URL}${path}-${when (size) {
+                                            ImageSize.MEDIUM -> "M"
+                                            ImageSize.LARGE -> "L"
+                                        }}.jpg"
+                                    },
                                     images.map { CarouselImage(
-                                        filePath = "/ID/${it}-M.jpg",
+                                        filePath = "/ID/${it}",
                                         aspectRatio = 2f / 3f,
                                     ) },
                                     itemWidth = 110.dp,
                                     itemHeight = 180.dp,
                                     shape = MaterialTheme.shapes.large,
+                                    maximizable = true,
+                                    supportingContent = { url, onDismiss ->
+                                        Button(
+                                            onClick = {
+                                                haptic.performHapticFeedback(HapticFeedbackType.Confirm)
+                                                coverOverride = url
+                                                onCoverOverrideSaved?.invoke(url)
+                                                onDismiss()
+                                            },
+                                            shapes = ButtonDefaults.shapes(),
+                                        ) {
+                                            Icon(
+                                                Icons.Default.ReplayCircleFilled,
+                                                contentDescription = "Override",
+                                                modifier = Modifier.size(ToggleButtonDefaults.IconSize)
+                                            )
+                                            Spacer(Modifier.size(ToggleButtonDefaults.IconSpacing))
+                                            Text(
+                                                "Override",
+                                                style = MaterialTheme.typography.labelLarge,
+                                                fontWeight = FontWeight.Bold,
+                                            )
+                                        }
+                                    }
                                 )
                             }
                         }
