@@ -77,7 +77,7 @@ class TmdbEpisodeDetailViewModel(
                 }
 
                 launch {
-                    _state.update { it.copy(imdbRating = imdbRepository.getRating(episode.externalIds?.imdbId)) }
+                    _state.update { it.copy(imdbRating = imdbRepository.getRatingByImdbId(episode.externalIds?.imdbId)) }
                 }
 
                 launch {

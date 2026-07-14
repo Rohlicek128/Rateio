@@ -53,11 +53,16 @@ class DiscoverViewModel(
                         results.mapIndexed { index, item ->
                             if (item.externalId != null) {
                                 launch {
-                                    val imdbId = if (category.type == CategoryType.TMDB_MOVIES)
-                                        TmdbClient.tmdb.getMovieExternalIds(item.externalId.toInt()).imdbId
-                                    else TmdbClient.tmdb.getShowExternalIds(item.externalId.toInt()).imdbId
-                                    if (imdbId != null) {
-                                        val rating = imdbRepository.getRating(imdbId)?.averageRating
+                                    val cachedRating = imdbRepository.getRatingByTmdbId(item.externalId.toInt())?.averageRating
+                                    val rating = if (cachedRating != null) cachedRating
+                                    else {
+                                        val imdbId = if (category.type == CategoryType.TMDB_MOVIES)
+                                            TmdbClient.tmdb.getMovieExternalIds(item.externalId.toInt()).imdbId
+                                        else TmdbClient.tmdb.getShowExternalIds(item.externalId.toInt()).imdbId
+                                        imdbRepository.getRatingByImdbId(imdbId)?.averageRating
+                                    }
+
+                                    if (rating != null) {
                                         _state.update { current ->
                                             val updated = current.results.toMutableList()
                                             if (index < updated.size) updated[index] = updated[index].copy(

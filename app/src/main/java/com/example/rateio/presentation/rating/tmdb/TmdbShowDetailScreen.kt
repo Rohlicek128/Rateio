@@ -134,11 +134,10 @@ fun TmdbShowDetailScreen(
             }
 
             val seasons = show.seasons.filter { it.seasonNumber > 0 }.sortedBy { it.seasonNumber }
-            val seasonEpisodes = seasons.associate { it.seasonNumber to it.episodeCount }
             val episodesViewModel: TmdbEpisodesViewModel = viewModel(
                 factory = TmdbEpisodesViewModel.factory(
                     showId = showId,
-                    seasonEpisodes = seasonEpisodes,
+                    seasonNumbers = seasons.map { it.seasonNumber },
                     fetchRatings = !isSaved,
                     imdbRepository = imdbRepository,
                 )
@@ -689,7 +688,7 @@ fun TmdbShowDetailScreen(
                                         selectedRatings = it
                                         if (selectedRatings == 0 && episodesState.imdbRatings.isEmpty() &&
                                             isSaved && !episodesState.isLoadingRatings) {
-                                            episodesViewModel.fetchImdbRatings(seasonEpisodes)
+                                            episodesViewModel.fetchImdbRatings()
                                         }
                                     },
                                     options = listOf("IMDb", "TMDb", "Yours"),

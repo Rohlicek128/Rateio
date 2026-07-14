@@ -69,7 +69,7 @@ fun SettingsDatabaseScreen(
 
     var rating by remember(lastSyncTimestamp) { mutableStateOf<ImdbRatingEntity?>(null) }
     LaunchedEffect(key1 = lastSyncTimestamp) {
-        rating = imdbRepository.getRating("tt12042730")
+        rating = imdbRepository.getRatingByImdbId("tt12042730")
     }
 
     ScreenScaffold(

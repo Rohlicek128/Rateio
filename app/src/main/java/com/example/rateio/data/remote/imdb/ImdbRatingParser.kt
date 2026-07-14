@@ -51,7 +51,7 @@ suspend fun syncImdbRatings(
 
                             // Insert batch and clear
                             if (batch.size >= batchSize) {
-                                repository.insertRatings(batch)
+                                repository.upsertRatings(batch)
                                 batch.clear()
                             }
                         }
@@ -61,7 +61,7 @@ suspend fun syncImdbRatings(
 
                     // Insert any remaining items left over in the final batch
                     if (batch.isNotEmpty()) {
-                        repository.insertRatings(batch)
+                        repository.upsertRatings(batch)
                     }
                 }
             }
@@ -129,7 +129,7 @@ suspend fun fastSyncImdbRatings(
                     )
 
                     if (batch.size >= batchSize) {
-                        dao.insertRatings(batch)
+                        dao.upsertRatings(batch)
                         batch.clear()
 
                         // Calculate percentage based on zipped download stream progress
@@ -142,7 +142,7 @@ suspend fun fastSyncImdbRatings(
                 line = reader.readLine()
             }
             if (batch.isNotEmpty()) {
-                dao.insertRatings(batch)
+                dao.upsertRatings(batch)
             }
         }
     }

@@ -123,7 +123,7 @@ fun ChildrenTimeline(
 
     val density = LocalDensity.current
 
-    var hoveredIndex by remember { mutableStateOf<Int?>(null) }
+    var hoveredIndex by remember(childrenGroups) { mutableStateOf<Int?>(null) }
     var hoveredIndexChanged by remember { mutableStateOf(false) }
     var hoverPathIndex by remember { mutableIntStateOf(0) }
     val hoverScale = remember { Animatable(0.35f) }

@@ -52,19 +52,19 @@ fun SettingsScreen(
             }
             item {
                 SettingListItem(
-                    title = "Database",
-                    description = "IMDb ratings",
-                    icon = Icons.Default.DatasetLinked,
-                    onClick = onDatabaseClick,
+                    title = "Categories",
+                    description = "Shows, Movies, Games...",
+                    icon = Icons.Default.Category,
+                    onClick = onCategoriesClick,
                     position = ListItemPosition.MIDDLE,
                 )
             }
             item {
                 SettingListItem(
-                    title = "Categories",
-                    description = "Shows, Movies, Games...",
-                    icon = Icons.Default.Category,
-                    onClick = onCategoriesClick,
+                    title = "Database",
+                    description = "IMDb ratings",
+                    icon = Icons.Default.DatasetLinked,
+                    onClick = onDatabaseClick,
                     position = ListItemPosition.MIDDLE,
                 )
             }

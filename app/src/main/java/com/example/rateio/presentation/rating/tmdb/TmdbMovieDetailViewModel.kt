@@ -56,7 +56,7 @@ class TmdbMovieDetailViewModel(
                 _state.update { it.copy(movie = movie, isLoading = false) }
 
                 launch {
-                    _state.update { it.copy(imdbRating = imdbRepository.getRating(movie.imdbId)) }
+                    _state.update { it.copy(imdbRating = imdbRepository.getRatingByImdbId(movie.imdbId)) }
                 }
 
                 launch {

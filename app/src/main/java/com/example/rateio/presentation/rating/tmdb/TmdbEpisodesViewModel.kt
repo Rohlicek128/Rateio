@@ -31,7 +31,7 @@ data class TmdbEpisodesState(
 
 class TmdbEpisodesViewModel(
     private val showId: Int,
-    private val seasonEpisodes: Map<Int, Int>,
+    private val seasonNumbers: List<Int>,
     fetchRatings: Boolean,
     private val imdbRepository: ImdbRatingRepository,
 ) : ViewModel() {
@@ -45,44 +45,55 @@ class TmdbEpisodesViewModel(
         viewModelScope.launch {
             _state.update { it.copy(isLoadingEpisodes = true) }
             try {
-                val episodes = repository.getAllEpisodes(showId, seasonEpisodes.keys.toList())
+                val episodes = repository.getAllEpisodes(showId, seasonNumbers)
                 _state.update { it.copy(seasonEpisodes = episodes, isLoadingEpisodes = false) }
             } catch (e: Exception) {
                 _state.update { it.copy(error = e.message, isLoadingEpisodes = false) }
             }
-        }
 
-        if (fetchRatings) {
-            fetchImdbRatings(seasonEpisodes)
-        } else {
-            _state.update { it.copy(isLoadingRatings = false) }
+            if (fetchRatings) {
+                fetchImdbRatings()
+            } else {
+                _state.update { it.copy(isLoadingRatings = false) }
+            }
         }
     }
 
-    fun fetchImdbRatings(seasonEpisodes: Map<Int, Int>) {
+    fun fetchImdbRatings() {
         viewModelScope.launch(Dispatchers.IO) {
+            val episodeIdsBySeason = _state.value.seasonEpisodes.mapValues { episodes -> episodes.value.map { it.id } }
+
             _state.update { currentState ->
-                val initialRatings = seasonEpisodes.mapValues { emptyMap<Int, Float?>() }
+                val initialRatings = episodeIdsBySeason.mapValues { emptyMap<Int, Float?>() }
                 currentState.copy(imdbRatings = initialRatings, isLoadingRatings = true)
             }
 
-            seasonEpisodes.forEach { (seasonNum, episodeCount) ->
+            episodeIdsBySeason.forEach { (seasonNum, episodeIds) ->
                 val seasonRatings: Map<Int, Float?> = coroutineScope {
-                    (1..episodeCount).map { epNum ->
+                    episodeIds.mapIndexed { index, tmdbId ->
+                        val epNum = index + 1
                         async {
                             networkSemaphore.withPermit {
                                 try {
-                                    val imdbId = TmdbClient.tmdb.getEpisodeExternalIds(
-                                        showId = showId,
-                                        seasonNumber = seasonNum,
-                                        episodeNumber = epNum
-                                    ).imdbId
+                                    val cachedRating = imdbRepository.getRatingByTmdbId(tmdbId)
+                                    if (cachedRating != null) {
+                                        epNum to cachedRating.averageRating
+                                    }
+                                    else {
+                                        val imdbId = TmdbClient.tmdb.getEpisodeExternalIds(
+                                            showId = showId,
+                                            seasonNumber = seasonNum,
+                                            episodeNumber = epNum
+                                        ).imdbId
 
-                                    val rating = if (!imdbId.isNullOrBlank()) {
-                                        imdbRepository.getRating(imdbId)
-                                    } else null
+                                        val rating = if (!imdbId.isNullOrBlank()) {
+                                            imdbRepository.getRatingByImdbId(imdbId)
+                                        } else null
 
-                                    epNum to rating?.averageRating
+                                        imdbRepository.linkImdbToTmdb(imdbId, tmdbId)
+
+                                        epNum to rating?.averageRating
+                                    }
                                 } catch (_: Exception) {
                                     epNum to null
                                 }
@@ -109,8 +120,8 @@ class TmdbEpisodesViewModel(
     }
 
     companion object {
-        fun factory(showId: Int, seasonEpisodes: Map<Int, Int>, fetchRatings: Boolean, imdbRepository: ImdbRatingRepository) = viewModelFactory {
-            initializer { TmdbEpisodesViewModel(showId, seasonEpisodes, fetchRatings, imdbRepository) }
+        fun factory(showId: Int, seasonNumbers: List<Int>, fetchRatings: Boolean, imdbRepository: ImdbRatingRepository) = viewModelFactory {
+            initializer { TmdbEpisodesViewModel(showId, seasonNumbers, fetchRatings, imdbRepository) }
         }
     }
 }

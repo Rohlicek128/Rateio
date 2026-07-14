@@ -276,7 +276,7 @@ fun RateItemGridCard(
                                     roundedCorners = 10.dp,
                                     width = 12.dp,
                                     minWidth = 36.dp,
-                                    height = 2.5.dp,
+                                    height = 4.dp,
                                     textStyle = MaterialTheme.typography.headlineSmall,
                                     isLoading = isLoading,
                                     //decimalOffset = if (rank != null) 1u else 0u
