@@ -1,6 +1,6 @@
 package com.example.rateio.data.remote.tmdb
 
-import com.example.rateio.data.remote.imdb.ImdbService
+import com.example.rateio.data.remote.imdb.depricated.ImdbService
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit

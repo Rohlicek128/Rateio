@@ -10,17 +10,20 @@ import androidx.room.RoomDatabase
 @Database(
     entities = [
         CategoryEntity::class,
-        RateItemEntity::class
+        RateItemEntity::class,
+        ImdbRatingEntity::class
     ],
-    version = 3,
+    version = 4,
     autoMigrations = [
-        AutoMigration(from = 2, to = 3)
+        AutoMigration(from = 2, to = 3),
+        AutoMigration(from = 3, to = 4)
     ],
     exportSchema = true,
 )
 abstract class RateioDatabase : RoomDatabase() {
     abstract fun categoryDao(): CategoryDao
     abstract fun rateItemDao(): RateItemDao
+    abstract fun imdbRatingDao(): ImdbRatingDao
 
     companion object {
         @Volatile
@@ -32,7 +35,10 @@ abstract class RateioDatabase : RoomDatabase() {
                     context.applicationContext,
                     RateioDatabase::class.java,
                     "rateio"
-                ).fallbackToDestructiveMigration(true).build()
+                )
+                    .setJournalMode(JournalMode.WRITE_AHEAD_LOGGING)
+                    .fallbackToDestructiveMigration(true)
+                    .build()
                 INSTANCE = instance
                 instance
             }

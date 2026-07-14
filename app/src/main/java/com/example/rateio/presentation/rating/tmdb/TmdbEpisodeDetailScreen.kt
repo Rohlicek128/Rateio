@@ -1,11 +1,9 @@
 package com.example.rateio.presentation.rating.tmdb
 
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -17,7 +15,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.CircularWavyProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -26,15 +23,17 @@ import androidx.compose.material3.ToggleButtonDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.Alignment
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.rateio.data.db.RateioDatabase
+import com.example.rateio.data.remote.imdb.ImdbRatingRepository
 import com.example.rateio.data.remote.tmdb.toCarouselImage
 import com.example.rateio.model.CategoryType
 import com.example.rateio.presentation.components.AdaptiveImageCarousel
@@ -44,13 +43,10 @@ import com.example.rateio.presentation.components.ItemStatCard
 import com.example.rateio.presentation.components.PersonCard
 import com.example.rateio.presentation.components.ScreenError
 import com.example.rateio.presentation.components.ScreenLoading
-import com.example.rateio.presentation.components.SectionHeader
 import com.example.rateio.presentation.rating.RateItemDetailScreen
-import com.example.rateio.utils.formatCompact
 import com.example.rateio.utils.formatDate
 import com.example.rateio.utils.formatItemRankLabel
 import com.example.rateio.utils.formatTime
-import java.util.Locale
 
 
 @Composable
@@ -66,10 +62,16 @@ fun TmdbEpisodeDetailScreen(
     onPreviousClick: (season: Int, episode: Int) -> Unit,
     onBackClick: () -> Unit,
     debug: String? = null,
-    viewModel: TmdbEpisodeDetailViewModel = viewModel(
-        factory = TmdbEpisodeDetailViewModel.factory(showId, season, episode)
-    ),
 ) {
+    val context = LocalContext.current
+    val imdbRepository = remember {
+        val db = RateioDatabase.getDatabase(context)
+        ImdbRatingRepository(db.imdbRatingDao())
+    }
+
+    val viewModel: TmdbEpisodeDetailViewModel = viewModel(
+        factory = TmdbEpisodeDetailViewModel.factory(showId, season, episode, imdbRepository)
+    )
     val state by viewModel.state.collectAsState()
 
     when {
@@ -94,8 +96,8 @@ fun TmdbEpisodeDetailScreen(
                 backdropImageUrl = episode.stillPath?.let {
                     "https://image.tmdb.org/t/p/original$it"
                 },
-                rating = if (!isSaved) state.imdbRating?.normalizedRating else customRating,
-                ratingVotes = if (!isSaved) state.imdbRating?.voteCount else null,
+                rating = if (!isSaved) state.imdbRating?.averageRating else customRating,
+                ratingVotes = if (!isSaved) state.imdbRating?.numVotes else null,
                 ratingLabel = savedRank?.let { formatItemRankLabel(it, CategoryType.TMDB_EPISODES) },
                 onRatingSaved = onRatingSaved,
                 onBackClick = onBackClick,

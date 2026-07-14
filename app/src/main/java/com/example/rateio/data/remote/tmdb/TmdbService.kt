@@ -86,6 +86,22 @@ interface TmdbService {
         @Header("Authorization") bearer: String = "Bearer " + BuildConfig.TMDB_API_KEY,
     ): TmdbReviews
 
+    @GET("tv/{id}/external_ids")
+    suspend fun getShowExternalIds(
+        @Path("id") id: Int,
+        @Header("accept") accept: String = "application/json",
+        @Header("Authorization") bearer: String = "Bearer " + BuildConfig.TMDB_API_KEY,
+    ): TmdbExternalIds
+
+    @GET("tv/{showId}/season/{seasonNumber}/episode/{episodeNumber}/external_ids")
+    suspend fun getEpisodeExternalIds(
+        @Path("showId")       showId: Int,
+        @Path("seasonNumber") seasonNumber: Int,
+        @Path("episodeNumber") episodeNumber: Int,
+        @Header("accept") accept: String = "application/json",
+        @Header("Authorization") bearer: String = "Bearer " + BuildConfig.TMDB_API_KEY,
+    ): TmdbExternalIds
+
 
 
     // Movies
@@ -144,6 +160,13 @@ interface TmdbService {
         @Header("accept") accept: String = "application/json",
         @Header("Authorization") bearer: String = "Bearer " + BuildConfig.TMDB_API_KEY,
     ): TmdbMovieSearchResponse
+
+    @GET("movie/{id}/external_ids")
+    suspend fun getMovieExternalIds(
+        @Path("id") id: Int,
+        @Header("accept") accept: String = "application/json",
+        @Header("Authorization") bearer: String = "Bearer " + BuildConfig.TMDB_API_KEY,
+    ): TmdbExternalIds
 
 
 

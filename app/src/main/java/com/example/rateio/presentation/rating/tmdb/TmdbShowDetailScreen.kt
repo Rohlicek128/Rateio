@@ -41,6 +41,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.rateio.data.CategoryRegistry
 import com.example.rateio.data.db.RateioDatabase
+import com.example.rateio.data.remote.imdb.ImdbRatingRepository
 import com.example.rateio.data.remote.tmdb.TmdbEpisodeMetadata
 import com.example.rateio.data.remote.tmdb.TmdbShowMetadata
 import com.example.rateio.data.remote.tmdb.toCarouselImage
@@ -105,9 +106,13 @@ fun TmdbShowDetailScreen(
         val db = RateioDatabase.getDatabase(context)
         CategoryRepository(db.categoryDao())
     }
+    val imdbRepository = remember {
+        val db = RateioDatabase.getDatabase(context)
+        ImdbRatingRepository(db.imdbRatingDao())
+    }
 
     val viewModel: TmdbShowDetailViewModel = viewModel(
-        factory = TmdbShowDetailViewModel.factory(showId, categoryRepository, itemRepository)
+        factory = TmdbShowDetailViewModel.factory(showId, categoryRepository, itemRepository, imdbRepository)
     )
     val state by viewModel.state.collectAsState()
 
@@ -129,12 +134,13 @@ fun TmdbShowDetailScreen(
             }
 
             val seasons = show.seasons.filter { it.seasonNumber > 0 }.sortedBy { it.seasonNumber }
+            val seasonEpisodes = seasons.associate { it.seasonNumber to it.episodeCount }
             val episodesViewModel: TmdbEpisodesViewModel = viewModel(
                 factory = TmdbEpisodesViewModel.factory(
                     showId = showId,
-                    seasonNumbers = seasons.map { it.seasonNumber },
-                    imdbId = show.externalIds?.imdbId,
-                    fetchRatings = !isSaved
+                    seasonEpisodes = seasonEpisodes,
+                    fetchRatings = !isSaved,
+                    imdbRepository = imdbRepository,
                 )
             )
             val episodesState by episodesViewModel.state.collectAsState()
@@ -330,8 +336,8 @@ fun TmdbShowDetailScreen(
                 backdropImageUrl = show.backdropPath?.let {
                     "https://image.tmdb.org/t/p/w1280$it"
                 },
-                rating = if (!isSaved) state.imdbRating?.normalizedRating else customRating,
-                ratingVotes = if (!isSaved) state.imdbRating?.voteCount else null,
+                rating = if (!isSaved) state.imdbRating?.averageRating else customRating,
+                ratingVotes = if (!isSaved) state.imdbRating?.numVotes else null,
                 ratingLabel = savedRank?.let { formatItemRankLabel(it, CategoryType.TMDB_SHOWS) },
                 ratingColorBucketsOverride = if (!isSaved) RatingColorBucketConstants.RC_IMDB_SHOWS else getCurrentRatingColorBuckets(),
                 onRatingSaved = onRatingSaved,
@@ -683,7 +689,7 @@ fun TmdbShowDetailScreen(
                                         selectedRatings = it
                                         if (selectedRatings == 0 && episodesState.imdbRatings.isEmpty() &&
                                             isSaved && !episodesState.isLoadingRatings) {
-                                            episodesViewModel.fetchImdbRatings(imdbId = show.externalIds?.imdbId)
+                                            episodesViewModel.fetchImdbRatings(seasonEpisodes)
                                         }
                                     },
                                     options = listOf("IMDb", "TMDb", "Yours"),

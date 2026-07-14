@@ -7,11 +7,11 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.example.rateio.data.CategoryRegistry
+import com.example.rateio.data.db.ImdbRatingEntity
+import com.example.rateio.data.remote.imdb.ImdbRatingRepository
 import com.example.rateio.data.remote.tmdb.TmdbClient
 import com.example.rateio.data.remote.tmdb.TmdbImageResponse
 import com.example.rateio.data.remote.tmdb.TmdbReviews
-import com.example.rateio.data.remote.imdb.ImdbRating
-import com.example.rateio.data.remote.imdb.ImdbRatingFetcher
 import com.example.rateio.data.remote.tmdb.toRateItem
 import com.example.rateio.data.repository.CategoryRepository
 import com.example.rateio.data.repository.RateItemRepository
@@ -26,7 +26,7 @@ import kotlinx.coroutines.launch
 
 data class TmdbMovieDetailState(
     val movie: TmdbMovieDetail? = null,
-    val imdbRating: ImdbRating? = null,
+    val imdbRating: ImdbRatingEntity? = null,
     val images: TmdbImageResponse? = null,
     val reviews: TmdbReviews? = null,
     val recommendations: List<RateItem> = emptyList(),
@@ -42,11 +42,11 @@ class TmdbMovieDetailViewModel(
     id: Int,
     private val categoryRepository: CategoryRepository,
     private val itemRepository: RateItemRepository,
+    private val imdbRepository: ImdbRatingRepository,
 ) : ViewModel() {
     private val _state = MutableStateFlow(TmdbMovieDetailState())
     val state: StateFlow<TmdbMovieDetailState> = _state.asStateFlow()
 
-    private val imdbFetcher = ImdbRatingFetcher()
 
     init {
         viewModelScope.launch {
@@ -56,8 +56,7 @@ class TmdbMovieDetailViewModel(
                 _state.update { it.copy(movie = movie, isLoading = false) }
 
                 launch {
-                    val rating = imdbFetcher.fetch(movie.imdbId)
-                    _state.update { it.copy(imdbRating = rating) }
+                    _state.update { it.copy(imdbRating = imdbRepository.getRating(movie.imdbId)) }
                 }
 
                 launch {
@@ -116,8 +115,8 @@ class TmdbMovieDetailViewModel(
     }
 
     companion object {
-        fun factory(id: Int, categoryRepository: CategoryRepository, itemRepository: RateItemRepository) = viewModelFactory {
-            initializer { TmdbMovieDetailViewModel(id, categoryRepository, itemRepository) }
+        fun factory(id: Int, categoryRepository: CategoryRepository, itemRepository: RateItemRepository, imdbRepository: ImdbRatingRepository) = viewModelFactory {
+            initializer { TmdbMovieDetailViewModel(id, categoryRepository, itemRepository, imdbRepository) }
         }
     }
 }

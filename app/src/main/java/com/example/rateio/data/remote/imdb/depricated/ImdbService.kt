@@ -1,4 +1,4 @@
-package com.example.rateio.data.remote.imdb
+package com.example.rateio.data.remote.imdb.depricated
 
 import retrofit2.http.GET
 import retrofit2.http.Header

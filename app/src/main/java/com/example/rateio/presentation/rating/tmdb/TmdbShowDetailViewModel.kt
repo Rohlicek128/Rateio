@@ -6,12 +6,12 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.example.rateio.data.CategoryRegistry
+import com.example.rateio.data.db.ImdbRatingEntity
+import com.example.rateio.data.remote.imdb.ImdbRatingRepository
 import com.example.rateio.data.remote.tmdb.TmdbClient
 import com.example.rateio.data.remote.tmdb.TmdbImageResponse
 import com.example.rateio.data.remote.tmdb.TmdbReviews
 import com.example.rateio.data.remote.tmdb.TmdbShowDetail
-import com.example.rateio.data.remote.imdb.ImdbRating
-import com.example.rateio.data.remote.imdb.ImdbRatingFetcher
 import com.example.rateio.data.remote.tmdb.toRateItem
 import com.example.rateio.data.repository.CategoryRepository
 import com.example.rateio.data.repository.RateItemRepository
@@ -43,7 +43,7 @@ enum class SortModeShow(override val displayName: String): HasDisplayName {
 
 data class TmdbShowDetailState(
     val show: TmdbShowDetail? = null,
-    val imdbRating: ImdbRating? = null,
+    val imdbRating: ImdbRatingEntity? = null,
     val images: TmdbImageResponse? = null,
     val reviews: TmdbReviews? = null,
     val savedItem: RateItem? = null,
@@ -62,11 +62,10 @@ class TmdbShowDetailViewModel(
     showId: Int,
     private val categoryRepository: CategoryRepository,
     private val itemRepository: RateItemRepository,
+    private val imdbRepository: ImdbRatingRepository,
 ) : ViewModel() {
     private val _state = MutableStateFlow(TmdbShowDetailState())
     val state: StateFlow<TmdbShowDetailState> = _state.asStateFlow()
-
-    private val imdbFetcher = ImdbRatingFetcher()
 
     init {
         viewModelScope.launch {
@@ -76,8 +75,7 @@ class TmdbShowDetailViewModel(
                 _state.update { it.copy(show = show, isLoading = false) }
 
                 launch {
-                    val rating = imdbFetcher.fetch(show.externalIds?.imdbId)
-                    _state.update { it.copy(imdbRating = rating) }
+                    _state.update { it.copy(imdbRating = imdbRepository.getRating(show.externalIds?.imdbId)) }
                 }
 
                 launch {
@@ -170,8 +168,8 @@ class TmdbShowDetailViewModel(
     }
 
     companion object {
-        fun factory(showId: Int, categoryRepository: CategoryRepository, itemRepository: RateItemRepository) = viewModelFactory {
-            initializer { TmdbShowDetailViewModel(showId, categoryRepository, itemRepository) }
+        fun factory(showId: Int, categoryRepository: CategoryRepository, itemRepository: RateItemRepository, imdbRepository: ImdbRatingRepository) = viewModelFactory {
+            initializer { TmdbShowDetailViewModel(showId, categoryRepository, itemRepository, imdbRepository) }
         }
     }
 }

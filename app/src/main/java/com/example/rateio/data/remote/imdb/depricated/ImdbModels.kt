@@ -1,4 +1,4 @@
-package com.example.rateio.data.remote.imdb
+package com.example.rateio.data.remote.imdb.depricated
 
 import com.google.gson.annotations.SerializedName
 

@@ -257,7 +257,7 @@ fun RateItemGridCard(
                         }
                     }
 
-                    if (showNullRatings) {
+                    if (rating != null || showNullRatings) {
                         Surface(
                             color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.0f),
                             border = null,

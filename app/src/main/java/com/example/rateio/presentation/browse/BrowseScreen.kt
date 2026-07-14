@@ -115,7 +115,7 @@ fun BrowseScreen(
                         sortBy = "popularity.desc",
                         category = state.selectedCategory!!,
                         onItemClick = onItemClick,
-                        showNullRatings = state.selectedCategory?.type == CategoryType.STEAM_GAMES
+                        //showNullRatings = true,
                     )
                 }
 

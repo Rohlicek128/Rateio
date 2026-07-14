@@ -5,11 +5,11 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
+import com.example.rateio.data.db.ImdbRatingEntity
+import com.example.rateio.data.remote.imdb.ImdbRatingRepository
 import com.example.rateio.data.remote.tmdb.TmdbClient
 import com.example.rateio.data.remote.tmdb.TmdbEpisodeDetail
 import com.example.rateio.data.remote.tmdb.TmdbEpisodeImageResponse
-import com.example.rateio.data.remote.imdb.ImdbRating
-import com.example.rateio.data.remote.imdb.ImdbRatingFetcher
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -21,7 +21,7 @@ data class TmdbEpisodeDetailState(
     val episode: TmdbEpisodeDetail? = null,
     val previousEpisode: Pair<Int, Int>? = null,
     val nextEpisode: Pair<Int, Int>? = null,
-    val imdbRating: ImdbRating? = null,
+    val imdbRating: ImdbRatingEntity? = null,
     val images: TmdbEpisodeImageResponse? = null,
 
     val collapsedHeaders: MutableSet<String> = mutableStateSetOf(),
@@ -30,11 +30,14 @@ data class TmdbEpisodeDetailState(
     val error: String? = null,
 )
 
-class TmdbEpisodeDetailViewModel(showId: Int, seasonNumber: Int, episodeNumber: Int) : ViewModel() {
+class TmdbEpisodeDetailViewModel(
+    showId: Int,
+    seasonNumber: Int,
+    episodeNumber: Int,
+    private val imdbRepository: ImdbRatingRepository,
+) : ViewModel() {
     private val _state = MutableStateFlow(TmdbEpisodeDetailState())
     val state: StateFlow<TmdbEpisodeDetailState> = _state.asStateFlow()
-
-    private val imdbFetcher = ImdbRatingFetcher()
 
     init {
         viewModelScope.launch {
@@ -74,8 +77,7 @@ class TmdbEpisodeDetailViewModel(showId: Int, seasonNumber: Int, episodeNumber: 
                 }
 
                 launch {
-                    val rating = imdbFetcher.fetch(episode.externalIds?.imdbId)
-                    _state.update { it.copy(imdbRating = rating) }
+                    _state.update { it.copy(imdbRating = imdbRepository.getRating(episode.externalIds?.imdbId)) }
                 }
 
                 launch {
@@ -89,8 +91,8 @@ class TmdbEpisodeDetailViewModel(showId: Int, seasonNumber: Int, episodeNumber: 
     }
 
     companion object {
-        fun factory(showId: Int, seasonNumber: Int, episodeNumber: Int) = viewModelFactory {
-            initializer { TmdbEpisodeDetailViewModel(showId, seasonNumber, episodeNumber) }
+        fun factory(showId: Int, seasonNumber: Int, episodeNumber: Int, imdbRepository: ImdbRatingRepository) = viewModelFactory {
+            initializer { TmdbEpisodeDetailViewModel(showId, seasonNumber, episodeNumber, imdbRepository) }
         }
     }
 }

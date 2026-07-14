@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Category
+import androidx.compose.material.icons.filled.DatasetLinked
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.Transform
@@ -18,6 +19,7 @@ import com.example.rateio.presentation.ScreenScaffold
 fun SettingsScreen(
     onAppearanceClick: () -> Unit,
     onRatingClick: () -> Unit,
+    onDatabaseClick: () -> Unit,
     onCategoriesClick: () -> Unit,
     onBackClick: () -> Unit,
 ) {
@@ -45,6 +47,15 @@ fun SettingsScreen(
                     description = "Colors, Rating transformations",
                     icon = Icons.Default.Transform,
                     onClick = onRatingClick,
+                    position = ListItemPosition.MIDDLE,
+                )
+            }
+            item {
+                SettingListItem(
+                    title = "Database",
+                    description = "IMDb ratings",
+                    icon = Icons.Default.DatasetLinked,
+                    onClick = onDatabaseClick,
                     position = ListItemPosition.MIDDLE,
                 )
             }

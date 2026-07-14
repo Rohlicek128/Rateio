@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
+import com.example.rateio.data.remote.imdb.ImdbRatingRepository
 import com.example.rateio.data.remote.tmdb.TmdbClient
 import com.example.rateio.data.remote.steam.SteamClient
 import com.example.rateio.data.remote.steam.toRateItem
@@ -27,6 +28,7 @@ data class DiscoverState(
 class DiscoverViewModel(
     category: Category,
     sortBy: String,
+    private val imdbRepository: ImdbRatingRepository
 ) : ViewModel() {
     private val _state = MutableStateFlow(DiscoverState())
     val state: StateFlow<DiscoverState> = _state.asStateFlow()
@@ -46,35 +48,60 @@ class DiscoverViewModel(
                 }
                 _state.update { it.copy(results = results, isLoading = false) }
 
-
-                if (category.type == CategoryType.STEAM_GAMES) {
-                    results.mapIndexed { index, item ->
-                        launch {
-                            val rating = runCatching {
-                                SteamClient.steamStore.getGameReviews(item.externalId ?: "")
-                                    .querySummary?.normalizedRating
-                            }.getOrNull()
-                            _state.update { current ->
-                                val updated = current.results.toMutableList()
-                                if (index < updated.size) updated[index] = updated[index].copy(
-                                    rating = rating
-                                )
-                                current.copy(results = updated)
+                when {
+                    category.type == CategoryType.TMDB_MOVIES || category.type == CategoryType.TMDB_SHOWS -> {
+                        results.mapIndexed { index, item ->
+                            if (item.externalId != null) {
+                                launch {
+                                    val imdbId = if (category.type == CategoryType.TMDB_MOVIES)
+                                        TmdbClient.tmdb.getMovieExternalIds(item.externalId.toInt()).imdbId
+                                    else TmdbClient.tmdb.getShowExternalIds(item.externalId.toInt()).imdbId
+                                    if (imdbId != null) {
+                                        val rating = imdbRepository.getRating(imdbId)?.averageRating
+                                        _state.update { current ->
+                                            val updated = current.results.toMutableList()
+                                            if (index < updated.size) updated[index] = updated[index].copy(
+                                                rating = rating
+                                            )
+                                            current.copy(results = updated)
+                                        }
+                                    }
+                                }
                             }
                         }
-                        launch {
-                            val details = runCatching {
-                                SteamClient.steamStore.getGames(item.externalId ?: "", filters = "basic")[item.externalId]
-                            }.getOrNull()?.data
+                    }
+                    category.type == CategoryType.STEAM_GAMES -> {
+                        results.mapIndexed { index, item ->
+                            launch {
+                                val rating = runCatching {
+                                    SteamClient.steamStore.getGameReviews(item.externalId ?: "")
+                                        .querySummary?.normalizedRating
+                                }.getOrNull()
+                                _state.update { current ->
+                                    val updated = current.results.toMutableList()
+                                    if (index < updated.size) updated[index] = updated[index].copy(
+                                        rating = rating
+                                    )
+                                    current.copy(results = updated)
+                                }
+                            }
+                            launch {
+                                val details = runCatching {
+                                    SteamClient.steamStore.getGames(item.externalId ?: "", filters = "basic")[item.externalId]
+                                }.getOrNull()?.data
 
-                            _state.update { current ->
-                                val updated = current.results.toMutableList()
-                                if (index < updated.size) updated[index] = updated[index].copy(
-                                    title = details?.name ?: updated[index].title
-                                )
-                                current.copy(results = updated)
+                                _state.update { current ->
+                                    val updated = current.results.toMutableList()
+                                    if (index < updated.size) updated[index] = updated[index].copy(
+                                        title = details?.name ?: updated[index].title
+                                    )
+                                    current.copy(results = updated)
+                                }
                             }
                         }
+                    }
+                    else -> {
+
                     }
                 }
             } catch (e: Exception) {
@@ -84,8 +111,8 @@ class DiscoverViewModel(
     }
 
     companion object {
-        fun factory(category: Category, sortBy: String) = viewModelFactory {
-            initializer { DiscoverViewModel(category, sortBy) }
+        fun factory(category: Category, sortBy: String, imdbRepository: ImdbRatingRepository) = viewModelFactory {
+            initializer { DiscoverViewModel(category, sortBy, imdbRepository) }
         }
     }
 }

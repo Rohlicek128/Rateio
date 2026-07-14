@@ -35,6 +35,7 @@ import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.example.rateio.presentation.components.ItemCard
 import kotlin.math.max
@@ -365,4 +366,18 @@ fun SettingsSelectedEnums(
             }
         }
     }
+}
+
+@Composable
+fun SettingsValueText(
+    value: String,
+    modifier: Modifier = Modifier,
+) {
+    Text(
+        modifier = modifier,
+        text = value,
+        style = MaterialTheme.typography.bodyMedium,
+        fontWeight = FontWeight.Bold,
+        textAlign = TextAlign.End,
+    )
 }

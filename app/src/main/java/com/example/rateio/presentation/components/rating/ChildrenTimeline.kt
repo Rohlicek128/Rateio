@@ -61,6 +61,7 @@ import com.example.rateio.presentation.rating.display.getRoundedRating
 import com.example.rateio.presentation.rating.display.getTransformedRating
 import com.example.rateio.presentation.settings.ListItemPosition
 import com.example.rateio.presentation.settings.SettingListItem
+import com.example.rateio.presentation.settings.SettingsValueText
 import com.example.rateio.utils.dim
 import com.example.rateio.utils.formatTime
 import kotlin.math.abs
@@ -123,8 +124,9 @@ fun ChildrenTimeline(
     val density = LocalDensity.current
 
     var hoveredIndex by remember { mutableStateOf<Int?>(null) }
+    var hoveredIndexChanged by remember { mutableStateOf(false) }
     var hoverPathIndex by remember { mutableIntStateOf(0) }
-    val hoverScale = remember { Animatable(0f) }
+    val hoverScale = remember { Animatable(0.35f) }
     LaunchedEffect(hoveredIndex) {
         if (hoveredIndex != null) {
             hoverScale.snapTo(0.35f)
@@ -177,6 +179,8 @@ fun ChildrenTimeline(
 
     val totalWidth = padL + childWidth.dp * flatPoints.size + padR
 
+    val rtf = getCurrentRatingTransformations()
+
     val textMeasurer = rememberTextMeasurer()
     Column(modifier = modifier) {
         Box(
@@ -203,6 +207,7 @@ fun ChildrenTimeline(
 
                                 if (closest?.globalIndex != hoveredIndex) {
                                     hoveredIndex = closest?.globalIndex
+                                    hoveredIndexChanged = true
                                     if (hoveredIndex != null) {
                                         hoverPathIndex = Random.nextInt(0, basePaths.size)
                                         haptic.performHapticFeedback(HapticFeedbackType.SegmentFrequentTick)
@@ -288,8 +293,6 @@ fun ChildrenTimeline(
 
 
                 // Y-axis grid lines
-                val rtf = getCurrentRatingTransformations()
-
                 val vMin = rtf.offset / rtf.divider
                 val vMax = (rtf.stepCount.toFloat() + rtf.offset) / rtf.divider
                 val vTotalRange = vMax - vMin
@@ -395,7 +398,7 @@ fun ChildrenTimeline(
                             brush = segmentBrush,
                             start = Offset(x1, y1),
                             end = Offset(x2, y2),
-                            strokeWidth = 1.5.dp.toPx(),
+                            strokeWidth = (childRadius * 0.5f).dp.toPx(),
                             cap = StrokeCap.Round
                         )
                     }
@@ -430,7 +433,7 @@ fun ChildrenTimeline(
                             radius = radius * 1.75f,
                             center = Offset(x, y),
                         )*/
-                        val hoverRadius = radius * 2f * (1f + 1f * hoverScale.value)
+                        val hoverRadius = radius * 2f * (1f + 1f * hoverScale.value * (if (hoveredIndexChanged) 0f else 1f))
                         translate(left = x, top = y) {
                             rotate(degrees = rotationDegrees, pivot = Offset.Zero) {
                                 scale(scaleX = hoverRadius, scaleY = hoverRadius, pivot = Offset(0.5f, 0.5f)) {
@@ -441,7 +444,7 @@ fun ChildrenTimeline(
                                 }
                             }
                         }
-                        val regularRadius = radius * 1.5f * (1f + 1f * hoverScale.value)
+                        val regularRadius = radius * 1.5f * (1f + 1f * hoverScale.value * (if (hoveredIndexChanged) 0f else 1f))
                         translate(left = x, top = y) {
                             rotate(degrees = rotationDegrees, pivot = Offset.Zero) {
                                 scale(scaleX = regularRadius, scaleY = regularRadius, pivot = Offset(0.5f, 0.5f)) {
@@ -452,6 +455,7 @@ fun ChildrenTimeline(
                                 }
                             }
                         }
+                        if (hoveredIndexChanged) hoveredIndexChanged = false
                     }
                 }
 
@@ -488,34 +492,44 @@ fun ChildrenTimeline(
             SettingListItem(
                 modifier = Modifier.fillMaxWidth(),
                 title = "Scale",
-                description = "Value: ${"%.1f".format(plotScale)}",
+                description = "Adjusts how zoomed in the timeline is.",
                 position = ListItemPosition.START,
                 supportingContent = {
                     Slider(
                         plotScale,
                         onValueChange = { value ->
-                            //haptic.performHapticFeedback(HapticFeedbackType.SegmentFrequentTick)
-                            plotScale = value
+                            if (plotScale != value) {
+                                haptic.performHapticFeedback(HapticFeedbackType.SegmentFrequentTick)
+                                plotScale = value
+                            }
                         },
                         valueRange = 1f..9.99f
                     )
-                }
+                },
+                trailingContent = {
+                    SettingsValueText("%.1fx".format(rtf.locale, plotScale))
+                },
             )
             SettingListItem(
                 modifier = Modifier.fillMaxWidth(),
                 title = "Space width",
-                description = "Value: ${"%.1f".format(childWidth)}",
+                description = "Sets the width between each dot in DP.",
                 position = ListItemPosition.END,
                 supportingContent = {
                     Slider(
                         childWidth,
                         onValueChange = { value ->
-                            //haptic.performHapticFeedback(HapticFeedbackType.SegmentFrequentTick)
-                            childWidth = value
+                            if (childWidth != value) {
+                                haptic.performHapticFeedback(HapticFeedbackType.SegmentFrequentTick)
+                                childWidth = value
+                            }
                         },
                         valueRange = max(1f, 350f / flatPoints.size.toFloat())..max(50f, 1000f / flatPoints.size.toFloat())
                     )
-                }
+                },
+                trailingContent = {
+                    SettingsValueText("%.1f dp".format(rtf.locale, childWidth))
+                },
             )
         }
     }

@@ -61,6 +61,7 @@ import com.example.rateio.presentation.rating.tmdb.TmdbPersonDetailScreen
 import com.example.rateio.presentation.rating.tmdb.TmdbShowDetailScreen
 import com.example.rateio.presentation.settings.SettingsAppearanceScreen
 import com.example.rateio.presentation.settings.SettingsCategoriesScreen
+import com.example.rateio.presentation.settings.SettingsDatabaseScreen
 import com.example.rateio.presentation.settings.SettingsRatingScreen
 import com.example.rateio.presentation.settings.SettingsScreen
 import com.example.rateio.presentation.settings.rating.RatingTransformationSettingsScreen
@@ -232,6 +233,11 @@ fun AppNavigation(
                                 popUpTo<Route.SettingsLevel.SettingsTop>()
                             }
                         },
+                        onDatabaseClick = {
+                            navController.navigate(Route.SettingsLevel.Database) {
+                                popUpTo<Route.SettingsLevel.SettingsTop>()
+                            }
+                        },
                         onCategoriesClick = {
                             navController.navigate(Route.SettingsLevel.Categories) {
                                 popUpTo<Route.SettingsLevel.SettingsTop>()
@@ -257,6 +263,11 @@ fun AppNavigation(
                         onSave = {
                             RatingTransformationsConstants.currentTransformation = it
                         },
+                        onBackClick = { navController.popBackStack() },
+                    )
+                }
+                composable<Route.SettingsLevel.Database> {
+                    SettingsDatabaseScreen(
                         onBackClick = { navController.popBackStack() },
                     )
                 }

@@ -37,6 +37,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.rateio.data.CategoryRegistry
 import com.example.rateio.data.db.RateioDatabase
+import com.example.rateio.data.remote.imdb.ImdbRatingRepository
 import com.example.rateio.data.remote.tmdb.toCarouselImage
 import com.example.rateio.data.repository.CategoryRepository
 import com.example.rateio.data.repository.RateItemRepository
@@ -90,9 +91,13 @@ fun TmdbMovieDetailScreen(
         val db = RateioDatabase.getDatabase(context)
         CategoryRepository(db.categoryDao())
     }
+    val imdbRepository = remember {
+        val db = RateioDatabase.getDatabase(context)
+        ImdbRatingRepository(db.imdbRatingDao())
+    }
 
     val viewModel: TmdbMovieDetailViewModel = viewModel(
-        factory = TmdbMovieDetailViewModel.factory(movieId, categoryRepository, itemRepository)
+        factory = TmdbMovieDetailViewModel.factory(movieId, categoryRepository, itemRepository, imdbRepository)
     )
     val state by viewModel.state.collectAsState()
 
@@ -173,8 +178,8 @@ fun TmdbMovieDetailScreen(
                 backdropImageUrl = movie.backdropPath?.let {
                     "https://image.tmdb.org/t/p/w1280$it"
                 },
-                rating = if (!isSaved) state.imdbRating?.normalizedRating else customRating,
-                ratingVotes = if (!isSaved) state.imdbRating?.voteCount else null,
+                rating = if (!isSaved) state.imdbRating?.averageRating else customRating,
+                ratingVotes = if (!isSaved) state.imdbRating?.numVotes else null,
                 ratingLabel = savedRank?.let { formatItemRankLabel(it, CategoryType.TMDB_MOVIES) },
                 ratingColorBucketsOverride = if (!isSaved) RatingColorBucketConstants.RC_IMDB_MOVIES else getCurrentRatingColorBuckets(),
                 onRatingSaved = onRatingSaved,
