@@ -1,6 +1,5 @@
 package com.example.rateio.presentation.category
 
-import androidx.compose.runtime.collectAsState
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
@@ -8,19 +7,23 @@ import androidx.lifecycle.viewmodel.viewModelFactory
 import com.example.rateio.data.repository.CategoryRepository
 import com.example.rateio.data.repository.RateItemRepository
 import com.example.rateio.model.Category
-import com.example.rateio.model.ItemStatus
+import com.example.rateio.model.HasDisplayName
 import com.example.rateio.model.RateItem
-import com.example.rateio.presentation.rating.tmdb.TmdbMovieDetailState
-import kotlinx.coroutines.flow.MutableStateFlow
+import com.example.rateio.presentation.components.SortOrder
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.forEach
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
+
+enum class SortModeLibrary(override val displayName: String): HasDisplayName {
+    NAME("Alphabetically"),
+    RATING("Rating"),
+    UPDATED("Last Updated"),
+    CREATED("Date Added"),
+}
 
 data class LibraryCategoryState(
     val category: Category? = null,

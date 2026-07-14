@@ -648,6 +648,8 @@ fun OLWorkDetailScreen(
                                 onDisplayModeSelect = viewModel::onDisplayModeSelect,
                                 selectedSortMode = state.selectedSortMode,
                                 onSortModeSelect = viewModel::onSortModeSelect,
+                                selectedOrder = state.selectedSortOrder,
+                                onOrderChange = viewModel::onSortOrderChange,
                                 expandedParents = state.expandedChapters,
                             )
                         }

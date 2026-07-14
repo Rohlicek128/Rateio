@@ -34,6 +34,7 @@ fun ChildrenList(
     expandedParents: MutableSet<String?>,
     modifier: Modifier = Modifier,
     displayNotNullCounter: Boolean = false,
+    sortedChildren: List<RateItem> = emptyList(),
     spoilers: Boolean = true,
     spoilName: Boolean = true,
 ) {
@@ -98,6 +99,7 @@ fun ChildrenList(
                     items = children,
                     onChildClick = onChildClick,
                     modifier = Modifier.padding(start = 12.dp, end = 12.dp, bottom = 32.dp),
+                    sortedChildren = sortedChildren,
                     spoilers = spoilers,
                     spoilName = spoilName,
                 )
@@ -111,6 +113,7 @@ fun RateItemList(
     items: List<RateItem>,
     onChildClick: (RateItem) -> Unit,
     modifier: Modifier = Modifier,
+    sortedChildren: List<RateItem> = emptyList(),
     spoilers: Boolean = true,
     spoilName: Boolean = true,
 ) {
@@ -118,11 +121,11 @@ fun RateItemList(
         modifier = modifier,
     ) {
         items.forEach { item ->
-            //val topIndex = sortedEpisodesTop.indexOf(item)
+            val topIndex = sortedChildren.indexOf(item)
             RateItemCard(
                 title = item.title,
                 subtitle = item.subtitle,
-                //overlineText = if (topIndex != -1) "RATED #${topIndex + 1}" else null,
+                overlineText = if (topIndex != -1) "RATED #${topIndex + 1}" else null,
                 coverImagePath = item.coverImageUrl,
                 rating = item.rating,
                 placeholderRatio = 16f / 9f,

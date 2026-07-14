@@ -50,6 +50,7 @@ import com.example.rateio.presentation.settings.SettingsListHeader
 import com.example.rateio.presentation.settings.SettingsNumberField
 import com.example.rateio.presentation.settings.SettingsTextField
 import com.example.rateio.presentation.settings.WarningCard
+import java.util.Locale
 
 
 @Composable
@@ -304,7 +305,7 @@ fun RatingTransformationSettingsScreen(
             item {
                 SettingListItem(
                     title = "Locale",
-                    description = "Value: \"${state.locale.language}\"",
+                    description = "Value: ${state.locale.displayName}",
                     position = ListItemPosition.END,
                 )
             }

@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ClosedCaptionDisabled
 import androidx.compose.material.icons.filled.CommentsDisabled
 import androidx.compose.material.icons.filled.HideImage
 import androidx.compose.material.icons.filled.Refresh
@@ -54,7 +53,7 @@ import com.example.rateio.model.computeAggregateRating
 import com.example.rateio.presentation.components.AdaptiveImageCarousel
 import com.example.rateio.presentation.components.CollapsibleHeader
 import com.example.rateio.presentation.components.DateProgressBar
-import com.example.rateio.presentation.components.DisplaySelector
+import com.example.rateio.presentation.components.ConnectedItemSelector
 import com.example.rateio.presentation.components.GenreChips
 import com.example.rateio.presentation.components.ImageSize
 import com.example.rateio.presentation.components.ItemStatCard
@@ -687,7 +686,7 @@ fun TmdbShowDetailScreen(
                             }
                         ) {
                             Column {
-                                DisplaySelector(
+                                ConnectedItemSelector(
                                     modifier = Modifier
                                         .fillMaxWidth()
                                         .padding(horizontal = 8.dp),
@@ -710,6 +709,8 @@ fun TmdbShowDetailScreen(
                                     onDisplayModeSelect = viewModel::onDisplayModeSelect,
                                     selectedSortMode = state.selectedSortMode,
                                     onSortModeSelect = viewModel::onSortModeSelect,
+                                    selectedOrder = state.selectedSortOrder,
+                                    onOrderChange = viewModel::onSortOrderChange,
                                     expandedParents = state.expandedSeasons,
                                     isLoading = episodesState.isLoadingEpisodes,
                                     spoilers = spoilers,

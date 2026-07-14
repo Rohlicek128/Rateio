@@ -18,18 +18,20 @@ import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 
 
 @Composable
-fun DisplaySelector(
+fun ConnectedItemSelector(
     selectedIndex: Int,
     onSelectionChanged: (Int) -> Unit,
     options: List<String>,
     modifier: Modifier = Modifier,
     unCheckedIcons: List<ImageVector> = emptyList(),
     checkedIcons: List<ImageVector> = emptyList(),
+    textStyle: TextStyle = MaterialTheme.typography.labelMedium,
 ) {
     val haptic = LocalHapticFeedback.current
 
@@ -68,7 +70,7 @@ fun DisplaySelector(
                 }
                 Text(
                     label,
-                    style = MaterialTheme.typography.labelMedium,
+                    style = textStyle,
                     fontWeight = FontWeight.Bold,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,

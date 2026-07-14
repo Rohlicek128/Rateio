@@ -278,7 +278,7 @@ private fun FullReviewModal(
                     roundedCorners = 12.dp,
                     width = 12.dp,
                     minWidth = 36.dp,
-                    height = 4.dp,
+                    height = 5.dp,
                     textStyle = MaterialTheme.typography.headlineSmall,
                 )
             }

@@ -56,6 +56,7 @@ import com.example.rateio.model.CategoryType
 import com.example.rateio.presentation.category.CategoryItemListScreen
 import com.example.rateio.presentation.category.ItemListRow
 import com.example.rateio.presentation.components.AdaptiveAsyncImage
+import com.example.rateio.presentation.components.FloatingIconButton
 import com.example.rateio.presentation.rating.display.getCurrentRatingTransformations
 import com.example.rateio.presentation.rating.display.getMaxValue
 import com.example.rateio.presentation.rating.display.getMinValue
@@ -272,27 +273,14 @@ fun ProfileScreen(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.End
                 ) {
-                    FilledTonalIconButton(
-                        onClick = {
-                            haptic.performHapticFeedback(HapticFeedbackType.ContextClick)
-                            onOpenSettings()
-                        },
-                        colors = IconButtonDefaults.filledTonalIconButtonColors(
-                            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
-                        ),
-                        modifier = Modifier
-                            .padding(
+                    FloatingIconButton(
+                        modifier = Modifier.padding(
                                 top = innerPadding.calculateTopPadding() + 12.dp,
                                 end = 12.dp,
-                            )
-                            .zIndex(1f),
-                        shapes = IconButtonDefaults.shapes()
-                    ) {
-                        Icon(
-                            Icons.Filled.Settings,
-                            contentDescription = "Settings",
-                        )
-                    }
+                            ),
+                        icon = Icons.Filled.Settings,
+                        onClick = onOpenSettings,
+                    )
                 }
             }
 

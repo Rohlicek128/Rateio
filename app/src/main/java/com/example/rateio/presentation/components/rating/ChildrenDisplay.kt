@@ -46,14 +46,17 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.rateio.data.remote.tmdb.TmdbEpisodeMetadata
 import com.example.rateio.model.RateItem
-import com.example.rateio.presentation.components.DisplaySelector
-import com.example.rateio.presentation.components.SortBySelectionButton
-import com.example.rateio.presentation.rating.tmdb.SortMode
+import com.example.rateio.presentation.components.ConnectedItemSelector
+import com.example.rateio.presentation.components.ModalSortableEnumSelector
+import com.example.rateio.presentation.components.SortByButton
+import com.example.rateio.presentation.components.SortOrder
+import com.example.rateio.presentation.rating.tmdb.SortModeShow
 import com.example.rateio.presentation.settings.ListItemPosition
 import com.example.rateio.presentation.settings.SettingListItem
 import kotlinx.serialization.json.Json
 import kotlin.collections.component1
 import kotlin.collections.component2
+import kotlin.math.round
 
 
 enum class DisplayMode {
@@ -71,8 +74,10 @@ fun ChildrenDisplay(
     rowText: (Int) -> String,
     selectedDisplayMode: DisplayMode,
     onDisplayModeSelect: (DisplayMode) -> Unit,
-    selectedSortMode: SortMode,
-    onSortModeSelect: (SortMode) -> Unit,
+    selectedSortMode: SortModeShow,
+    onSortModeSelect: (SortModeShow) -> Unit,
+    selectedOrder: SortOrder,
+    onOrderChange: (SortOrder) -> Unit,
     expandedParents: MutableSet<String?>,
     modifier: Modifier = Modifier,
     isLoading: Boolean = false,
@@ -82,22 +87,32 @@ fun ChildrenDisplay(
 ) {
     val haptic = LocalHapticFeedback.current
 
-    val sortedBestEpisodes = remember(childrenGroups) {
+    val sortedChildrenBest = remember(childrenGroups) {
         childrenGroups
             .flatMap { (_, episodes) -> episodes }
             .sortedByDescending { episode ->
                 episode.rating ?: -1f
             }
     }
-    val sortedEpisodes = remember(childrenGroups, selectedSortMode) {
+    val sortedChildrenBestRated = sortedChildrenBest.filter { it.rating != null }
+    val sortedChildrenTop = when {
+        sortedChildrenBestRated.size >= 10 -> {
+            sortedChildrenBestRated.take(round(sortedChildrenBestRated.size * 0.1f).toInt().coerceIn(3, 10))
+        }
+        sortedChildrenBestRated.size in 5..<10 -> {
+            sortedChildrenBestRated.take(1)
+        }
+        else -> {
+            emptyList()
+        }
+    }
+
+    val sortedChildren = remember(childrenGroups, selectedSortMode) {
         childrenGroups
             .flatMap { (_, episodes) -> episodes }
             .let { episodes ->
                 when (selectedSortMode) {
-                    SortMode.BY_RATING_WORST -> episodes.sortedBy { episode ->
-                        episode.rating ?: 2f
-                    }
-                    SortMode.BY_RUNTIME -> episodes.sortedByDescending { episode ->
+                    SortModeShow.RUNTIME -> episodes.sortedBy { episode ->
                         val metadata = episode.metadataJSON?.let {
                             runCatching {
                                 Json.decodeFromString<TmdbEpisodeMetadata>(it)
@@ -105,10 +120,10 @@ fun ChildrenDisplay(
                         }
                         metadata?.runtime
                     }
-                    SortMode.BY_NAME -> episodes.sortedBy { episode ->
+                    SortModeShow.NAME -> episodes.sortedBy { episode ->
                         episode.title
                     }
-                    else -> sortedBestEpisodes
+                    else -> sortedChildrenBest.asReversed()
                 }
             }
     }
@@ -116,6 +131,7 @@ fun ChildrenDisplay(
     if (expandIfSingleGroup && childrenGroups.keys.size == 1)
         expandedParents.add(childrenGroups.keys.first()?.title)
 
+    var showSortBySheet by remember { mutableStateOf(false) }
     var invertedGrid by remember { mutableStateOf(false) }
     var columnsWrapped by remember { mutableFloatStateOf(4f) }
 
@@ -137,13 +153,14 @@ fun ChildrenDisplay(
     Column (
         modifier = modifier,
     ) {
-        DisplaySelector(
+        ConnectedItemSelector(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 8.dp),
             selectedIndex = DisplayMode.entries.indexOf(selectedDisplayMode),
             onSelectionChanged = { onDisplayModeSelect(DisplayMode.entries[it]) },
             options = listOf("List", "Grid", "Wrapped", "Timeline"),
+            textStyle = MaterialTheme.typography.labelSmall,
             unCheckedIcons = listOf(Icons.AutoMirrored.Outlined.List, Icons.Outlined.GridOn, Icons.AutoMirrored.Outlined.WrapText, Icons.Outlined.Timeline),
             checkedIcons = listOf(Icons.AutoMirrored.Filled.List, Icons.Filled.GridOn, Icons.AutoMirrored.Filled.WrapText, Icons.Filled.Timeline),
         )
@@ -163,13 +180,19 @@ fun ChildrenDisplay(
                                 .padding(horizontal = 8.dp),
                             horizontalArrangement = Arrangement.SpaceBetween,
                         ) {
-                            SortBySelectionButton(
-                                selected = selectedSortMode,
-                                onSelect = onSortModeSelect,
-                            )
+                            SortByButton(onClick = { showSortBySheet = true })
+                            if (showSortBySheet) {
+                                ModalSortableEnumSelector(
+                                    selectedOption = selectedSortMode,
+                                    onOptionSelected = onSortModeSelect,
+                                    selectedOrder = selectedOrder,
+                                    onOrderChange = onOrderChange,
+                                    onDismiss = { showSortBySheet = false },
+                                )
+                            }
 
                             AnimatedVisibility(
-                                visible = selectedSortMode == SortMode.BY_SEASON,
+                                visible = selectedSortMode == SortModeShow.SEASON,
                             ) {
                                 Row(
                                     horizontalArrangement = Arrangement.End,
@@ -222,22 +245,24 @@ fun ChildrenDisplay(
                         }
 
                         when (selectedSortMode) {
-                            SortMode.BY_SEASON -> {
+                            SortModeShow.SEASON -> {
                                 ChildrenList(
                                     childrenGroups = childrenGroups,
                                     onChildClick = onChildClick,
                                     expandedParents = expandedParents,
                                     modifier = Modifier.padding(horizontal = 16.dp),
                                     displayNotNullCounter = true,
+                                    sortedChildren = sortedChildrenTop,
                                     spoilers = spoilers,
                                     spoilName = spoilName,
                                 )
                             }
                             else -> {
                                 RateItemList(
-                                    items = sortedEpisodes,
+                                    items = if (selectedOrder == SortOrder.ASCENDING) sortedChildren else sortedChildren.asReversed(),
                                     onChildClick = onChildClick,
                                     modifier = Modifier.padding(horizontal = 16.dp),
+                                    sortedChildren = sortedChildrenTop,
                                     spoilers = spoilers,
                                     spoilName = spoilName,
                                 )
@@ -306,7 +331,7 @@ fun ChildrenDisplay(
                     }
                     DisplayMode.TIMELINE -> {
                         if (timelineCategories.size > 1) {
-                            DisplaySelector(
+                            ConnectedItemSelector(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .padding(horizontal = 8.dp),
@@ -324,6 +349,7 @@ fun ChildrenDisplay(
                             childrenGroups = if (selectedCategoryIndex == 0) childrenGroups else parentGroups,
                             onChildClick = if (selectedCategoryIndex == 0) onChildClick else { _ -> },
                             placeholderRatio = if (selectedCategoryIndex == 0) 16f / 9f else 2f / 3f,
+                            sortedChildren = sortedChildrenTop,
                             spoilers = spoilers,
                             spoilName = spoilName,
                         )

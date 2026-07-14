@@ -20,6 +20,7 @@ import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Card
 import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.HorizontalDivider
@@ -55,6 +56,7 @@ import androidx.compose.ui.zIndex
 import androidx.palette.graphics.Palette
 import coil3.toBitmap
 import com.example.rateio.presentation.components.AdaptiveAsyncImage
+import com.example.rateio.presentation.components.FloatingIconButton
 import com.example.rateio.presentation.components.FullScreenImageModal
 import com.example.rateio.presentation.components.LibraryToggle
 import com.example.rateio.presentation.components.RateBox
@@ -239,56 +241,28 @@ fun RateItemDetailScreen(
         }
 
 
-
-        FilledTonalIconButton(
-            onClick = {
-                haptic.performHapticFeedback(HapticFeedbackType.ContextClick)
-                onBackClick()
-            },
-            colors = IconButtonDefaults.filledTonalIconButtonColors(
-                containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
-            ),
-            modifier = Modifier
-                .padding(
+        FloatingIconButton(
+            modifier = Modifier.padding(
                     top = innerPadding.calculateTopPadding() + 12.dp,
                     start = 12.dp,
-                )
-                .zIndex(1f),
-            shapes = IconButtonDefaults.shapes()
-        ) {
-            Icon(
-                Icons.AutoMirrored.Filled.ArrowBack,
-                contentDescription = "Back",
-            )
-        }
-
+                ),
+            icon = Icons.AutoMirrored.Filled.ArrowBack,
+            onClick = onBackClick,
+        )
 
         if (onOpenSettings != null) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.End
             ) {
-                FilledTonalIconButton(
-                    onClick = {
-                        haptic.performHapticFeedback(HapticFeedbackType.ContextClick)
-                        onOpenSettings()
-                    },
-                    colors = IconButtonDefaults.filledTonalIconButtonColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
-                    ),
-                    modifier = Modifier
-                        .padding(
+                FloatingIconButton(
+                    modifier = Modifier.padding(
                             top = innerPadding.calculateTopPadding() + 12.dp,
                             end = 12.dp,
-                        )
-                        .zIndex(1f),
-                    shapes = IconButtonDefaults.shapes()
-                ) {
-                    Icon(
-                        Icons.Filled.MoreVert,
-                        contentDescription = "Back",
-                    )
-                }
+                        ),
+                    icon = Icons.Filled.MoreVert,
+                    onClick = onOpenSettings,
+                )
             }
         }
 
@@ -397,7 +371,8 @@ private fun DetailHeader(
                 Text(
                     subtitle,
                     style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = TextAlign.Center,
                 )
             }
         }

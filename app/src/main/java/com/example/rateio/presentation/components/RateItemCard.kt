@@ -13,7 +13,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.NavigateNext
 import androidx.compose.material3.Card
+import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -60,12 +63,20 @@ fun RateItemCard(
     leadingRateBoxContent: @Composable (() -> Unit)? = null,
 ) {
     val haptic = LocalHapticFeedback.current
-    val offset = (-6).dp
 
     //val scope = rememberCoroutineScope()
     //var glowColor by remember { mutableStateOf(Color.Transparent) }
 
-    ListItem(
+    ItemCard(
+        modifier = modifier.padding(padding),
+        shape = MaterialTheme.shapes.largeIncreased,
+        tonalElevation = tonalElevation,
+        contentPadding = PaddingValues(10.dp),
+        leadingPadding = if (coverImagePath == null) 12.dp else 0.dp,
+        onClick = {
+            haptic.performHapticFeedback(HapticFeedbackType.Confirm)
+            onClick()
+        },
         headlineContent = {
             Column(
                 verticalArrangement = Arrangement.Bottom,
@@ -76,14 +87,12 @@ fun RateItemCard(
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.ExtraBold,
                         color = MaterialTheme.colorScheme.secondaryFixedDim,
-                        modifier = Modifier.offset(x = (-6).dp)
                     )
                 }
 
                 Text(
                     title,
                     modifier = Modifier
-                        .offset(x = offset)
                         .then(if (!spoilers && !spoilName)
                             Modifier
                                 .clip(RoundedCornerShape(6.dp))
@@ -105,28 +114,26 @@ fun RateItemCard(
         overlineContent = {
             overlineText?.let { Text(
                 it,
-                modifier = Modifier.offset(x = offset),
                 color = Color(0xFFF4D03F),
+                style = MaterialTheme.typography.labelSmall,
                 fontWeight = FontWeight.Bold,
-                maxLines = 1,
+                maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
             ) }
         },
-        supportingContent = {
+        subtitleContent = {
             subtitle?.let { Text(
                 it,
-                modifier = Modifier.offset(x = offset),
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines = 2,
+                style = MaterialTheme.typography.labelMedium,
+                maxLines = 3,
                 lineHeight = 1.em,
                 overflow = TextOverflow.Ellipsis,
             ) }
         },
-        leadingContent = {
-            if (coverImagePath != null) {
-                Box (
-                    modifier = Modifier.offset(x = offset),
-                ) {
+        leadingContent = if (coverImagePath != null) {
+            {
+                Box {
                     Card(
                         shape = MaterialTheme.shapes.medium,
                     ) {
@@ -176,14 +183,13 @@ fun RateItemCard(
                     }
 
                 }
-
             }
-        },
+        } else null,
         trailingContent = {
             Row(
                 horizontalArrangement = Arrangement.End,
                 verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.padding(vertical = 5.dp).offset(y = if (overlineText == null) 0.dp else 16.dp),
+                modifier = Modifier.padding(vertical = 5.dp),
             ) {
                 leadingRateBoxContent?.invoke()
                 RateBox(
@@ -191,7 +197,7 @@ fun RateItemCard(
                     roundedCorners = 12.dp,
                     width = 12.dp,
                     minWidth = 36.dp,
-                    height = 4.dp,
+                    height = 5.dp,
                     textStyle = MaterialTheme.typography.headlineSmall,
                     isLoading = isLoading,
                     decimalOffset = if (preciseRatings) 1u else 0u,
@@ -199,18 +205,10 @@ fun RateItemCard(
                 )
             }
         },
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(padding)
-            .clip(MaterialTheme.shapes.largeIncreased)
-            .clickable(onClick = {
-                haptic.performHapticFeedback(HapticFeedbackType.Confirm)
-                onClick()
-            }),
-        tonalElevation = tonalElevation,
-        //colors = ListItemDefaults.colors().copy(containerColor = glowColor),
     )
+
 }
+
 
 @Composable
 fun RateItemGridCard(

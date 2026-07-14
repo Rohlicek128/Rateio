@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -15,7 +16,13 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Movie
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Transform
+import androidx.compose.material.icons.filled.Tv
 import androidx.compose.material3.CircularWavyProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.ListItem
@@ -44,12 +51,19 @@ import com.example.rateio.data.repository.CategoryRepository
 import com.example.rateio.data.repository.RateItemRepository
 import com.example.rateio.model.Category
 import com.example.rateio.presentation.category.CategoryItemListScreen
+import com.example.rateio.presentation.components.FloatingIconButton
 import com.example.rateio.presentation.components.RateBox
+import com.example.rateio.presentation.settings.ListItemPosition
+import com.example.rateio.presentation.settings.SettingListItem
 import com.example.rateio.ui.theme.GoogleSans
 
 
 @Composable
-fun HomeScreen(contentPadding: PaddingValues, onItemClick: (Long) -> Unit) {
+fun HomeScreen(
+    contentPadding: PaddingValues,
+    onItemClick: (Long) -> Unit,
+    onOpenSettings: () -> Unit,
+) {
     val context = LocalContext.current
     val categoryRepository = remember {
         val db = RateioDatabase.getDatabase(context)
@@ -101,9 +115,37 @@ fun HomeScreen(contentPadding: PaddingValues, onItemClick: (Long) -> Unit) {
 
                 item { HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp, horizontal = 16.dp)) }
 
-                items(state.categories.sortedBy { it.first.sortOrder }) { (category, count) ->
-                    CategoryCard(category, onItemClick, count)
+                itemsIndexed(state.categories.sortedBy { it.category.sortOrder }) { index, (category, icon, count) ->
+                    SettingListItem(
+                        modifier = Modifier.padding(horizontal = 20.dp, vertical = 3.dp),
+                        title = category.name,
+                        titleStyle = MaterialTheme.typography.titleLarge,
+                        icon = icon,
+                        description = "$count items",
+                        position = when {
+                            state.categories.size == 1 -> ListItemPosition.SINGLE
+                            index == 0 -> ListItemPosition.START
+                            index >= state.categories.size - 1 -> ListItemPosition.END
+                            state.categories.size > 1 -> ListItemPosition.MIDDLE
+                            else -> ListItemPosition.SINGLE
+                        },
+                        onClick = { onItemClick(category.id) },
+                    )
                 }
+            }
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.End
+            ) {
+                FloatingIconButton(
+                    modifier = Modifier.padding(
+                        top = contentPadding.calculateTopPadding() + 12.dp,
+                        end = 20.dp,
+                    ),
+                    icon = Icons.Filled.Settings,
+                    onClick = onOpenSettings,
+                )
             }
         }
         

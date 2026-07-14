@@ -16,7 +16,9 @@ import com.example.rateio.data.remote.tmdb.toRateItem
 import com.example.rateio.data.repository.CategoryRepository
 import com.example.rateio.data.repository.RateItemRepository
 import com.example.rateio.model.CategoryType
+import com.example.rateio.model.HasDisplayName
 import com.example.rateio.model.RateItem
+import com.example.rateio.presentation.components.SortOrder
 import com.example.rateio.presentation.components.rating.DisplayMode
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -32,12 +34,11 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 
-enum class SortMode {
-    BY_SEASON,
-    BY_RATING_BEST,
-    BY_RATING_WORST,
-    BY_RUNTIME,
-    BY_NAME,
+enum class SortModeShow(override val displayName: String): HasDisplayName {
+    SEASON("Season"),
+    RATING("Rating"),
+    RUNTIME("Runtime"),
+    NAME("Alphabetically"),
 }
 
 data class TmdbShowDetailState(
@@ -48,7 +49,8 @@ data class TmdbShowDetailState(
     val savedItem: RateItem? = null,
 
     val selectedDisplayMode: DisplayMode = DisplayMode.LIST,
-    val selectedSortMode: SortMode = SortMode.BY_SEASON,
+    val selectedSortMode: SortModeShow = SortModeShow.SEASON,
+    val selectedSortOrder: SortOrder = SortOrder.DESCENDING,
     val collapsedHeaders: MutableSet<String> = mutableStateSetOf(),
     val expandedSeasons: MutableSet<String?> = mutableStateSetOf(),
 
@@ -159,8 +161,12 @@ class TmdbShowDetailViewModel(
         _state.update { it.copy(selectedDisplayMode = selectedMode) }
     }
 
-    fun onSortModeSelect(sortMode: SortMode) {
+    fun onSortModeSelect(sortMode: SortModeShow) {
         _state.update { it.copy(selectedSortMode = sortMode) }
+    }
+
+    fun onSortOrderChange(order: SortOrder) {
+        _state.update { it.copy(selectedSortOrder = order) }
     }
 
     companion object {

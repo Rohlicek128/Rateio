@@ -1,6 +1,15 @@
 package com.example.rateio.presentation.components.rating
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
@@ -24,11 +33,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.graphics.StrokeJoin
-import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.input.pointer.pointerInput
@@ -36,15 +42,37 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.material3.MaterialShapes
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.asComposePath
+import androidx.compose.ui.graphics.drawscope.rotate
+import androidx.compose.ui.graphics.drawscope.translate
+import androidx.compose.ui.graphics.drawscope.scale
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.text.drawText
+import androidx.compose.ui.text.rememberTextMeasurer
+import androidx.compose.ui.unit.sp
+import androidx.graphics.shapes.toPath
 import com.example.rateio.model.RateItem
 import com.example.rateio.presentation.components.RateItemCard
+import com.example.rateio.presentation.rating.display.getCurrentRatingTransformations
 import com.example.rateio.presentation.rating.display.getRatingColor
 import com.example.rateio.presentation.rating.display.getRoundedRating
+import com.example.rateio.presentation.rating.display.getTransformedRating
 import com.example.rateio.presentation.settings.ListItemPosition
 import com.example.rateio.presentation.settings.SettingListItem
+import com.example.rateio.utils.dim
 import com.example.rateio.utils.formatTime
 import kotlin.math.abs
+import kotlin.math.ceil
+import kotlin.math.floor
+import kotlin.math.log10
 import kotlin.math.max
+import kotlin.math.min
+import kotlin.math.pow
+import kotlin.random.Random
 
 
 private data class ChildPoint(
@@ -59,6 +87,7 @@ fun ChildrenTimeline(
     modifier: Modifier = Modifier,
     minEpisodeWidth: Dp = 7.dp,
     placeholderRatio: Float = 16f / 9f,
+    sortedChildren: List<RateItem> = emptyList(),
     spoilers: Boolean = true,
     spoilName: Boolean = true,
 ) {
@@ -80,14 +109,55 @@ fun ChildrenTimeline(
 
     if (flatPoints.isEmpty()) return
 
+    val basePaths = remember {
+        listOf(
+            MaterialShapes.Sunny.toPath().asComposePath(),
+            MaterialShapes.VerySunny.toPath().asComposePath(),
+            MaterialShapes.Cookie4Sided.toPath().asComposePath(),
+            MaterialShapes.Cookie7Sided.toPath().asComposePath(),
+            MaterialShapes.Cookie12Sided.toPath().asComposePath(),
+            MaterialShapes.Clover4Leaf.toPath().asComposePath(),
+            MaterialShapes.SoftBurst.toPath().asComposePath(),
+        )
+
+    }
+
     val density = LocalDensity.current
+
     var hoveredIndex by remember { mutableStateOf<Int?>(null) }
+    var hoverPathIndex by remember { mutableIntStateOf(0) }
+    val hoverScale = remember { Animatable(0f) }
+    LaunchedEffect(hoveredIndex) {
+        if (hoveredIndex != null) {
+            hoverScale.snapTo(0.35f)
+            hoverScale.animateTo(
+                targetValue = 1f,
+                animationSpec = spring(
+                    dampingRatio = Spring.DampingRatioMediumBouncy, // Controls the overshoot/bounce
+                    stiffness = Spring.StiffnessLow               // Controls how fast it snaps
+                )
+            )
+        } else {
+            hoverScale.animateTo(0f, spring(stiffness = Spring.StiffnessMedium))
+        }
+    }
+
+    val infiniteTransition = rememberInfiniteTransition(label = "timeline_spin")
+    val rotationDegrees by infiniteTransition.animateFloat(
+        initialValue = 0f,
+        targetValue = 360f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 5000, easing = LinearEasing),
+            repeatMode = RepeatMode.Restart
+        ),
+        label = "rotation"
+    )
+
 
     val padL = 40.dp
     val padR = 16.dp
     val padT = 16.dp
     val padB = 0.dp
-
 
     val ratingColor = { r: Float -> getRatingColor(getRoundedRating(r)).backgroundColor }
     val gridColor = MaterialTheme.colorScheme.surfaceVariant
@@ -95,7 +165,7 @@ fun ChildrenTimeline(
     val dividerColor = MaterialTheme.colorScheme.outline
     val dividerBackColor = MaterialTheme.colorScheme.surfaceContainerLowest
     val lineColor = MaterialTheme.colorScheme.secondaryFixedDim
-
+    val labelStyle = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp)
 
     val minRating = childrenGroups.values.flatten().minBy { it.rating ?: 1f }.rating ?: 1f
     var plotScale by rememberSaveable(childrenGroups) { mutableFloatStateOf(getInitialPlotScale(minRating)) }
@@ -103,9 +173,13 @@ fun ChildrenTimeline(
     var childWidth by rememberSaveable(childrenGroups) { mutableFloatStateOf(
         max(minEpisodeWidth.value, 350f / flatPoints.size.toFloat())
     ) }
+    val childRadius = remember(childrenGroups, childWidth) {
+        max(4f, min(8f, childWidth / 3f))
+    }
 
     val totalWidth = padL + childWidth.dp * flatPoints.size + padR
 
+    val textMeasurer = rememberTextMeasurer()
     Column(modifier = modifier) {
         Box(
             modifier = Modifier
@@ -128,7 +202,14 @@ fun ChildrenTimeline(
                                     val x = padLpx + (child.globalIndex + 0.5f) * epWpx
                                     abs(pos.x - x)
                                 }
-                                hoveredIndex = closest?.globalIndex
+
+                                if (closest?.globalIndex != hoveredIndex) {
+                                    hoveredIndex = closest?.globalIndex
+                                    if (hoveredIndex != null) {
+                                        hoverPathIndex = Random.nextInt(0, basePaths.size)
+                                        haptic.performHapticFeedback(HapticFeedbackType.SegmentFrequentTick)
+                                    }
+                                }
                             }
                         }
                     }
@@ -166,7 +247,7 @@ fun ChildrenTimeline(
                             topLeft = Offset(x, padTpx),
                             size = Size(
                                 (nextIdx - firstIdx) * epWpx,
-                                padTpx + plotH
+                                plotH
                             )
                         )
                     }
@@ -179,56 +260,98 @@ fun ChildrenTimeline(
                             floatArrayOf(4.dp.toPx(), 3.dp.toPx())
                         ),
                     )
-                    drawContext.canvas.nativeCanvas.drawText(
-                        parent?.title ?: "N/A",
-                        x + 4.dp.toPx(),
-                        padTpx + 12.dp.toPx(),
-                        android.graphics.Paint().apply {
-                            textSize = 10.dp.toPx()
-                            color = labelColor.copy(alpha = 0.5f).toArgb()
-                            isAntiAlias = true
-                        }
+                    val parentTextResult = textMeasurer.measure(
+                        text = parent?.title ?: "N/A",
+                        style = labelStyle
+                    )
+                    drawText(
+                        textLayoutResult = parentTextResult,
+                        color = labelColor.copy(alpha = 0.5f),
+                        topLeft = Offset(
+                            x + 4.dp.toPx(),
+                            padTpx + 2.dp.toPx()
+                        ),
                     )
                     even = !even
                 }
-
                 // S1 label
-                drawContext.canvas.nativeCanvas.drawText(
-                    points.keys.first()?.title ?: "N/A",
-                    padLpx + 4.dp.toPx(),
-                    padTpx + 12.dp.toPx(),
-                    android.graphics.Paint().apply {
-                        textSize = 10.dp.toPx()
-                        color = labelColor.copy(alpha = 0.5f).toArgb()
-                        isAntiAlias = true
-                    }
+                val parentTextResult = textMeasurer.measure(
+                    text = points.keys.first()?.title ?: "N/A",
+                    style = labelStyle
+                )
+                drawText(
+                    textLayoutResult = parentTextResult,
+                    color = labelColor.copy(alpha = 0.5f),
+                    topLeft = Offset(
+                        padLpx + 4.dp.toPx(),
+                        padTpx + 2.dp.toPx()
+                    ),
                 )
 
+
                 // Y-axis grid lines
-                for (r in 0..10) {
-                    val y = yOf(r / 10f)
-                    drawLine(
-                        color = gridColor,
-                        start = Offset(padLpx, y),
-                        end = Offset(w - padRpx, y),
-                        strokeWidth = 1.dp.toPx(),
-                    )
-                    drawContext.canvas.nativeCanvas.drawText(
-                        r.toString(),
-                        padLpx - 6.dp.toPx(),
-                        y + 4.dp.toPx(),
-                        android.graphics.Paint().apply {
-                            textSize = 10.dp.toPx()
-                            textAlign = android.graphics.Paint.Align.RIGHT
-                            color = labelColor.copy(alpha = 0.6f).toArgb()
-                            isAntiAlias = true
-                        }
-                    )
+                val rtf = getCurrentRatingTransformations()
+
+                val vMin = rtf.offset / rtf.divider
+                val vMax = (rtf.stepCount.toFloat() + rtf.offset) / rtf.divider
+                val vTotalRange = vMax - vMin
+
+                val vVisibleRange = vTotalRange / plotScale
+
+                val minPxBetweenLines = 45.dp.toPx()
+                val desiredSteps = max(2, (plotH / minPxBetweenLines).toInt())
+
+                val roughStep = vVisibleRange / desiredSteps
+                val stepExponent = floor(log10(roughStep + 1e-9f))
+                val fraction = roughStep / 10f.pow(stepExponent)
+                val niceFraction = when {
+                    fraction <= 1.5f -> 1f
+                    fraction <= 3f -> 2f
+                    fraction <= 7f -> 5f
+                    else -> 10f
+                }
+                val niceVStep = niceFraction * 10f.pow(stepExponent)
+
+                val vMinAllowedStep = 1f / rtf.divider
+                val clampedVStep = max(niceVStep, vMinAllowedStep)
+
+                val requiredDecimals = max(0, -stepExponent.toInt())
+                val currentDecimals = rtf.decimalPlaces.toInt()
+                val decimalOffset = max(0, requiredDecimals - currentDecimals).toUInt()
+
+                val startV = ceil(vMin / clampedVStep) * clampedVStep
+                var currentV = startV
+
+                while (currentV <= vMax + 1e-5f) {
+                    val r = (currentV * rtf.divider - rtf.offset) / rtf.stepCount.toFloat()
+                    val y = yOf(r)
+
+                    if (y in -50f..(h + 50f) && y <= h) {
+                        drawLine(
+                            color = gridColor,
+                            start = Offset(padLpx, y),
+                            end = Offset(w - padRpx, y),
+                            strokeWidth = 1.dp.toPx(),
+                        )
+                        val textLayoutResult = textMeasurer.measure(
+                            text = getTransformedRating(r, decimalOffset, rtf),
+                            style = labelStyle
+                        )
+                        drawText(
+                            textLayoutResult = textLayoutResult,
+                            color = labelColor.copy(alpha = 0.6f),
+                            topLeft = Offset(
+                                x = padLpx - textLayoutResult.size.width - 6.dp.toPx(),
+                                y = y - (textLayoutResult.size.height / 2f)
+                            )
+                        )
+                    }
+                    currentV += clampedVStep
                 }
 
 
                 // Connecting line
-                val ratedPoints = flatPoints.filter { it.child.rating != null }
+                /*val ratedPoints = flatPoints.filter { it.child.rating != null }
                 if (ratedPoints.size >= 2) {
                     val path = Path()
                     ratedPoints.forEachIndexed { i, item ->
@@ -245,44 +368,95 @@ fun ChildrenTimeline(
                             join = StrokeJoin.Round,
                         )
                     )
+                }*/
+                val ratedPoints = flatPoints.filter { it.child.rating != null }
+                if (ratedPoints.size >= 2) {
+                    for (i in 0 until ratedPoints.size - 1) {
+                        val startItem = ratedPoints[i]
+                        val endItem = ratedPoints[i + 1]
+
+                        val startRating = startItem.child.rating!!
+                        val endRating = endItem.child.rating!!
+
+                        val x1 = xOf(startItem.globalIndex)
+                        val y1 = yOf(startRating)
+                        val color1 = ratingColor(startRating)
+
+                        val x2 = xOf(endItem.globalIndex)
+                        val y2 = yOf(endRating)
+                        val color2 = ratingColor(endRating)
+
+                        // Create a gradient that spans exactly across this specific segment
+                        val segmentBrush = Brush.linearGradient(
+                            colors = listOf(color1, color2),
+                            start = Offset(x1, y1),
+                            end = Offset(x2, y2)
+                        )
+
+                        drawLine(
+                            brush = segmentBrush,
+                            start = Offset(x1, y1),
+                            end = Offset(x2, y2),
+                            strokeWidth = 1.5.dp.toPx(),
+                            cap = StrokeCap.Round
+                        )
+                    }
                 }
 
                 // Episode dots
                 points.forEach { (_, children) ->
                     children.forEach { item ->
+                        if (item.globalIndex == hoveredIndex) return@forEach
+
                         val rating = item.child.rating ?: return@forEach
                         val x = xOf(item.globalIndex)
                         val y = yOf(rating)
                         val color = ratingColor(rating)
-                        val isHovered = item.globalIndex == hoveredIndex
-                        val radius = 4.dp.toPx()
+                        val radius = childRadius.dp.toPx()
 
-                        // Glow ring on hover
-                        if (isHovered) {
-                            drawCircle(
-                                color = color.copy(alpha = 0.25f),
-                                radius = radius * 1.75f,
-                                center = Offset(x, y),
-                            )
-                        }
                         drawCircle(color = color, radius = radius, center = Offset(x, y))
                     }
                 }
+                if (hoveredIndex != null && hoveredIndex!! < flatPoints.size) {
+                    val hoveredItem = flatPoints[hoveredIndex!!]
+                    if (hoveredItem.child.rating != null) {
+                        val rating = hoveredItem.child.rating
+                        val x = xOf(hoveredItem.globalIndex)
+                        val y = yOf(rating)
+                        val color = ratingColor(rating)
+                        val radius = childRadius.dp.toPx()
 
-                // X axis labels
-                /*points.forEach { ep ->
-                    drawContext.canvas.nativeCanvas.drawText(
-                        ep.episode.episodeNumber.toString(),
-                        xOf(ep.globalIndex),
-                        h - 8.dp.toPx(),
-                        android.graphics.Paint().apply {
-                            textSize = 11.dp.toPx()
-                            textAlign = android.graphics.Paint.Align.CENTER
-                            color = labelColor.copy(alpha = 0.5f).toArgb()
-                            isAntiAlias = true
+                        // Glow ring on hover
+                        /*drawCircle(
+                            color = color.copy(alpha = 0.25f),
+                            radius = radius * 1.75f,
+                            center = Offset(x, y),
+                        )*/
+                        val hoverRadius = radius * 2f * (1f + 1f * hoverScale.value)
+                        translate(left = x, top = y) {
+                            rotate(degrees = rotationDegrees, pivot = Offset.Zero) {
+                                scale(scaleX = hoverRadius, scaleY = hoverRadius, pivot = Offset(0.5f, 0.5f)) {
+                                    drawPath(
+                                        path = basePaths[hoverPathIndex],
+                                        color = color.dim(0.2f, alpha = 0.7f)
+                                    )
+                                }
+                            }
                         }
-                    )
-                }*/
+                        val regularRadius = radius * 1.5f * (1f + 1f * hoverScale.value)
+                        translate(left = x, top = y) {
+                            rotate(degrees = rotationDegrees, pivot = Offset.Zero) {
+                                scale(scaleX = regularRadius, scaleY = regularRadius, pivot = Offset(0.5f, 0.5f)) {
+                                    drawPath(
+                                        path = basePaths[hoverPathIndex],
+                                        color = color
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+
             }
 
         }
@@ -292,9 +466,11 @@ fun ChildrenTimeline(
         AnimatedVisibility(visible = hovered != null) {
             hovered?.let { point ->
                 val child = point.child
+                val topIndex = sortedChildren.indexOf(child)
                 RateItemCard(
                     title = child.title,
                     subtitle = child.subtitle,
+                    overlineText = if (topIndex != -1) "RATED #${topIndex + 1}" else null,
                     coverImagePath = child.coverImageUrl,
                     rating = child.rating,
                     bubbleText = if (child.length != null && child.length > 0f) formatTime(child.length.toInt()) else null,
@@ -323,7 +499,7 @@ fun ChildrenTimeline(
                             //haptic.performHapticFeedback(HapticFeedbackType.SegmentFrequentTick)
                             plotScale = value
                         },
-                        valueRange = 1f..5f
+                        valueRange = 1f..9.99f
                     )
                 }
             )
@@ -339,7 +515,7 @@ fun ChildrenTimeline(
                             //haptic.performHapticFeedback(HapticFeedbackType.SegmentFrequentTick)
                             childWidth = value
                         },
-                        valueRange = 1f..50f
+                        valueRange = max(1f, 350f / flatPoints.size.toFloat())..max(50f, 1000f / flatPoints.size.toFloat())
                     )
                 }
             )

@@ -104,7 +104,7 @@ private fun ChildrenSection(
                             minWidth = 40.dp,
                             maxWidth = 40.dp,
                             height = 5.dp,
-                            textStyle = MaterialTheme.typography.titleLarge,
+                            textStyle = MaterialTheme.typography.headlineSmall,
                             fontWeight = FontWeight.Bold,
                             onClick = {
                                 onChildClick(children[index])

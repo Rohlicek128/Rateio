@@ -90,9 +90,10 @@ fun AppNavigation(
         selectedIndicatorColor = rateColors.backgroundColor,
         selectedIconColor = rateColors.foregroundColor,
         selectedTextColor = rateColors.foregroundColor,
-        unselectedTextColor = MaterialTheme.colorScheme.primaryFixedDim,
-        unselectedIconColor = MaterialTheme.colorScheme.primaryFixedDim,
+        unselectedTextColor = MaterialTheme.colorScheme.tertiaryContainer,
+        unselectedIconColor = MaterialTheme.colorScheme.tertiaryContainer,
     )
+    val style = MaterialTheme.typography.bodySmall
 
     Scaffold(
         bottomBar = {
@@ -117,7 +118,7 @@ fun AppNavigation(
                         selected = currentDestination?.hasRoute<Route.TopLevel.Home>() == true,
                         onClick = { navController.navigateSingleTop(Route.TopLevel.Home) },
                         icon = { Icon(Icons.Default.LibraryAdd, contentDescription = null) },
-                        label = { Text("Ratings", fontWeight = FontWeight.Bold) },
+                        label = { Text("Ratings", fontWeight = FontWeight.Bold, style = style) },
                         colors = colors,
                     )
                     // Leaderboard
@@ -125,7 +126,7 @@ fun AppNavigation(
                         selected = currentDestination?.hasRoute<Route.TopLevel.Leaderboard>() == true,
                         onClick = { navController.navigateSingleTop(Route.TopLevel.Leaderboard) },
                         icon = { Icon(Icons.Default.Leaderboard, contentDescription = null) },
-                        label = { Text("Leaderboard", fontWeight = FontWeight.Bold) },
+                        label = { Text("Leaderboard", fontWeight = FontWeight.Bold, style = style) },
                         colors = colors,
                     )
                     // Browse
@@ -133,7 +134,7 @@ fun AppNavigation(
                         selected = currentDestination?.hasRoute<Route.TopLevel.Browse>() == true,
                         onClick = { navController.navigateSingleTop(Route.TopLevel.Browse) },
                         icon = { Icon(Icons.Default.Search, contentDescription = null) },
-                        label = { Text("Browse", fontWeight = FontWeight.Bold) },
+                        label = { Text("Browse", fontWeight = FontWeight.Bold, style = style) },
                         colors = colors,
                     )
                     // Settings
@@ -141,7 +142,7 @@ fun AppNavigation(
                         selected = currentDestination?.hasRoute<Route.TopLevel.Profile>() == true,
                         onClick = { navController.navigateSingleTop(Route.TopLevel.Profile) },
                         icon = { Icon(Icons.Default.Person, contentDescription = null) },
-                        label = { Text("Profile", fontWeight = FontWeight.Bold) },
+                        label = { Text("Profile", fontWeight = FontWeight.Bold, style = style) },
                         colors = colors,
                     )
                 }
@@ -178,7 +179,10 @@ fun AppNavigation(
                 composable<Route.TopLevel.Home> {
                     HomeScreen(
                         contentPadding = globalPadding,
-                        onItemClick = { id -> navController.navigate(Route.CategoryDetail(id)) }
+                        onItemClick = { id -> navController.navigate(Route.CategoryDetail(id)) },
+                        onOpenSettings = {
+                            navController.navigate(Route.SettingsLevel.SettingsTop)
+                        }
                     )
                 }
 

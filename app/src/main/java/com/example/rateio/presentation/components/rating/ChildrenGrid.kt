@@ -41,9 +41,9 @@ fun ChildrenGrid(
             horizontalArrangement = Arrangement.spacedBy(6.dp),
         ) {
             Column(
-                verticalArrangement = Arrangement.spacedBy(22.3.dp),
+                verticalArrangement = Arrangement.spacedBy(25.dp),
                 horizontalAlignment = Alignment.End,
-                modifier = Modifier.width(48.dp).padding(top = 35.dp),
+                modifier = Modifier.width(48.dp).padding(top = 34.dp),
             ) {
                 val longestSeason = childrenGroups.values.maxBy { it.size }
                 for (i in 1..longestSeason.size) {
@@ -127,7 +127,7 @@ private fun ChildrenColumn(
                     minWidth = width,
                     maxWidth = width,
                     height = height,
-                    textStyle = MaterialTheme.typography.titleLarge,
+                    textStyle = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.Bold,
                     onClick = {
                         onChildClick(child)
@@ -143,7 +143,7 @@ private fun ChildrenColumn(
                     minWidth = width,
                     maxWidth = width,
                     height = height,
-                    textStyle = MaterialTheme.typography.titleLarge,
+                    textStyle = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.Bold,
                 )
             }
@@ -163,7 +163,7 @@ private fun AverageRatingBox(
         minWidth = width,
         maxWidth = width,
         height = height,
-        textStyle = MaterialTheme.typography.titleLarge,
+        textStyle = MaterialTheme.typography.headlineSmall,
         fontWeight = FontWeight.Bold,
     )
 }

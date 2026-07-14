@@ -1,5 +1,6 @@
 package com.example.rateio.presentation.rating.tmdb
 
+import androidx.compose.runtime.mutableStateSetOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
@@ -22,6 +23,9 @@ data class TmdbEpisodeDetailState(
     val nextEpisode: Pair<Int, Int>? = null,
     val imdbRating: ImdbRating? = null,
     val images: TmdbEpisodeImageResponse? = null,
+
+    val collapsedHeaders: MutableSet<String> = mutableStateSetOf(),
+
     val isLoading: Boolean = false,
     val error: String? = null,
 )

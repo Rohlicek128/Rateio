@@ -81,7 +81,7 @@ fun RateioTheme(
     MaterialTheme(
         colorScheme = colorScheme,
         motionScheme = MotionScheme.expressive(),
-        typography = Typography,
+        typography = TypographyRounded,
         content = content
     )
 }

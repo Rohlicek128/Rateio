@@ -38,15 +38,19 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.rateio.data.remote.tmdb.toCarouselImage
 import com.example.rateio.model.CategoryType
 import com.example.rateio.presentation.components.AdaptiveImageCarousel
+import com.example.rateio.presentation.components.CollapsibleHeader
 import com.example.rateio.presentation.components.ImageSize
+import com.example.rateio.presentation.components.ItemStatCard
 import com.example.rateio.presentation.components.PersonCard
 import com.example.rateio.presentation.components.ScreenError
 import com.example.rateio.presentation.components.ScreenLoading
 import com.example.rateio.presentation.components.SectionHeader
 import com.example.rateio.presentation.rating.RateItemDetailScreen
+import com.example.rateio.utils.formatCompact
 import com.example.rateio.utils.formatDate
 import com.example.rateio.utils.formatItemRankLabel
 import com.example.rateio.utils.formatTime
+import java.util.Locale
 
 
 @Composable
@@ -55,13 +59,13 @@ fun TmdbEpisodeDetailScreen(
     season: Int,
     episode: Int,
     isSaved: Boolean,
-    debug: String = "",
     customRating: Float? = null,
     savedRank: Int? = null,
     onRatingSaved: ((Float?) -> Unit)? = null,
     onNextClick: (season: Int, episode: Int) -> Unit,
     onPreviousClick: (season: Int, episode: Int) -> Unit,
     onBackClick: () -> Unit,
+    debug: String? = null,
     viewModel: TmdbEpisodeDetailViewModel = viewModel(
         factory = TmdbEpisodeDetailViewModel.factory(showId, season, episode)
     ),
@@ -80,7 +84,7 @@ fun TmdbEpisodeDetailScreen(
 
             RateItemDetailScreen(
                 title = episode.name,
-                subtitle = "Season ${episode.seasonNumber}, Episode ${episode.episodeNumber}  |  ${formatDate(episode.airDate)}  |  ${formatTime(episode.runtime)}$debug",
+                subtitle = formatDate(episode.airDate),
                 categoryName = "Episodes",
                 description = episode.overview,
                 coverImageUrl = episode.stillPath?.let {
@@ -95,6 +99,31 @@ fun TmdbEpisodeDetailScreen(
                 ratingLabel = savedRank?.let { formatItemRankLabel(it, CategoryType.TMDB_EPISODES) },
                 onRatingSaved = onRatingSaved,
                 onBackClick = onBackClick,
+                debug = debug,
+                headerExtraContent = {
+                    //Stats
+                    item {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceEvenly,
+                        ) {
+                            ItemStatCard(
+                                header = "Episode",
+                                statistic = "S${episode.seasonNumber}E${episode.episodeNumber}",
+                            )
+                            ItemStatCard(
+                                header = "Runtime",
+                                statistic = formatTime(episode.runtime),
+                            )
+                            if (!episode.productionCode.isNullOrBlank()) {
+                                ItemStatCard(
+                                    header = "Code",
+                                    statistic = episode.productionCode,
+                                )
+                            }
+                        }
+                    }
+                },
                 extraContent = {
 
                     // Move buttons
@@ -109,49 +138,25 @@ fun TmdbEpisodeDetailScreen(
 
                     // Crew
                     episode.credits?.crew?.takeIf { it.isNotEmpty() }?.let { crew ->
-                        item { SectionHeader("Crew") }
                         item {
-                            LazyRow(
-                                modifier = Modifier.height(150.dp),
-                                contentPadding = PaddingValues(horizontal = 16.dp),
-                                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                            ) {
-                                items(crew.sortedByDescending { it.popularity }.take(10), key = { it.creditId }) { member ->
-                                    PersonCard(
-                                        name = member.name,
-                                        position = member.job,
-                                        profilePath = member.profilePath?.let { "https://image.tmdb.org/t/p/w185$it" },
-                                        width = 80.dp,
-                                        height = 100.dp,
-                                    )
+                            val headerName = "Crew"
+                            CollapsibleHeader(
+                                headerName,
+                                isOpened = headerName !in state.collapsedHeaders,
+                                onClick = {
+                                    if (it) state.collapsedHeaders.remove(headerName)
+                                    else state.collapsedHeaders.add(headerName)
                                 }
-                            }
-                        }
-                    }
-
-                    // Cast
-                    if (episode.credits != null && (episode.credits.cast.isNotEmpty() || episode.credits.guest.isNotEmpty())) {
-                        item { SectionHeader("Cast") }
-                        item {
-                            LazyRow(
-                                modifier = Modifier.height(200.dp),
-                                contentPadding = PaddingValues(horizontal = 16.dp),
-                                horizontalArrangement = Arrangement.spacedBy(12.dp),
                             ) {
-                                episode.credits?.cast?.takeIf { it.isNotEmpty() }?.let { cast ->
-                                    items(cast.take(10), key = { it.creditId }) { member ->
+                                LazyRow(
+                                    modifier = Modifier.height(150.dp),
+                                    contentPadding = PaddingValues(horizontal = 16.dp),
+                                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                ) {
+                                    items(crew.sortedByDescending { it.popularity }.take(10), key = { it.creditId }) { member ->
                                         PersonCard(
                                             name = member.name,
-                                            position = member.character,
-                                            profilePath = member.profilePath?.let { "https://image.tmdb.org/t/p/w185$it" },
-                                        )
-                                    }
-                                }
-                                episode.credits?.guest?.takeIf { it.isNotEmpty() }?.let { guest ->
-                                    items(guest.sortedByDescending { it.popularity }.take(20), key = { it.creditId }) { member ->
-                                        PersonCard(
-                                            name = member.name,
-                                            position = member.character,
+                                            position = member.job,
                                             profilePath = member.profilePath?.let { "https://image.tmdb.org/t/p/w185$it" },
                                             width = 80.dp,
                                             height = 100.dp,
@@ -162,22 +167,73 @@ fun TmdbEpisodeDetailScreen(
                         }
                     }
 
+                    // Cast
+                    if (episode.credits != null && (episode.credits.cast.isNotEmpty() || episode.credits.guest.isNotEmpty())) {
+                        item {
+                            val headerName = "Cast"
+                            CollapsibleHeader(
+                                headerName,
+                                isOpened = headerName !in state.collapsedHeaders,
+                                onClick = {
+                                    if (it) state.collapsedHeaders.remove(headerName)
+                                    else state.collapsedHeaders.add(headerName)
+                                }
+                            ) {
+                                LazyRow(
+                                    modifier = Modifier.height(200.dp),
+                                    contentPadding = PaddingValues(horizontal = 16.dp),
+                                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                ) {
+                                    episode.credits?.cast?.takeIf { it.isNotEmpty() }?.let { cast ->
+                                        items(cast.take(10), key = { it.creditId }) { member ->
+                                            PersonCard(
+                                                name = member.name,
+                                                position = member.character,
+                                                profilePath = member.profilePath?.let { "https://image.tmdb.org/t/p/w185$it" },
+                                            )
+                                        }
+                                    }
+                                    episode.credits?.guest?.takeIf { it.isNotEmpty() }?.let { guest ->
+                                        items(guest.sortedByDescending { it.popularity }.take(20), key = { it.creditId }) { member ->
+                                            PersonCard(
+                                                name = member.name,
+                                                position = member.character,
+                                                profilePath = member.profilePath?.let { "https://image.tmdb.org/t/p/w185$it" },
+                                                width = 80.dp,
+                                                height = 100.dp,
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+
                     //Images
                     state.images?.stills?.takeIf { it.isNotEmpty() }?.let { images ->
-                        item { SectionHeader("Images") }
                         item {
-                            AdaptiveImageCarousel(
-                                urlBuilder = { size, path ->
-                                    "https://image.tmdb.org/t/p/${when(size) {
-                                        ImageSize.MEDIUM -> "w300"
-                                        ImageSize.LARGE -> "original"
-                                    }}${path}"
-                                },
-                                images.sortedBy { -it.voteCount }.map { it.toCarouselImage() },
-                                itemWidth = 250.dp,
-                                shape = MaterialTheme.shapes.large,
-                                maximizable = true,
-                            )
+                            val headerName = "Images"
+                            CollapsibleHeader(
+                                headerName,
+                                isOpened = headerName !in state.collapsedHeaders,
+                                onClick = {
+                                    if (it) state.collapsedHeaders.remove(headerName)
+                                    else state.collapsedHeaders.add(headerName)
+                                }
+                            ) {
+                                AdaptiveImageCarousel(
+                                    urlBuilder = { size, path ->
+                                        "https://image.tmdb.org/t/p/${when(size) {
+                                            ImageSize.MEDIUM -> "w300"
+                                            ImageSize.LARGE -> "original"
+                                        }}${path}"
+                                    },
+                                    images.sortedBy { -it.voteCount }.map { it.toCarouselImage() },
+                                    itemWidth = 250.dp,
+                                    shape = MaterialTheme.shapes.large,
+                                    maximizable = true,
+                                )
+                            }
                         }
                     }
 
