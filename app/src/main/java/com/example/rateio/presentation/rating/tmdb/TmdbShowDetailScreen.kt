@@ -221,23 +221,11 @@ fun TmdbShowDetailScreen(
                 unwatchedEpisodes.first() else null
 
             val expandWatchedSeason = true
-            if (isSaved && expandWatchedSeason && nextToWatchEpisode != null) {
+            if (isSaved && status != ItemStatus.COMPLETED && status != ItemStatus.DROPPED &&
+                expandWatchedSeason && nextToWatchEpisode != null) {
                 state.expandedSeasons.add("Season ${nextToWatchEpisode.seasonNumber}")
             }
 
-
-            /*val episodesCount = if (selectedRatings == 2) listOfRatings.size else sortedBestEpisodes.size
-            val sortedEpisodesTop = when {
-                episodesCount >= 10 -> {
-                    sortedBestEpisodes.take(round(episodesCount * 0.1f).toInt().coerceIn(3, 10))
-                }
-                episodesCount in 5..<10 -> {
-                    sortedBestEpisodes.take(1)
-                }
-                else -> {
-                    emptyList()
-                }
-            }*/
 
             val spoilers = metadata.showSpoilers || !isSaved
             var spoilName by remember { mutableStateOf(true) }

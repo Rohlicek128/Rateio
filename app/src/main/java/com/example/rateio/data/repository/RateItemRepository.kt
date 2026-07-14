@@ -122,7 +122,7 @@ class RateItemRepository(private val dao: RateItemDao) {
             dao.update(updated)
             return existing.id
         }
-        return dao.insert(build().copy(parentId = parentId, rating = null).toEntity())
+        return dao.insert(build().copy(id = 0, parentId = parentId, rating = null).toEntity())
     }
 
     suspend fun save(item: RateItem): Long =

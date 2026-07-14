@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.HideImage
 import androidx.compose.material.icons.filled.Refresh
@@ -75,6 +76,8 @@ import com.example.rateio.presentation.settings.SettingsSwitch
 import com.example.rateio.presentation.settings.SettingsTextField
 import kotlinx.serialization.json.Json
 import kotlin.math.abs
+import kotlin.math.max
+import kotlin.math.min
 
 
 @Composable
@@ -302,11 +305,14 @@ fun OLWorkDetailScreen(
                                 )
                             },
                             trailingContent = {
-                                Text(
-                                    modifier = Modifier.padding(end = 6.dp),
-                                    text = completedPages.toString(),
-                                    fontWeight = FontWeight.Bold,
-                                    color = MaterialTheme.colorScheme.primary,
+                                SettingsNumberField(
+                                    modifier = Modifier.width(85.dp),
+                                    value = completedPages.toFloat(),
+                                    icon = false,
+                                    asInt = true,
+                                    onValueChange = { value ->
+                                        completedPages = max(0, min(numberOfPages ?: 1000, value.toInt()))
+                                    },
                                 )
                             }
                         )

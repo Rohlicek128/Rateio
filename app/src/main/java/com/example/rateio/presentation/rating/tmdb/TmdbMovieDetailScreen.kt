@@ -184,6 +184,7 @@ fun TmdbMovieDetailScreen(
                     { showSettings = true }
                 } else null,
                 canAddToLibrary = false,
+                debug = "${state.savedItem?.id}, ${state.savedItem?.parentId}, ${state.savedItem?.categoryId}, ${state.savedItem?.externalId}",
                 headerExtraContent = {
                     //Stats
                     item {
