@@ -57,13 +57,7 @@ fun RatingBottomSheet(
         ) {
             RateBox(
                 rating = rackPosition,
-                roundedCorners = 18.dp,
-                width = 24.dp,
-                minWidth = 42.dp,
-                height = 6.dp,
-                textStyle = MaterialTheme.typography.displayMedium,
-                fontWeight = FontWeight.Bold,
-                loadingSize = 38.dp,
+                size = RateBoxSizeDefaults.DISPLAY,
                 decimalOffset = 1u,
                 colorBucketsOverride = colorBucketsOverride,
                 transformationOverride = transformationOverride,

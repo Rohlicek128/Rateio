@@ -37,6 +37,7 @@ fun ChildrenList(
     sortedChildren: List<RateItem> = emptyList(),
     spoilers: Boolean = true,
     spoilName: Boolean = true,
+    showChildRatedCompletion: Boolean = false,
 ) {
     Column(
         modifier = modifier,
@@ -69,7 +70,7 @@ fun ChildrenList(
                     }
                 },
                 leadingRateBoxContent = {
-                    if (displayNotNullCounter && children.isNotEmpty() && flatRatings.isNotEmpty()) {
+                    if (showChildRatedCompletion && displayNotNullCounter && children.isNotEmpty() && flatRatings.isNotEmpty()) {
                         Text(
                             "${flatRatings.size}/${children.size}",
                             style = MaterialTheme.typography.titleMedium,

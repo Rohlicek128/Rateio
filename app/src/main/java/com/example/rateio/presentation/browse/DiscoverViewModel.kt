@@ -62,14 +62,12 @@ class DiscoverViewModel(
                                         imdbRepository.getRatingByImdbId(imdbId)?.averageRating
                                     }
 
-                                    if (rating != null) {
-                                        _state.update { current ->
-                                            val updated = current.results.toMutableList()
-                                            if (index < updated.size) updated[index] = updated[index].copy(
-                                                rating = rating
-                                            )
-                                            current.copy(results = updated)
-                                        }
+                                    _state.update { current ->
+                                        val updated = current.results.toMutableList()
+                                        if (index < updated.size) updated[index] = updated[index].copy(
+                                            rating = rating
+                                        )
+                                        current.copy(results = updated)
                                     }
                                 }
                             }

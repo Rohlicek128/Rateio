@@ -18,6 +18,7 @@ import androidx.compose.ui.unit.dp
 import com.example.rateio.model.RateItem
 import com.example.rateio.model.computeAggregateRating
 import com.example.rateio.presentation.components.RateBox
+import com.example.rateio.presentation.components.RateBoxSizeDefaults
 
 
 @Composable
@@ -117,18 +118,14 @@ private fun ChildrenColumn(
             modifier = Modifier.padding(horizontal = 16.dp),
         )
 
-        val width = 39.dp
-        val height = 4.dp
+        //val width = 39.dp
+        //val height = 4.dp
         children
             ?.forEach { child ->
                 RateBox(
                     rating = child.rating,
-                    roundedCorners = 7.dp,
-                    minWidth = width,
-                    maxWidth = width,
-                    height = height,
-                    textStyle = MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.Bold,
+                    widthConstrained = true,
+                    size = RateBoxSizeDefaults.REGULAR_GRID,
                     onClick = {
                         onChildClick(child)
                     }
@@ -139,12 +136,8 @@ private fun ChildrenColumn(
             if (it <= 0) {
                 RateBox(
                     rating = null,
-                    roundedCorners = 7.dp,
-                    minWidth = width,
-                    maxWidth = width,
-                    height = height,
-                    textStyle = MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.Bold,
+                    widthConstrained = true,
+                    size = RateBoxSizeDefaults.REGULAR_GRID,
                 )
             }
         }
@@ -155,15 +148,9 @@ private fun ChildrenColumn(
 private fun AverageRatingBox(
     children: List<RateItem>,
 ) {
-    val width = 39.dp
-    val height = 4.dp
     RateBox(
         rating = computeAggregateRating(children),
-        roundedCorners = 7.dp,
-        minWidth = width,
-        maxWidth = width,
-        height = height,
-        textStyle = MaterialTheme.typography.headlineSmall,
-        fontWeight = FontWeight.Bold,
+        widthConstrained = true,
+        size = RateBoxSizeDefaults.REGULAR_GRID,
     )
 }

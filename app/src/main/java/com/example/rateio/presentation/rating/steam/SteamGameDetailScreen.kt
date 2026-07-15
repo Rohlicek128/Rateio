@@ -87,7 +87,7 @@ fun SteamGameDetailScreen(
                         state.reviews?.totalPositive?.div(state.reviews?.totalReviews?.toFloat() ?: 1f) else null
                 } else customRating,
                 ratingVotes = if (!isSaved) state.reviews?.totalReviews else null,
-                ratingLabel = state.reviews?.reviewScoreDesc,
+                //ratingLabel = state.reviews?.reviewScoreDesc,
                 onRatingSaved = onRatingSaved,
                 onBackClick = onBackClick,
                 canAddToLibrary = false,

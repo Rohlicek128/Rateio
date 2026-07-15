@@ -39,6 +39,14 @@ fun RatingTransformation.getMaxValue(): String {
     return rtf.leadingString + ("%.${rtf.decimalPlaces}f").format(rtf.locale, rounded) + rtf.trailingString
 }
 
+fun RatingTransformation.getMaxCharWidth(rating: Float? = 1f): Int {
+    return getTransformedRating(rating, rtf = this)
+        .replace(".", "")
+        .replace(",", "")
+        .length
+}
+
+
 fun getTransformedRating(rating: Float?, decimalOffset: UInt = 0u, rtf: RatingTransformation = getCurrentRatingTransformations()): String {
     if (rating == null) return rtf.nullString
     val decimalOffsetPow = 10f.pow(decimalOffset.toInt())

@@ -92,11 +92,6 @@ fun SettingsDatabaseScreen(
                     trailingContent = {
                         RateBox(
                             rating = rating?.averageRating,
-                            roundedCorners = 12.dp,
-                            width = 12.dp,
-                            minWidth = 36.dp,
-                            height = 4.dp,
-                            textStyle = MaterialTheme.typography.headlineSmall,
                             colorBucketsOverride = RatingColorBucketConstants.RC_IMDB_MOVIES,
                         )
                     }

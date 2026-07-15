@@ -42,6 +42,7 @@ import com.example.rateio.presentation.components.RatingBottomSheet
 import com.example.rateio.presentation.rating.display.RatingTransformation
 import com.example.rateio.presentation.rating.display.RatingTransformationsConstants
 import com.example.rateio.presentation.rating.display.getCurrentRatingTransformations
+import com.example.rateio.presentation.rating.display.getMaxCharWidth
 import com.example.rateio.presentation.rating.display.getTransformedRating
 import com.example.rateio.presentation.settings.ErrorCard
 import com.example.rateio.presentation.settings.ListItemPosition
@@ -126,10 +127,7 @@ fun RatingTransformationSettingsScreen(
             }
             item {
                 AnimatedVisibility(
-                    visible = getTransformedRating(1f, rtf = state)
-                        .replace(".", "")
-                        .replace(",", "")
-                        .length >= 5,
+                    visible = state.getMaxCharWidth() >= 5,
                     enter = fadeIn() + expandVertically(expandFrom = Alignment.Top),
                     exit = fadeOut() + shrinkVertically(shrinkTowards = Alignment.Top)
                 ) {
@@ -160,11 +158,6 @@ fun RatingTransformationSettingsScreen(
                             )
                             RateBox(
                                 rating = viewModel.testRating,
-                                roundedCorners = 12.dp,
-                                width = 12.dp,
-                                minWidth = 36.dp,
-                                height = 4.dp,
-                                textStyle = MaterialTheme.typography.headlineSmall,
                                 transformationOverride = state,
                                 onClick = {
                                     showRatingSheet = true

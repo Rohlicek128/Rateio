@@ -20,6 +20,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.rateio.presentation.ScreenScaffold
 import com.example.rateio.presentation.components.RateBox
+import com.example.rateio.presentation.components.RateBoxSizeDefaults
 import com.example.rateio.presentation.components.RatingBottomSheet
 import com.example.rateio.presentation.components.SelectionList
 import com.example.rateio.presentation.rating.display.RatingTransformationsConstants
@@ -70,13 +71,7 @@ fun SettingsRatingScreen(
 
                     RateBox(
                         rating = ratingPer,
-                        roundedCorners = 18.dp,
-                        width = 24.dp,
-                        minWidth = 42.dp,
-                        height = 4.dp,
-                        textStyle = MaterialTheme.typography.displayMedium,
-                        fontWeight = FontWeight.Bold,
-                        loadingSize = 38.dp,
+                        size = RateBoxSizeDefaults.DISPLAY,
                         onClick = {
                             showRatingSheet = true
                         }

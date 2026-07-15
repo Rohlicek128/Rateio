@@ -37,9 +37,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.asComposePath
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.graphics.drawscope.scale
 import androidx.compose.ui.graphics.drawscope.translate
@@ -84,11 +87,12 @@ fun ChildrenTimeline(
     childrenGroups: Map<RateItem?, List<RateItem>>,
     onChildClick: (RateItem) -> Unit,
     modifier: Modifier = Modifier,
-    minEpisodeWidth: Dp = 7.dp,
+    minEpisodeWidth: Dp = 14.dp,
     placeholderRatio: Float = 16f / 9f,
     sortedChildren: List<RateItem> = emptyList(),
     spoilers: Boolean = true,
     spoilName: Boolean = true,
+    trendline: Boolean = true,
 ) {
     val haptic = LocalHapticFeedback.current
 
@@ -174,10 +178,16 @@ fun ChildrenTimeline(
         max(minEpisodeWidth.value, 350f / flatPoints.size.toFloat())
     ) }
     val childRadius = remember(childrenGroups, childWidth) {
-        max(4f, min(8f, childWidth / 3f))
+        max(4f, min(8f, (childWidth + 2f) / 3f))
     }
+    var tension by rememberSaveable { mutableFloatStateOf(0.13f) }
 
     val totalWidth = padL + childWidth.dp * flatPoints.size + padR
+
+    val movingAveragePoints = remember(flatPoints, trendline) {
+        if (trendline) calculateMovingAverage(flatPoints, windowSize = 6)
+        else emptyList()
+    }
 
     val rtf = getCurrentRatingTransformations()
 
@@ -351,6 +361,39 @@ fun ChildrenTimeline(
                 }
 
 
+                // Draw Moving Average path
+                if (trendline && movingAveragePoints.size >= 2) {
+                    val trendPath = Path().apply {
+                        moveTo(xOf(movingAveragePoints.first().first), yOf(movingAveragePoints.first().second))
+                        for (i in 1 until movingAveragePoints.size) {
+                            lineTo(xOf(movingAveragePoints[i].first), yOf(movingAveragePoints[i].second))
+                        }
+                    }
+
+                    drawPath(
+                        path = trendPath,
+                        color = lineColor.copy(alpha = 0.65f),
+                        style = Stroke(
+                            width = (max(3f, childRadius * 0.5f)).dp.toPx(),
+                            cap = StrokeCap.Round,
+                            join = StrokeJoin.Round,
+                            pathEffect = PathEffect.dashPathEffect(
+                                floatArrayOf(10f, 25f),
+                                0f
+                            )
+                        )
+                    )
+                    /*drawPath(
+                        path = trendPath,
+                        color = lineColor.copy(alpha = 0.65f),
+                        style = Stroke(
+                            width = (max(3f, childRadius * 0.45f)).dp.toPx(),
+                            cap = StrokeCap.Round,
+                            join = StrokeJoin.Round,
+                        )
+                    )*/
+                }
+
                 // Connecting line
                 /*val ratedPoints = flatPoints.filter { it.child.rating != null }
                 if (ratedPoints.size >= 2) {
@@ -372,34 +415,61 @@ fun ChildrenTimeline(
                 }*/
                 val ratedPoints = flatPoints.filter { it.child.rating != null }
                 if (ratedPoints.size >= 2) {
+                    // A tension factor: 0.1f to 0.3f gives a beautiful, natural curve.
+                    // Higher values make it bend more aggressively; 0f results in straight lines.
+                    //val tension = 0.15f
+
                     for (i in 0 until ratedPoints.size - 1) {
-                        val startItem = ratedPoints[i]
-                        val endItem = ratedPoints[i + 1]
+                        val current = ratedPoints[i]
+                        val next = ratedPoints[i + 1]
 
-                        val startRating = startItem.child.rating!!
-                        val endRating = endItem.child.rating!!
+                        val x1 = xOf(current.globalIndex)
+                        val y1 = yOf(current.child.rating!!)
+                        val x2 = xOf(next.globalIndex)
+                        val y2 = yOf(next.child.rating!!)
 
-                        val x1 = xOf(startItem.globalIndex)
-                        val y1 = yOf(startRating)
-                        val color1 = ratingColor(startRating)
+                        // Neighbors
+                        val prev = if (i > 0) ratedPoints[i - 1] else current
+                        val x0 = xOf(prev.globalIndex)
+                        val y0 = yOf(prev.child.rating!!)
 
-                        val x2 = xOf(endItem.globalIndex)
-                        val y2 = yOf(endRating)
-                        val color2 = ratingColor(endRating)
+                        val post = if (i + 2 < ratedPoints.size) ratedPoints[i + 2] else next
+                        val x3 = xOf(post.globalIndex)
+                        val y3 = yOf(post.child.rating!!)
 
-                        // Create a gradient that spans exactly across this specific segment
+                        // C1
+                        val cp1x = x1 + (x2 - x0) * tension
+                        val cp1y = y1 + (y2 - y0) * tension
+
+                        // C2
+                        val cp2x = x2 - (x3 - x1) * tension
+                        val cp2y = y2 - (y3 - y1) * tension
+
+                        val segmentPath = Path().apply {
+                            moveTo(x1, y1)
+                            cubicTo(
+                                x1 = cp1x, y1 = cp1y,
+                                x2 = cp2x, y2 = cp2y,
+                                x3 = x2, y3 = y2
+                            )
+                        }
+
+                        val color1 = ratingColor(current.child.rating)
+                        val color2 = ratingColor(next.child.rating)
                         val segmentBrush = Brush.linearGradient(
                             colors = listOf(color1, color2),
                             start = Offset(x1, y1),
                             end = Offset(x2, y2)
                         )
 
-                        drawLine(
+                        drawPath(
+                            path = segmentPath,
                             brush = segmentBrush,
-                            start = Offset(x1, y1),
-                            end = Offset(x2, y2),
-                            strokeWidth = (childRadius * 0.5f).dp.toPx(),
-                            cap = StrokeCap.Round
+                            style = Stroke(
+                                width = (childRadius * 0.5f).dp.toPx(),
+                                cap = StrokeCap.Round,
+                                join = StrokeJoin.Round
+                            )
                         )
                     }
                 }
@@ -514,7 +584,7 @@ fun ChildrenTimeline(
                 modifier = Modifier.fillMaxWidth(),
                 title = "Space width",
                 description = "Sets the width between each dot in DP.",
-                position = ListItemPosition.END,
+                position = ListItemPosition.MIDDLE,
                 supportingContent = {
                     Slider(
                         childWidth,
@@ -531,6 +601,27 @@ fun ChildrenTimeline(
                     SettingsValueText("%.1f dp".format(rtf.locale, childWidth))
                 },
             )
+            SettingListItem(
+                modifier = Modifier.fillMaxWidth(),
+                title = "Tension",
+                description = "Tension of the trendline.",
+                position = ListItemPosition.END,
+                supportingContent = {
+                    Slider(
+                        tension,
+                        onValueChange = { value ->
+                            if (tension != value) {
+                                haptic.performHapticFeedback(HapticFeedbackType.SegmentFrequentTick)
+                                tension = value
+                            }
+                        },
+                        valueRange = 0f..1.5f
+                    )
+                },
+                trailingContent = {
+                    SettingsValueText("%.2f dp".format(rtf.locale, tension))
+                },
+            )
         }
     }
 }
@@ -543,4 +634,25 @@ private fun getInitialPlotScale(minRating: Float): Float {
 
     val mapped = targetMin + (minRating - initialMin) * (targetMax - targetMin) / (initialMax - initialMin)
     return mapped.coerceIn(targetMin, targetMax).toFloat()
+}
+
+
+private fun calculateMovingAverage(points: List<ChildPoint>, windowSize: Int = 3): List<Pair<Int, Float>> {
+    val rated = points.filter { it.child.rating != null }
+    if (rated.size < 3) return emptyList()
+    val wSize = min(rated.size, windowSize)
+
+    val averages = mutableListOf<Pair<Int, Float>>()
+
+    for (i in rated.indices) {
+        // Define sliding window boundaries centered around the current index
+        val start = (i - wSize / 2).coerceAtLeast(0)
+        val end = (start + wSize).coerceAtMost(rated.size)
+
+        val window = rated.subList(start, end)
+        val averageRating = window.map { it.child.rating!! }.average().toFloat()
+
+        averages.add(rated[i].globalIndex to averageRating)
+    }
+    return averages
 }

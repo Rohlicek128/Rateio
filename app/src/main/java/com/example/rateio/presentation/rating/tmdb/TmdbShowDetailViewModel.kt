@@ -41,6 +41,12 @@ enum class SortModeShow(override val displayName: String): HasDisplayName {
     NAME("Alphabetically"),
 }
 
+enum class RatingsSource(override val displayName: String): HasDisplayName {
+    IMDB("IMDb"),
+    TMDB("TMDb"),
+    USER("Yours"),
+}
+
 data class TmdbShowDetailState(
     val show: TmdbShowDetail? = null,
     val imdbRating: ImdbRatingEntity? = null,

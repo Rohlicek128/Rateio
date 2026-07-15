@@ -166,14 +166,7 @@ fun ReviewCard(
                         }
                     }
                 }
-                RateBox(
-                    rating = rating,
-                    roundedCorners = 12.dp,
-                    width = 12.dp,
-                    minWidth = 32.dp,
-                    height = 4.dp,
-                    textStyle = MaterialTheme.typography.titleLarge,
-                )
+                RateBox(rating = rating)
             }
             if (placeholderContent != null && content.isBlank()) {
                 Text(
@@ -273,14 +266,7 @@ private fun FullReviewModal(
                         }
                     }
                 }
-                RateBox(
-                    rating = rating,
-                    roundedCorners = 12.dp,
-                    width = 12.dp,
-                    minWidth = 36.dp,
-                    height = 5.dp,
-                    textStyle = MaterialTheme.typography.headlineSmall,
-                )
+                RateBox(rating = rating,)
             }
 
             LazyColumn(

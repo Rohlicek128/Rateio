@@ -13,6 +13,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.example.rateio.presentation.ScreenScaffold
+import com.example.rateio.presentation.rating.display.getRatingColor
+import com.example.rateio.utils.dim
 
 
 @Composable
@@ -23,6 +25,10 @@ fun SettingsScreen(
     onCategoriesClick: () -> Unit,
     onBackClick: () -> Unit,
 ) {
+    val alpha = 0.5f
+    val step = 0.1f
+    var settingCount = 1f
+
     ScreenScaffold(
         title = "Settings",
         onBackClick = onBackClick,
@@ -33,45 +39,66 @@ fun SettingsScreen(
             contentPadding = padding,
         ) {
             item {
+                val colors = getRatingColor(settingCount)
+                settingCount -= step
                 SettingListItem(
                     title = "Appearance",
                     description = "Theme, style",
                     icon = Icons.Default.Palette,
+                    //iconContentColor = colors.foregroundColor,
+                    iconContainerColor = colors.backgroundColor.copy(alpha = alpha),
                     onClick = onAppearanceClick,
                     position = ListItemPosition.START,
                 )
+
             }
             item {
+                val colors = getRatingColor(settingCount)
+                settingCount -= step
                 SettingListItem(
                     title = "Rating Visualization",
                     description = "Colors, Rating transformations",
                     icon = Icons.Default.Transform,
+                    //iconContentColor = colors.foregroundColor,
+                    iconContainerColor = colors.backgroundColor.copy(alpha = alpha),
                     onClick = onRatingClick,
                     position = ListItemPosition.MIDDLE,
                 )
             }
             item {
+                val colors = getRatingColor(settingCount)
+                settingCount -= step
                 SettingListItem(
                     title = "Categories",
                     description = "Shows, Movies, Games...",
                     icon = Icons.Default.Category,
+                    //iconContentColor = colors.foregroundColor,
+                    iconContainerColor = colors.backgroundColor.copy(alpha = alpha),
                     onClick = onCategoriesClick,
                     position = ListItemPosition.MIDDLE,
                 )
             }
             item {
+                val colors = getRatingColor(settingCount)
+                settingCount -= step
                 SettingListItem(
                     title = "Database",
                     description = "IMDb ratings",
                     icon = Icons.Default.DatasetLinked,
+                    //iconContentColor = colors.foregroundColor,
+                    iconContainerColor = colors.backgroundColor.copy(alpha = alpha),
                     onClick = onDatabaseClick,
                     position = ListItemPosition.MIDDLE,
                 )
             }
             item {
+                val colors = getRatingColor(settingCount)
+                settingCount -= step
                 SettingListItem(
                     title = "About",
                     description = "App info",
+                    //iconContentColor = colors.foregroundColor,
+                    iconContainerColor = colors.backgroundColor.copy(alpha = alpha),
                     icon = Icons.Default.Info,
                     position = ListItemPosition.END,
                 )

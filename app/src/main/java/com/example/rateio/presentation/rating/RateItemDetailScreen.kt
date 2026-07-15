@@ -60,6 +60,7 @@ import com.example.rateio.presentation.components.FloatingIconButton
 import com.example.rateio.presentation.components.FullScreenImageModal
 import com.example.rateio.presentation.components.LibraryToggle
 import com.example.rateio.presentation.components.RateBox
+import com.example.rateio.presentation.components.RateBoxSizeDefaults
 import com.example.rateio.presentation.components.RatingBottomSheet
 import com.example.rateio.presentation.components.ReviewCard
 import com.example.rateio.presentation.rating.display.RatingColorBuckets
@@ -490,13 +491,7 @@ private fun PosterWithRating(
             ) {
                 RateBox(
                     rating = if (onRatingSaved == null) rating else ratingPer,
-                    roundedCorners = 18.dp,
-                    width = 24.dp,
-                    minWidth = 42.dp,
-                    height = 4.dp,
-                    textStyle = MaterialTheme.typography.displayMedium,
-                    fontWeight = FontWeight.Bold,
-                    loadingSize = 38.dp,
+                    size = RateBoxSizeDefaults.DISPLAY,
                     colorBucketsOverride = colorBucketsOverride,
                     onClick = {
                         showRatingSheet = true

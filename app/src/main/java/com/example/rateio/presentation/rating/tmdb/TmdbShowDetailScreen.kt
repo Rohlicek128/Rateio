@@ -27,7 +27,6 @@ import androidx.compose.material3.ToggleButtonDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -144,59 +143,62 @@ fun TmdbShowDetailScreen(
             )
             val episodesState by episodesViewModel.state.collectAsState()
 
-            var selectedRatings by remember { mutableIntStateOf(if (!isSaved) 0 else 2) }
+            var selectedRatings by remember { mutableStateOf(if (!isSaved) RatingsSource.IMDB else RatingsSource.USER) }
 
             val userRatings = viewModel.userRatingsState.collectAsStateWithLifecycle()
             val listOfRatings = userRatings.value.values.flatMap { it.values }.filterNotNull()
 
-            val ratings: Map<Int, Map<Int, Float?>> = when (selectedRatings) {
-                0 -> episodesState.imdbRatings
-                1 -> episodesState.seasonEpisodes.mapValues { (_, episodes) ->
-                    episodes.associate { it -> it.episodeNumber to it.voteAverage?.div(10f).takeIf { it != 0f } }
+            val ratings: Map<Int, Map<Int, Float?>> = remember(selectedRatings, episodesState) {
+                when (selectedRatings) {
+                    RatingsSource.IMDB -> episodesState.imdbRatings
+                    RatingsSource.TMDB -> episodesState.seasonEpisodes.mapValues { (_, episodes) ->
+                        episodes.associate { it -> it.episodeNumber to it.voteAverage?.div(10f).takeIf { it != 0f } }
+                    }
+                    RatingsSource.USER -> userRatings.value
                 }
-                2 -> userRatings.value
-                else -> userRatings.value
             }
 
-            val childrenGroups: Map<RateItem?, List<RateItem>> = episodesState.seasonEpisodes.entries
-                .associate { (seasonNumber, episodes) ->
-                    val items = episodes.sortedBy { it.episodeNumber }.map { episode ->
-                        RateItem(
-                            id = -1,
-                            parentId = seasonNumber.toLong(),
+            val childrenGroups: Map<RateItem?, List<RateItem>> = remember(ratings, episodesState.seasonEpisodes, state.savedItem) {
+                episodesState.seasonEpisodes.entries
+                    .associate { (seasonNumber, episodes) ->
+                        val items = episodes.sortedBy { it.episodeNumber }.map { episode ->
+                            RateItem(
+                                id = -1,
+                                parentId = seasonNumber.toLong(),
+                                categoryId = state.savedItem?.categoryId ?: 0,
+                                title = episode.name,
+                                subtitle = "Episode ${episode.episodeNumber}",
+                                length = if (episode.runtime > 0) episode.runtime.toFloat() else null,
+                                rating = ratings[episode.seasonNumber]?.get(episode.episodeNumber),
+                                coverImageUrl = episode.stillPath?.let { "https://image.tmdb.org/t/p/original$it" } ?: "",
+                                coverImageLowUrl = episode.stillPath?.let { "https://image.tmdb.org/t/p/w300$it" } ?: "",
+                                externalId = episode.id.toString(),
+                                externalSource = CategoryType.TMDB_EPISODES,
+                                metadataJSON = Json.encodeToString(TmdbEpisodeMetadata(
+                                    showId = showId,
+                                    seasonNumber = episode.seasonNumber,
+                                    episodeNumber = episode.episodeNumber,
+                                    runtime = episode.runtime,
+                                ))
+                            )
+                        }
+                        val season = seasons[seasonNumber - 1]
+                        val seasonItem = RateItem(
+                            id = seasonNumber.toLong(),
+                            parentId = state.savedItem?.id,
                             categoryId = state.savedItem?.categoryId ?: 0,
-                            title = episode.name,
-                            subtitle = "Episode ${episode.episodeNumber}",
-                            length = if (episode.runtime > 0) episode.runtime.toFloat() else null,
-                            rating = ratings[episode.seasonNumber]?.get(episode.episodeNumber),
-                            coverImageUrl = episode.stillPath?.let { "https://image.tmdb.org/t/p/original$it" } ?: "",
-                            coverImageLowUrl = episode.stillPath?.let { "https://image.tmdb.org/t/p/w300$it" } ?: "",
-                            externalId = episode.id.toString(),
-                            externalSource = CategoryType.TMDB_EPISODES,
-                            metadataJSON = Json.encodeToString(TmdbEpisodeMetadata(
-                                showId = showId,
-                                seasonNumber = episode.seasonNumber,
-                                episodeNumber = episode.episodeNumber,
-                                runtime = episode.runtime,
-                            ))
+                            title = "Season $seasonNumber",
+                            subtitle = "${(season.airDate ?: "N/A").take(4)} | ${season.episodeCount} episodes",
+                            length = season.episodeCount.toFloat(),
+                            rating = computeAggregateRating(items),
+                            coverImageUrl = season.posterPath.let { "https://image.tmdb.org/t/p/original$it" },
+                            coverImageLowUrl = season.posterPath.let { "https://image.tmdb.org/t/p/w342$it" },
+                            externalId = season.id.toString(),
+                            externalSource = CategoryType.TMDB_SEASONS,
                         )
+                        seasonItem to items
                     }
-                    val season = seasons[seasonNumber - 1]
-                    val seasonItem = RateItem(
-                        id = seasonNumber.toLong(),
-                        parentId = state.savedItem?.id,
-                        categoryId = state.savedItem?.categoryId ?: 0,
-                        title = "Season $seasonNumber",
-                        subtitle = "${(season.airDate ?: "N/A").take(4)} | ${season.episodeCount} episodes",
-                        length = season.episodeCount.toFloat(),
-                        rating = computeAggregateRating(items),
-                        coverImageUrl = season.posterPath.let { "https://image.tmdb.org/t/p/original$it" },
-                        coverImageLowUrl = season.posterPath.let { "https://image.tmdb.org/t/p/w342$it" },
-                        externalId = season.id.toString(),
-                        externalSource = CategoryType.TMDB_SEASONS,
-                    )
-                    seasonItem to items
-                }
+            }
             val onChildClick = { child: RateItem ->
                 val parent = childrenGroups.keys.find { it?.id == child.parentId }
                 if (parent != null) {
@@ -235,7 +237,8 @@ fun TmdbShowDetailScreen(
             val spoilers = metadata.showSpoilers || !isSaved
             var spoilName by remember { mutableStateOf(true) }
             val spoilEpisode = { seasonNumber: Int, episodeNumber: Int ->
-                spoilers || (selectedRatings == 2 && userRatings.value[seasonNumber]?.get(episodeNumber) != null) || selectedRatings != 2
+                spoilers || selectedRatings != RatingsSource.USER ||
+                        (selectedRatings == RatingsSource.USER && userRatings.value[seasonNumber]?.get(episodeNumber) != null)
             }
 
             var showStatusSelector by remember { mutableStateOf(false) }
@@ -683,15 +686,15 @@ fun TmdbShowDetailScreen(
                                     modifier = Modifier
                                         .fillMaxWidth()
                                         .padding(horizontal = 8.dp),
-                                    selectedIndex = selectedRatings,
+                                    selectedIndex = RatingsSource.entries.indexOf(selectedRatings),
                                     onSelectionChanged = {
-                                        selectedRatings = it
-                                        if (selectedRatings == 0 && episodesState.imdbRatings.isEmpty() &&
+                                        selectedRatings = RatingsSource.entries[it]
+                                        if (selectedRatings == RatingsSource.IMDB && episodesState.imdbRatings.isEmpty() &&
                                             isSaved && !episodesState.isLoadingRatings) {
                                             episodesViewModel.fetchImdbRatings()
                                         }
                                     },
-                                    options = listOf("IMDb", "TMDb", "Yours"),
+                                    options = RatingsSource.entries.map { it.displayName },
                                 )
                                 ChildrenDisplay(
                                     childrenGroups = childrenGroups,
@@ -708,6 +711,7 @@ fun TmdbShowDetailScreen(
                                     isLoading = episodesState.isLoadingEpisodes,
                                     spoilers = spoilers,
                                     spoilName = spoilName,
+                                    showChildRatedCompletion = selectedRatings == RatingsSource.USER,
                                 )
                             }
                         }

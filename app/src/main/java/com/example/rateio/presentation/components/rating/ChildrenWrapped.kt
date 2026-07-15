@@ -20,6 +20,7 @@ import androidx.compose.ui.unit.dp
 import com.example.rateio.model.RateItem
 import com.example.rateio.model.computeAggregateRating
 import com.example.rateio.presentation.components.RateBox
+import com.example.rateio.presentation.components.RateBoxSizeDefaults
 import com.example.rateio.presentation.rating.display.getTransformedRating
 
 
@@ -100,12 +101,8 @@ private fun ChildrenSection(
                     if (index < children.size) {
                         RateBox(
                             rating = children[index].rating,
-                            roundedCorners = 8.dp,
-                            minWidth = 40.dp,
-                            maxWidth = 40.dp,
-                            height = 5.dp,
-                            textStyle = MaterialTheme.typography.headlineSmall,
-                            fontWeight = FontWeight.Bold,
+                            widthConstrained = true,
+                            size = RateBoxSizeDefaults.REGULAR_GRID,
                             onClick = {
                                 onChildClick(children[index])
                             }

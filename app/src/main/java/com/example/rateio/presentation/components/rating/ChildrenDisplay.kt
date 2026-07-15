@@ -1,6 +1,7 @@
 package com.example.rateio.presentation.components.rating
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -41,6 +42,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.input.pointer.motionEventSpy
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -53,6 +55,7 @@ import com.example.rateio.presentation.components.SortOrder
 import com.example.rateio.presentation.rating.tmdb.SortModeShow
 import com.example.rateio.presentation.settings.ListItemPosition
 import com.example.rateio.presentation.settings.SettingListItem
+import com.example.rateio.presentation.settings.SettingsValueText
 import kotlinx.serialization.json.Json
 import kotlin.collections.component1
 import kotlin.collections.component2
@@ -84,6 +87,7 @@ fun ChildrenDisplay(
     spoilers: Boolean = true,
     spoilName: Boolean = true,
     expandIfSingleGroup: Boolean = true,
+    showChildRatedCompletion: Boolean = true,
 ) {
     val haptic = LocalHapticFeedback.current
 
@@ -134,6 +138,7 @@ fun ChildrenDisplay(
     var showSortBySheet by remember { mutableStateOf(false) }
     var invertedGrid by remember { mutableStateOf(false) }
     var columnsWrapped by remember { mutableFloatStateOf(4f) }
+    var trendline by remember { mutableStateOf(false) }
 
     val timelineCategories = if (childrenGroups.values.isNotEmpty() && childrenGroups.keys.isNotEmpty()) {
         listOfNotNull(
@@ -255,6 +260,7 @@ fun ChildrenDisplay(
                                     sortedChildren = sortedChildrenTop,
                                     spoilers = spoilers,
                                     spoilName = spoilName,
+                                    showChildRatedCompletion = showChildRatedCompletion,
                                 )
                             }
                             else -> {
@@ -306,7 +312,7 @@ fun ChildrenDisplay(
                         SettingListItem(
                             modifier = Modifier.fillMaxWidth().padding(20.dp),
                             title = "Columns",
-                            description = "Value: ${columnsWrapped.toInt() + 1}",
+                            description = null,
                             position = ListItemPosition.SINGLE,
                             supportingContent = {
                                 Slider(
@@ -317,6 +323,12 @@ fun ChildrenDisplay(
                                     },
                                     steps = 13,
                                     valueRange = 0f..14f
+                                )
+                            },
+                            trailingContent = {
+                                SettingsValueText(
+                                    (columnsWrapped.toInt() + 1).toString(),
+                                    modifier = Modifier.padding(horizontal = 5.dp)
                                 )
                             }
                         )
@@ -330,17 +342,38 @@ fun ChildrenDisplay(
                         }
                     }
                     DisplayMode.TIMELINE -> {
-                        if (timelineCategories.size > 1) {
-                            ConnectedItemSelector(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(horizontal = 8.dp),
-                                selectedIndex = selectedCategoryIndex,
-                                onSelectionChanged = {
-                                    selectedCategoryIndex = it
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 8.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                        ) {
+                            if (timelineCategories.size > 1) {
+                                ConnectedItemSelector(
+                                    selectedIndex = selectedCategoryIndex,
+                                    onSelectionChanged = {
+                                        selectedCategoryIndex = it
+                                    },
+                                    options = timelineCategories.map { it.displayName },
+                                )
+                            }
+                            else Spacer(modifier = Modifier.width(4.dp))
+
+                            OutlinedToggleButton(
+                                modifier = Modifier.padding(end = 3.dp),
+                                checked = trendline,
+                                onCheckedChange = {
+                                    haptic.performHapticFeedback(HapticFeedbackType.ToggleOn)
+                                    trendline = it
                                 },
-                                options = timelineCategories.map { it.displayName },
-                            )
+                                shapes = ToggleButtonDefaults.shapes(),
+                            ) {
+                                Text(
+                                    "Trendline",
+                                    style = MaterialTheme.typography.labelMedium,
+                                    fontWeight = FontWeight.Bold,
+                                )
+                            }
                         }
                         ChildrenTimeline(
                             modifier = Modifier
@@ -352,6 +385,7 @@ fun ChildrenDisplay(
                             sortedChildren = sortedChildrenTop,
                             spoilers = spoilers,
                             spoilName = spoilName,
+                            trendline = trendline,
                         )
                     }
                     else -> {

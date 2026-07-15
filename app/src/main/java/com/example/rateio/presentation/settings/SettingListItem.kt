@@ -3,9 +3,11 @@ package com.example.rateio.presentation.settings
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.NavigateNext
@@ -55,6 +57,8 @@ fun SettingListItem(
     modifier: Modifier = Modifier,
     description: String? = null,
     icon: ImageVector? = null,
+    iconContentColor: Color? = null,
+    iconContainerColor: Color? = null,
     containerColor: Color = MaterialTheme.colorScheme.surfaceContainer,
     contentColor: Color = MaterialTheme.colorScheme.onSurface,
     subtitleColor: Color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -114,27 +118,31 @@ fun SettingListItem(
         supportingContent = supportingContent,
         leadingContent = if (icon != null) {
             {
-                Icon(icon, null, tint = contentColor)
-                /*val colors = getRatingColor(Random.nextFloat() + 0.25f)
-                Card(
-                    modifier = Modifier.size(IconButtonDefaults.extraLargeIconSize),
-                    shape = CircleShape,
-                    colors = CardDefaults.cardColors().copy(
-                        containerColor = colors.backgroundColor,
-                        contentColor = colors.foregroundColor
-                    )
-                ) {
-                    Row(
-                        modifier = Modifier.fillMaxSize(),
-                        horizontalArrangement = Arrangement.Center,
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        Icon(
-                            icon, null,
-                            tint = colors.foregroundColor
+                val iconTint = iconContentColor ?: contentColor
+                if (iconContainerColor == null) {
+                    Icon(icon, null, tint = iconTint)
+                }
+                else {
+                    Card(
+                        modifier = Modifier.size(50.dp),
+                        shape = CircleShape,
+                        colors = CardDefaults.cardColors().copy(
+                            containerColor = iconContainerColor,
+                            contentColor =  iconTint
                         )
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxSize(),
+                            horizontalArrangement = Arrangement.Center,
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Icon(
+                                icon, null,
+                                tint = iconTint.copy(alpha = 0.8f)
+                            )
+                        }
                     }
-                }*/
+                }
             }
         } else null,
         trailingContent = {

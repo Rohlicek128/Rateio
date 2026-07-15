@@ -194,11 +194,6 @@ fun RateItemCard(
                 leadingRateBoxContent?.invoke()
                 RateBox(
                     rating = rating,
-                    roundedCorners = 12.dp,
-                    width = 12.dp,
-                    minWidth = 36.dp,
-                    height = 5.dp,
-                    textStyle = MaterialTheme.typography.headlineSmall,
                     isLoading = isLoading,
                     decimalOffset = if (preciseRatings) 1u else 0u,
                     colorBucketsOverride = colorBucketsOverride,
@@ -273,11 +268,6 @@ fun RateItemGridCard(
 
                                 RateBox(
                                     rating = rating,
-                                    roundedCorners = 10.dp,
-                                    width = 12.dp,
-                                    minWidth = 36.dp,
-                                    height = 4.dp,
-                                    textStyle = MaterialTheme.typography.headlineSmall,
                                     isLoading = isLoading,
                                     //decimalOffset = if (rank != null) 1u else 0u
                                     colorBucketsOverride = colorBucketsOverride,
