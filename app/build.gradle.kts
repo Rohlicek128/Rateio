@@ -15,7 +15,7 @@ plugins {
 }
 
 android {
-    namespace = "com.example.rateio"
+    namespace = "com.rohlicek.rateio"
     compileSdk {
         version = release(36) {
             minorApiLevel = 1
@@ -23,11 +23,11 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.example.rateio"
+        applicationId = "com.rohlicek.rateio"
         minSdk = 35
         targetSdk = 36
         versionCode = 1
-        versionName = "1.0"
+        versionName = "0.1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
