@@ -42,6 +42,9 @@ fun LibraryToggle(
             if (checked) openDeleteDialog = true
             else onCheckedChange(true)
         },
+        colors = ToggleButtonDefaults.elevatedToggleButtonColors().copy(
+            contentColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.75f),
+        ),
         shapes = ToggleButtonDefaults.shapes(),
     ) {
         if (checked) {

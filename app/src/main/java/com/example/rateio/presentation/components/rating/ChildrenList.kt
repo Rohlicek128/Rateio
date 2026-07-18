@@ -19,12 +19,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
-import com.example.rateio.data.remote.tmdb.TmdbEpisodeMetadata
 import com.example.rateio.model.RateItem
-import com.example.rateio.model.computeAggregateRating
+import com.example.rateio.model.computeAggregateRatingAverage
 import com.example.rateio.presentation.components.RateItemCard
 import com.example.rateio.utils.formatTime
-import kotlinx.serialization.json.Json
 
 
 @Composable
@@ -60,7 +58,7 @@ fun ChildrenList(
                 titleStyle = MaterialTheme.typography.headlineSmall,
                 subtitle = parent.subtitle,
                 coverImagePath = parent.coverImageUrl,
-                rating = computeAggregateRating(children),
+                rating = computeAggregateRatingAverage(children),
                 padding = PaddingValues(vertical = 6.dp),
                 tonalElevation = if (isExpanded) 4.dp else 1.dp,
                 onClick = {

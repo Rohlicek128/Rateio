@@ -49,7 +49,8 @@ import com.example.rateio.data.repository.RateItemRepository
 import com.example.rateio.model.CategoryType
 import com.example.rateio.model.ItemStatus
 import com.example.rateio.model.RateItem
-import com.example.rateio.model.computeAggregateRating
+import com.example.rateio.model.computeAggregateRatingAverage
+import com.example.rateio.model.computeAggregateRatingWeighted
 import com.example.rateio.presentation.components.AdaptiveImageCarousel
 import com.example.rateio.presentation.components.CollapsibleHeader
 import com.example.rateio.presentation.components.DateProgressBar
@@ -191,7 +192,7 @@ fun TmdbShowDetailScreen(
                             title = "Season $seasonNumber",
                             subtitle = "${(season.airDate ?: "N/A").take(4)} | ${season.episodeCount} episodes",
                             length = season.episodeCount.toFloat(),
-                            rating = computeAggregateRating(items),
+                            rating = computeAggregateRatingAverage(items),
                             coverImageUrl = season.posterPath.let { "https://image.tmdb.org/t/p/original$it" },
                             coverImageLowUrl = season.posterPath.let { "https://image.tmdb.org/t/p/w342$it" },
                             externalId = season.id.toString(),
@@ -207,7 +208,7 @@ fun TmdbShowDetailScreen(
                 }
             }
 
-
+            val showAverage = remember(childrenGroups) { computeAggregateRatingWeighted(listOfRatings) }
 
             if (listOfRatings.size >= show.numberOfEpisodes)
                 onStatusSaved?.invoke(ItemStatus.COMPLETED)
@@ -344,7 +345,7 @@ fun TmdbShowDetailScreen(
                 ratingLabel = savedRank?.let { formatItemRankLabel(it, CategoryType.TMDB_SHOWS) },
                 ratingColorBucketsOverride = if (!isSaved) RatingColorBucketConstants.RC_IMDB_SHOWS else getCurrentRatingColorBuckets(),
                 onRatingSaved = onRatingSaved,
-                review = if (state.savedItem != null) "" else null,
+                //review = if (state.savedItem != null) "" else null,
                 onBackClick = onBackClick,
                 savedInLibrary = state.savedItem != null,
                 onChangeLibrary = { viewModel.onToggleSaved(state.show!!) },

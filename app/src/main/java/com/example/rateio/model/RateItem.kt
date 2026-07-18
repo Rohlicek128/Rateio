@@ -1,5 +1,7 @@
 package com.example.rateio.model
 
+import kotlin.math.log10
+
 data class RateItem(
     val id: Long = 0,
     val categoryId: Long,
@@ -45,7 +47,21 @@ fun RateItem.computedRating(children: List<RateItem>): Float? {
     else rated.average().toFloat()
 }
 
-fun computeAggregateRating(children: List<RateItem>): Float? {
+fun computeAggregateRatingWeighted(ratings: List<Float>): Float? {
+    val ratingWeight = 0.9f
+    val lengthWeight = 1f - ratingWeight
+    val maxLength = 150
+
+    val ratingWeighted = if (ratings.isNotEmpty())
+        ratings.average().toFloat() * ratingWeight
+    else return null
+
+    val lengthWeighted = (log10(ratings.size.toFloat()) / log10(maxLength.toFloat())) * lengthWeight
+
+    return ratingWeighted + lengthWeighted
+}
+
+fun computeAggregateRatingAverage(children: List<RateItem>): Float? {
     val flatRatings = children.mapNotNull { it.rating }
     return if (flatRatings.isNotEmpty()) flatRatings.average().toFloat() else null
 }

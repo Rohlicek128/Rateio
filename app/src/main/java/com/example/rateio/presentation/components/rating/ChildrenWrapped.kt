@@ -18,7 +18,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.rateio.model.RateItem
-import com.example.rateio.model.computeAggregateRating
+import com.example.rateio.model.computeAggregateRatingAverage
 import com.example.rateio.presentation.components.RateBox
 import com.example.rateio.presentation.components.RateBoxSizeDefaults
 import com.example.rateio.presentation.rating.display.getTransformedRating
@@ -74,7 +74,7 @@ private fun ChildrenSection(
                 fontWeight = FontWeight.Bold,
             )
 
-            val avg = computeAggregateRating(children)
+            val avg = computeAggregateRatingAverage(children)
             if (avg != null) {
                 Spacer(modifier = Modifier.width(8.dp))
 
