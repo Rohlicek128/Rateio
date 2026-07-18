@@ -7,6 +7,8 @@ import kotlin.math.round
 
 
 data class RatingTransformation(
+    val name: String,
+
     val stepCount: UInt,
     val offset: Float = 0f,
     val divider: Float = 1f,
@@ -59,9 +61,8 @@ fun getTransformedRating(rating: Float?, decimalOffset: UInt = 0u, rtf: RatingTr
     return rtf.leadingString + ("%.${rtf.decimalPlaces + decimalOffset}f").format(rtf.locale, rounded) + rtf.trailingString
 }
 
-fun getRoundedRating(rating: Float?): Float? {
+fun getRoundedRating(rating: Float?, rtf: RatingTransformation = getCurrentRatingTransformations()): Float? {
     if (rating == null) return null
-    val rtf = getCurrentRatingTransformations()
     return round(rating * rtf.stepCount.toInt()) / rtf.stepCount.toFloat()
 }
 
@@ -71,12 +72,14 @@ fun getCurrentRatingTransformations(): RatingTransformation {
 
 object RatingTransformationsConstants {
     val TF_IMDB_PRECISE = RatingTransformation(
+        name = "IMDb Precise",
         stepCount = 1000u,
         divider = 100f,
         decimalPlaces = 2u,
         majorTickFrequency = 10,
     )
     val TF_IMDB = RatingTransformation(
+        name = "IMDb",
         stepCount = 100u,
         divider = 10f,
         decimalPlaces = 1u,
@@ -84,11 +87,13 @@ object RatingTransformationsConstants {
         legendaryPart = 0.96f
     )
     val TF_PERCENTAGE = RatingTransformation(
+        name = "Percentage",
         stepCount = 100u,
         trailingString = "%",
         majorTickFrequency = 10,
     )
     val TF_PERCENTAGE_PRECISE = RatingTransformation(
+        name = "Percentage Precise",
         stepCount = 1000u,
         divider = 10f,
         decimalPlaces = 1u,
@@ -96,12 +101,14 @@ object RatingTransformationsConstants {
         majorTickFrequency = 10,
     )
     val TF_TEN_STARS = RatingTransformation(
+        name = "Ten Stars",
         stepCount = 20u,
         divider = 2f,
         decimalPlaces = 1u,
         majorTickFrequency = 2,
     )
     val TF_FIVE_STARS = RatingTransformation(
+        name = "Five Stars",
         stepCount = 8u,
         offset = 2f,
         divider = 2f,
@@ -109,34 +116,41 @@ object RatingTransformationsConstants {
         majorTickFrequency = 2,
     )
     val TF_FIVE_STARS_ZERO = RatingTransformation(
+        name = "Five Stars (From Zero)",
         stepCount = 10u,
         divider = 2f,
         decimalPlaces = 1u,
         majorTickFrequency = 2,
     )
     val TF_THOUSAND = RatingTransformation(
+        name = "Thousand",
         stepCount = 1000u,
         majorTickFrequency = 10,
     )
-    val TF_ELEVEN = RatingTransformation(
+    val TF_TEN_ZERO = RatingTransformation(
+        name = "Ten (From Zero)",
         stepCount = 10u,
         majorTickFrequency = 1,
     )
     val TF_TEN = RatingTransformation(
+        name = "Ten",
         stepCount = 9u,
         offset = 1f,
         majorTickFrequency = 1,
     )
     val TF_FIVE = RatingTransformation(
+        name = "Five",
         stepCount = 4u,
         offset = 1f,
         majorTickFrequency = 1,
     )
     val TF_RECOMMEND = RatingTransformation(
+        name = "Recommend",
         stepCount = 1u,
         majorTickFrequency = 1,
     )
     val TF_FLOAT = RatingTransformation(
+        name = "Float",
         stepCount = 100u,
         divider = 100f,
         decimalPlaces = 2u,

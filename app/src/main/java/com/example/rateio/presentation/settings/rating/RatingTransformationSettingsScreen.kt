@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -40,10 +39,8 @@ import com.example.rateio.presentation.ScreenScaffold
 import com.example.rateio.presentation.components.RateBox
 import com.example.rateio.presentation.components.RatingBottomSheet
 import com.example.rateio.presentation.rating.display.RatingTransformation
-import com.example.rateio.presentation.rating.display.RatingTransformationsConstants
 import com.example.rateio.presentation.rating.display.getCurrentRatingTransformations
 import com.example.rateio.presentation.rating.display.getMaxCharWidth
-import com.example.rateio.presentation.rating.display.getTransformedRating
 import com.example.rateio.presentation.settings.ErrorCard
 import com.example.rateio.presentation.settings.ListItemPosition
 import com.example.rateio.presentation.settings.SettingListItem
@@ -51,7 +48,6 @@ import com.example.rateio.presentation.settings.SettingsListHeader
 import com.example.rateio.presentation.settings.SettingsNumberField
 import com.example.rateio.presentation.settings.SettingsTextField
 import com.example.rateio.presentation.settings.WarningCard
-import java.util.Locale
 
 
 @Composable
@@ -133,7 +129,7 @@ fun RatingTransformationSettingsScreen(
                 ) {
                     WarningCard(
                         title = "Getting too long",
-                        description = "Transformed rating is getting too long. This could pose rendering issues, mainly in grid views!"
+                        description = "Transformed rating is getting too long. This could pose rendering issues, mainly in grid and wrapped views!"
                     )
                 }
             }
@@ -297,14 +293,28 @@ fun RatingTransformationSettingsScreen(
             }
             item {
                 SettingListItem(
+                    title = "Null String",
+                    description = "A String that will be displayed if rating is null.",
+                    position = ListItemPosition.MIDDLE,
+                    supportingContent = {
+                        SettingsTextField(
+                            modifier = Modifier.fillMaxWidth().padding(top = 6.dp),
+                            value = state.nullString,
+                            onValueChange = { value ->
+                                viewModel.updateTransformations { it.copy(nullString = value) }
+                            },
+                            placeholder = { Text("eg. ?") }
+                        )
+                    }
+                )
+            }
+            item {
+                SettingListItem(
                     title = "Locale",
                     description = "Value: ${state.locale.displayName}",
                     position = ListItemPosition.END,
                 )
             }
-
-
-            item { Spacer(modifier = Modifier.height(150.dp)) }
 
         }
     }

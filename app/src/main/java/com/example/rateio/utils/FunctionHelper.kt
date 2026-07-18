@@ -2,6 +2,11 @@ package com.example.rateio.utils
 
 import androidx.compose.ui.graphics.Color
 import kotlin.math.max
+import android.content.Context
+import android.content.Intent
+import android.net.Uri
+import android.widget.Toast
+import androidx.core.net.toUri
 
 fun <T> List<T>.getWrapped(index: Int): T {
     if (isEmpty()) throw NoSuchElementException("List is empty.")
@@ -18,4 +23,16 @@ fun Color.dim(dimAmount: Float = 0.1f, alpha: Float = 1f): Color {
         blue = max(0f, this.blue - amount),
         alpha = alpha
     )
+}
+
+
+fun openExternalLink(context: Context, url: String) {
+    try {
+        val intent = Intent(Intent.ACTION_VIEW, url.toUri()).apply {
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        }
+        context.startActivity(intent)
+    } catch (_: Exception) {
+        Toast.makeText(context, "No application found to open this link.", Toast.LENGTH_SHORT).show()
+    }
 }

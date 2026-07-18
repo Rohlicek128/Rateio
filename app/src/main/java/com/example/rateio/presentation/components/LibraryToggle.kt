@@ -5,11 +5,13 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Remove
+import androidx.compose.material3.ElevatedToggleButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedToggleButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.ToggleButtonDefaults
+import androidx.compose.material3.TonalToggleButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -32,7 +34,7 @@ fun LibraryToggle(
     val haptic = LocalHapticFeedback.current
     var openDeleteDialog by remember { mutableStateOf(false) }
 
-    OutlinedToggleButton(
+    ElevatedToggleButton(
         modifier = modifier,
         checked = !checked,
         onCheckedChange = {

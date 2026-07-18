@@ -90,24 +90,9 @@ fun SteamGameDetailScreen(
                 //ratingLabel = state.reviews?.reviewScoreDesc,
                 onRatingSaved = onRatingSaved,
                 onBackClick = onBackClick,
-                canAddToLibrary = false,
+                savedInLibrary = state.savedItemId != null,
+                onChangeLibrary = { viewModel.onToggleSaved(state.game!!) },
                 extraContent = {
-                    // Library
-                    item {
-                        Row(
-                            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp),
-                            horizontalArrangement = Arrangement.Center,
-                        ) {
-                            LibraryToggle(
-                                checked = state.savedItemId != null,
-                                onCheckedChange = {
-                                    viewModel.onToggleSaved(state.game!!)
-                                },
-                                itemName = game.name,
-                            )
-                        }
-                    }
-
 
                     // Genres
                     if (game.genres?.isNotEmpty() ?: false) {

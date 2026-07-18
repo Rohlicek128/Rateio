@@ -39,11 +39,14 @@ import com.example.rateio.model.CategoryType
 import com.example.rateio.presentation.components.AdaptiveImageCarousel
 import com.example.rateio.presentation.components.CollapsibleHeader
 import com.example.rateio.presentation.components.ImageSize
+import com.example.rateio.presentation.components.ItemRatingStatCard
 import com.example.rateio.presentation.components.ItemStatCard
 import com.example.rateio.presentation.components.PersonCard
 import com.example.rateio.presentation.components.ScreenError
 import com.example.rateio.presentation.components.ScreenLoading
 import com.example.rateio.presentation.rating.RateItemDetailScreen
+import com.example.rateio.presentation.rating.display.RatingColorBucketConstants
+import com.example.rateio.presentation.rating.display.RatingTransformationsConstants
 import com.example.rateio.utils.formatDate
 import com.example.rateio.utils.formatItemRankLabel
 import com.example.rateio.utils.formatTime
@@ -127,6 +130,35 @@ fun TmdbEpisodeDetailScreen(
                     }
                 },
                 extraContent = {
+
+                    // Ratings
+                    item {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(8.dp),
+                            horizontalArrangement = Arrangement.SpaceEvenly,
+                        ) {
+                            ItemRatingStatCard(
+                                rating = state.imdbRating?.averageRating,
+                                votes = state.imdbRating?.numVotes,
+                                source = "IMDb",
+                                transformationOverride = RatingTransformationsConstants.TF_IMDB,
+                                colorBucketsOverride = RatingColorBucketConstants.RC_IMDB_EPISODES,
+                                onClickUrl = state.episode?.externalIds?.imdbId?.let { "https://www.imdb.com/title/$it" },
+                            )
+                            ItemRatingStatCard(
+                                rating = episode.voteAverage?.div(10f),
+                                votes = episode.voteCount,
+                                source = "TMDB",
+                                transformationOverride = RatingTransformationsConstants.TF_PERCENTAGE,
+                                colorBucketsOverride = RatingColorBucketConstants.RC_IMDB_EPISODES,
+                                onClickUrl = "https://www.themoviedb.org/tv/${showId}/season/${season}/episode/${episode.episodeNumber}",
+                            )
+                        }
+                    }
+
+                    item { Spacer(modifier = Modifier.height(10.dp)) }
 
                     // Move buttons
                     item {

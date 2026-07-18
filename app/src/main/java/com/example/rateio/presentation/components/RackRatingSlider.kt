@@ -60,11 +60,11 @@ fun RackRatingSlider(
 
     // Track which step we were on before this drag gesture started so we can
     // fire a haptic on every step boundary crossing.
-    val lastHapticStep = remember { mutableIntStateOf(currentStep) }
+    val lastHapticStep = remember(rating) { mutableIntStateOf(currentStep) }
 
     // dragOffset accumulates raw pixel drag distance within a single gesture.
     // It resets to 0 at the start of each new drag.
-    var dragOffset by remember { mutableFloatStateOf(0f) }
+    var dragOffset by remember(rating) { mutableFloatStateOf(0f) }
 
     // pixelsPerStep: computed inside the Canvas via a captured state so we can
     // convert drag distance → step delta outside the Canvas scope.

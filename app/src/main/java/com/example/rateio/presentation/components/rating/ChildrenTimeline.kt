@@ -178,7 +178,7 @@ fun ChildrenTimeline(
         max(minEpisodeWidth.value, 350f / flatPoints.size.toFloat())
     ) }
     val childRadius = remember(childrenGroups, childWidth) {
-        max(4f, min(8f, (childWidth + 2f) / 3f))
+        max(4f, min(9f, (childWidth + 2f) / 3f))
     }
     var tension by rememberSaveable { mutableFloatStateOf(0.13f) }
 
@@ -584,7 +584,7 @@ fun ChildrenTimeline(
                 modifier = Modifier.fillMaxWidth(),
                 title = "Space width",
                 description = "Sets the width between each dot in DP.",
-                position = ListItemPosition.MIDDLE,
+                position = ListItemPosition.END,
                 supportingContent = {
                     Slider(
                         childWidth,
@@ -601,7 +601,7 @@ fun ChildrenTimeline(
                     SettingsValueText("%.1f dp".format(rtf.locale, childWidth))
                 },
             )
-            SettingListItem(
+            /*SettingListItem(
                 modifier = Modifier.fillMaxWidth(),
                 title = "Tension",
                 description = "Tension of the trendline.",
@@ -621,7 +621,7 @@ fun ChildrenTimeline(
                 trailingContent = {
                     SettingsValueText("%.2f dp".format(rtf.locale, tension))
                 },
-            )
+            )*/
         }
     }
 }

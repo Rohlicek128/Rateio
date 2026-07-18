@@ -64,6 +64,7 @@ import com.example.rateio.presentation.settings.SettingsCategoriesScreen
 import com.example.rateio.presentation.settings.SettingsDatabaseScreen
 import com.example.rateio.presentation.settings.SettingsRatingScreen
 import com.example.rateio.presentation.settings.SettingsScreen
+import com.example.rateio.presentation.settings.rating.RatingColorSettingsScreen
 import com.example.rateio.presentation.settings.rating.RatingTransformationSettingsScreen
 import com.example.rateio.ui.theme.AppTheme
 import kotlinx.serialization.json.Json
@@ -248,6 +249,12 @@ fun AppNavigation(
                 }
                 composable<Route.SettingsLevel.Rating> {
                     SettingsRatingScreen(
+                        onRatingTransformationClick = {
+                            navController.navigate(Route.SettingsLevel.RatingTransformation)
+                        },
+                        onRatingColorClick = {
+                            navController.navigate(Route.SettingsLevel.RatingColor)
+                        },
                         onBackClick = { navController.popBackStack() },
                     )
                 }
@@ -266,6 +273,11 @@ fun AppNavigation(
                         onBackClick = { navController.popBackStack() },
                     )
                 }
+                composable<Route.SettingsLevel.RatingColor> {
+                    RatingColorSettingsScreen(
+                        onBackClick = { navController.popBackStack() },
+                    )
+                }
                 composable<Route.SettingsLevel.Database> {
                     SettingsDatabaseScreen(
                         onBackClick = { navController.popBackStack() },
@@ -273,9 +285,6 @@ fun AppNavigation(
                 }
                 composable<Route.SettingsLevel.Categories> {
                     SettingsCategoriesScreen(
-                        onRatingTransformationClick = {
-                            navController.navigate(Route.SettingsLevel.RatingTransformation)
-                        },
                         onBackClick = { navController.popBackStack() },
                     )
                 }

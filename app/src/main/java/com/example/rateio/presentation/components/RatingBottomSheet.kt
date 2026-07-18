@@ -17,7 +17,7 @@ import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -33,14 +33,14 @@ import com.example.rateio.presentation.rating.display.getCurrentRatingTransforma
 
 @Composable
 fun RatingBottomSheet(
-    rating: Float? = 0f,
+    rating: Float? = null,
     onDismiss: () -> Unit,
     onValueChange: (Float?) -> Unit,
     colorBucketsOverride: RatingColorBuckets = getCurrentRatingColorBuckets(),
     transformationOverride: RatingTransformation = getCurrentRatingTransformations(),
 ) {
     val haptic = LocalHapticFeedback.current
-    var rackPosition by rememberSaveable { mutableStateOf(rating) }
+    var rackPosition by remember(rating) { mutableStateOf(rating) }
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,

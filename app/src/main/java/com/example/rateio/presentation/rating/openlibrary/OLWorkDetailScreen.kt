@@ -471,7 +471,7 @@ fun OLWorkDetailScreen(
                 subtitle = if (author?.name != null) "by ${author.name}" else null,
                 categoryName = CategoryRegistry.forType(CategoryType.OPEN_LIBRARY_BOOKS)?.name,
                 description = work.description?.value,
-                coverImageUrl = coverOverride ?: work.covers?.takeIf { it.isNotEmpty() }?.let {
+                coverImageUrl = (if (!isSaved) null else coverOverride) ?: work.covers?.takeIf { it.isNotEmpty() }?.let {
                     OpenLibraryClient.COVERS_BASE_URL + "/ID/${it.first()}-L.jpg"
                 },
                 backdropImageUrl = work.covers?.takeIf { it.isNotEmpty() }?.let {

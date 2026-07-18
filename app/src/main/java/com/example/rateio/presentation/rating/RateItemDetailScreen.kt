@@ -2,6 +2,7 @@ package com.example.rateio.presentation.rating
 
 import android.graphics.Bitmap
 import android.graphics.BlurMaskFilter
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -14,18 +15,17 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Card
-import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -40,12 +40,15 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Paint
 import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.toArgb
-import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.layout.layout
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -93,6 +96,8 @@ fun RateItemDetailScreen(
     extraContent: LazyListScope.() -> Unit = {},
     placeholderRatio: Float = 2f / 3f,
     canAddToLibrary: Boolean = false,
+    savedInLibrary: Boolean? = null,
+    onChangeLibrary: ((Boolean) -> Unit)? = null,
     onRatingSaved: ((Float?) -> Unit)? = null,
     onReviewSaved: ((String?) -> Unit)? = null,
     onOpenSettings: (() -> Unit)? = null,
@@ -109,125 +114,208 @@ fun RateItemDetailScreen(
         }
     }
 
-    var isSaved by remember { mutableStateOf(false) }
-    var expandDescription by remember { mutableStateOf(false) }
+    var posterPalette by remember { mutableStateOf<Palette?>(null) }
+    val dominantColor = posterPalette?.dominantSwatch?.rgb?.let { Color(it) } ?: Color.Transparent
 
+    var expandDescription by remember { mutableStateOf(false) }
     var editedReview by remember { mutableStateOf(review) }
 
-    val haptic = LocalHapticFeedback.current
+    //val haptic = LocalHapticFeedback.current
+
+    val listState = rememberLazyListState()
 
     Scaffold { innerPadding ->
-        LazyColumn(
-            modifier = modifier
-                .fillMaxSize()
-                .pullToRefresh(
-                    state = state,
-                    isRefreshing = isRefreshing,
-                    onRefresh = onRefresh,
-                ),
-            contentPadding = PaddingValues(
-                top = 76.dp,
-                bottom = innerPadding.calculateBottomPadding(),
-            )
-        ) {
-            // Cover + title header
-            item {
-                DetailHeader(
-                    title = title,
-                    subtitle = subtitle,
-                    category = categoryName,
-                    coverImageUrl = coverImageUrl,
-                    placeholderRatio = placeholderRatio,
-                    backdropImageUrl = backdropImageUrl,
-                    rating = rating,
-                    ratingVotes = ratingVotes,
-                    ratingLabel = ratingLabel,
-                    showNullRating = showNullRating,
-                    onRatingSaved = onRatingSaved,
-                    colorBucketsOverride = ratingColorBucketsOverride,
-                )
+        Box(modifier = Modifier.fillMaxSize()) {
+            if (extraContent != {}) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .graphicsLayer {
+                            val itemInfo = listState.layoutInfo.visibleItemsInfo
+                            val anchorItem = itemInfo.find { it.key == "content_divider" }
+
+                            val bottomY = 682.dp.toPx()
+                            val topY = 350.dp.toPx()
+
+                            if (anchorItem != null) {
+                                translationY = anchorItem.offset.toFloat() + anchorItem.size.toFloat() - 188.dp.toPx()
+                            } else {
+                                val firstVisibleIndex = itemInfo.firstOrNull()?.index ?: 0
+                                translationY = if (firstVisibleIndex > 2) {
+                                    -500.dp.toPx()
+                                } else {
+                                    bottomY
+                                }
+                            }
+
+                            alpha = when {
+                                translationY >= bottomY -> 0f
+                                translationY <= topY -> 1f
+                                else -> {
+                                    val fraction = (translationY - bottomY) / (topY - bottomY)
+                                    fraction.coerceIn(0f, 1f)
+                                }
+                            }
+                        }
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .align(Alignment.BottomCenter)
+                            .fillMaxWidth()
+                            .height(275.dp)
+                            .background(
+                                Brush.verticalGradient(
+                                    colors = listOf(
+                                        Color.Transparent,
+                                        dominantColor.copy(alpha = 0.05f),
+                                        dominantColor.copy(alpha = 0.3f),
+                                        dominantColor,
+                                    )
+                                )
+                            )
+                    )
+                    Box(
+                        modifier = Modifier
+                            .align(Alignment.BottomCenter)
+                            .fillMaxWidth()
+                            .height(100.dp)
+                            .background(
+                                Brush.verticalGradient(
+                                    colors = listOf(
+                                        Color.Transparent,
+                                        Color.Black.copy(alpha = 0.3f),
+                                        Color.Black.copy(alpha = 0.7f),
+                                    )
+                                )
+                            )
+                    )
+                    Box(
+                        modifier = Modifier
+                            .align(Alignment.BottomCenter)
+                            .fillMaxWidth()
+                            .height(35.dp)
+                            .offset(y = 2.dp)
+                            .clip(MaterialTheme.shapes.extraExtraLarge.copy(
+                                bottomStart = CornerSize(0.dp),
+                                bottomEnd = CornerSize(0.dp),
+                            ))
+                            .background(MaterialTheme.colorScheme.surface)
+                    )
+                }
             }
 
-            headerExtraContent()
+            LazyColumn(
+                state = listState,
+                modifier = modifier
+                    .fillMaxSize()
+                    .pullToRefresh(
+                        state = state,
+                        isRefreshing = isRefreshing,
+                        onRefresh = onRefresh,
+                    ),
+                contentPadding = PaddingValues(
+                    top = 76.dp,
+                    bottom = innerPadding.calculateBottomPadding(),
+                ),
 
-            // Library
-            if (canAddToLibrary) {
+            ) {
+                // Cover + title header
                 item {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth(),
-                        horizontalArrangement = Arrangement.Center,
-                    ) {
-                        LibraryToggle(
-                            checked = isSaved,
-                            onCheckedChange = {
-                                isSaved = it
-                            },
-                            itemName = title,
+                    DetailHeader(
+                        title = title,
+                        subtitle = subtitle,
+                        category = categoryName,
+                        coverImageUrl = coverImageUrl,
+                        placeholderRatio = placeholderRatio,
+                        backdropImageUrl = backdropImageUrl,
+                        rating = rating,
+                        ratingVotes = ratingVotes,
+                        ratingLabel = ratingLabel,
+                        showNullRating = showNullRating,
+                        onRatingSaved = onRatingSaved,
+                        colorBucketsOverride = ratingColorBucketsOverride,
+                        onPaletteSuccess = { posterPalette = it }
+                    )
+                }
+
+                headerExtraContent()
+
+                // Description
+                if (!description.isNullOrBlank() && !isRefreshing) {
+                    item {
+                        Text(
+                            text = description,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier
+                                .padding(horizontal = 16.dp, vertical = 8.dp)
+                                .clickable(onClick = { expandDescription = !expandDescription }),
+                            maxLines = if (expandDescription) Int.MAX_VALUE else 10,
+                            overflow = TextOverflow.Ellipsis,
                         )
                     }
                 }
-            }
 
-
-            // Description
-            if (!description.isNullOrBlank() && !isRefreshing) {
-                item {
-                    Text(
-                        text = description,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier
-                            .padding(horizontal = 16.dp, vertical = 8.dp)
-                            .clickable(onClick = { expandDescription = !expandDescription }),
-                        maxLines = if (expandDescription) Int.MAX_VALUE else 10,
-                        overflow = TextOverflow.Ellipsis,
-                    )
+                // Review
+                if (editedReview != null) {
+                    item {
+                        ReviewCard(
+                            modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 12.dp),
+                            name = "You",
+                            avatarPath = null,
+                            supportingText = null,
+                            rating = rating,
+                            content = editedReview!!,
+                            placeholderContent = "Your thoughts",
+                            onEdit = {
+                                editedReview = it
+                                onReviewSaved?.invoke(it)
+                            }
+                        )
+                    }
                 }
-            }
 
-            // Review
-            if (editedReview != null) {
-                item {
-                    ReviewCard(
-                        modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 12.dp),
-                        name = "You",
-                        avatarPath = null,
-                        supportingText = null,
-                        rating = rating,
-                        content = editedReview!!,
-                        placeholderContent = "Your thoughts",
-                        onEdit = {
-                            editedReview = it
-                            onReviewSaved?.invoke(it)
+                // Library
+                if (savedInLibrary != null && onChangeLibrary != null) {
+                    item {
+                        Row(
+                            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
+                            horizontalArrangement = Arrangement.Center,
+                        ) {
+                            LibraryToggle(
+                                checked = savedInLibrary,
+                                onCheckedChange = onChangeLibrary,
+                                itemName = title,
+                            )
                         }
-                    )
+                    }
                 }
-            }
 
 
-            // Debug
-            if (debug != null) {
-                item {
-                    Text(
-                        text = debug,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
-                        fontWeight = FontWeight.SemiBold,
-                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-                    )
+                // Debug
+                if (debug != null) {
+                    item {
+                        Text(
+                            text = debug,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
+                            fontWeight = FontWeight.SemiBold,
+                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                        )
+                    }
                 }
+
+                if (extraContent != {}) {
+                    // Divider before extra content
+                    //item { HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp, horizontal = 16.dp)) }
+                    item(key = "content_divider") { Spacer(modifier = Modifier.padding(vertical = 16.dp)) }
+                    extraContent()
+                }
+
+                item { Spacer(modifier = Modifier.height(200.dp)) }
             }
-
-            if (extraContent != {}) {
-                // Divider before extra content
-                item { HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp, horizontal = 16.dp)) }
-
-                extraContent()
-            }
-
-            item { Spacer(modifier = Modifier.height(200.dp)) }
         }
+
 
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -285,6 +373,7 @@ private fun DetailHeader(
     showNullRating: Boolean = true,
     colorBucketsOverride: RatingColorBuckets,
     onRatingSaved: ((Float?) -> Unit)? = null,
+    onPaletteSuccess: ((Palette) -> Unit)? = null,
 ) {
     /*val backgroundColor = MaterialTheme.colorScheme.background
     val offset = (-62).dp
@@ -355,6 +444,7 @@ private fun DetailHeader(
             colorBucketsOverride = colorBucketsOverride,
             showNullRating = showNullRating,
             onRatingSaved = onRatingSaved,
+            onPaletteSuccess = onPaletteSuccess,
         )
 
         Column(
@@ -392,11 +482,12 @@ private fun PosterWithRating(
     showNullRating: Boolean = true,
     placeholderRatio: Float = 2f / 3f,
     onRatingSaved: ((Float?) -> Unit)? = null,
+    onPaletteSuccess: ((Palette) -> Unit)? = null,
 ) {
     var showRatingSheet by remember { mutableStateOf(false) }
     val rateBoxOverhang = 42.dp
 
-    var ratingPer by remember { mutableStateOf(rating) }
+    var ratingPer by remember(rating) { mutableStateOf(rating) }
 
     val scope = rememberCoroutineScope()
     var glowColor by remember { mutableStateOf(Color.Transparent) }
@@ -473,6 +564,7 @@ private fun PosterWithRating(
                                 withContext(Dispatchers.Main) {
                                     glowColor = argb?.let { Color(it) } ?: Color.Transparent
                                 }
+                                onPaletteSuccess?.invoke(palette)
                             }
                         }
                     )

@@ -49,7 +49,6 @@ import kotlin.math.max
 
 @Composable
 fun SettingsCategoriesScreen(
-    onRatingTransformationClick: () -> Unit,
     onBackClick: () -> Unit,
 ) {
     val haptic = LocalHapticFeedback.current
@@ -129,18 +128,6 @@ fun SettingsCategoriesScreen(
                             onCheckedChange = { checked = it }
                         )
                     }
-                )
-            }
-
-            item { SettingsListHeader("More Options") }
-            item {
-                SettingListItem(
-                    title = "Rating Transformation",
-                    //description = "Something, Something important. And is quite long for a setting label/description",
-                    description = "Something, Something important",
-                    icon = Icons.Default.Transform,
-                    position = ListItemPosition.SINGLE,
-                    onClick = onRatingTransformationClick,
                 )
             }
         }

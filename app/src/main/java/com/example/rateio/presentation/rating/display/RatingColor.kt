@@ -8,18 +8,22 @@ data class RatingColor(
     val equalOrGreaterThen: Float? = null,
     val backgroundColor: Color,
     val foregroundColor: Color,
-    val label: String,
+    val label: String? = null,
 )
 
 data class RatingColorBuckets(
-    val name: String? = null,
+    val name: String,
     val buckets: List<RatingColor>,
     val nullBucket: RatingColor,
 )
 
-fun getRatingColor(rating: Float?, buckets: RatingColorBuckets = getCurrentRatingColorBuckets()): RatingColor {
+fun getRatingColor(
+    rating: Float?,
+    buckets: RatingColorBuckets = getCurrentRatingColorBuckets(),
+    rtf: RatingTransformation = getCurrentRatingTransformations()
+): RatingColor {
     if (rating == null) return buckets.nullBucket
-    val transformedRating = getRoundedRating(rating)!!
+    val transformedRating = getRoundedRating(rating, rtf = rtf)!!
 
     buckets.buckets.forEach { if (it.equalOrGreaterThen != null && transformedRating >= it.equalOrGreaterThen) return it }
     return buckets.nullBucket

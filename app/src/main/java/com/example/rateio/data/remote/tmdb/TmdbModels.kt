@@ -120,6 +120,7 @@ data class TmdbEpisodeSummary(
     @SerializedName("episode_number") val episodeNumber: Int,
     @SerializedName("season_number")  val seasonNumber: Int,
     @SerializedName("vote_average")   val voteAverage: Float?,
+    @SerializedName("vote_count") val voteCount: Int?,
     @SerializedName("still_path")     val stillPath: String?,
     @SerializedName("air_date")       val airDate: String?,
 ) {
@@ -135,6 +136,7 @@ data class TmdbEpisodeDetail(
     @SerializedName("episode_number") val episodeNumber: Int,
     @SerializedName("season_number")  val seasonNumber: Int,
     @SerializedName("vote_average")   val voteAverage: Float?,
+    @SerializedName("vote_count") val voteCount: Int?,
     @SerializedName("still_path")     val stillPath: String?,
     @SerializedName("air_date")       val airDate: String?,
     @SerializedName("production_code")val productionCode: String?,

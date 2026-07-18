@@ -15,6 +15,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
@@ -29,7 +30,6 @@ import com.example.rateio.presentation.rating.display.getCurrentRatingColorBucke
 import com.example.rateio.presentation.rating.display.getCurrentRatingTransformations
 import com.example.rateio.presentation.rating.display.getMaxCharWidth
 import com.example.rateio.presentation.rating.display.getRatingColor
-import com.example.rateio.presentation.rating.display.getRoundedRating
 import com.example.rateio.presentation.rating.display.getTransformedRating
 import com.example.rateio.ui.theme.GoogleSansRounded
 
@@ -48,7 +48,7 @@ fun RateBox(
 ) {
     val haptic = LocalHapticFeedback.current
 
-    val colors = getRatingColor(getRoundedRating(rating), colorBucketsOverride)
+    val colors = getRatingColor(rating, colorBucketsOverride, rtf = transformationOverride)
     val display = getTransformedRating(rating, decimalOffset, transformationOverride)
 
     val maxLength = transformationOverride.getMaxCharWidth()
@@ -57,13 +57,17 @@ fun RateBox(
 
     Surface(
         color = colors.backgroundColor,
-        contentColor = colors.foregroundColor,
+        contentColor = colors.foregroundColor.copy(alpha = 0.9f),
         shape = RoundedCornerShape(size.rounding),
         border = null,
-        modifier = if (onClick != null) modifier.clickable(onClick = {
-            haptic.performHapticFeedback(HapticFeedbackType.Confirm)
-            onClick()
-        }) else modifier,
+        modifier = modifier
+            .clip(RoundedCornerShape(size.rounding))
+            .then(
+                if (onClick != null) modifier.clickable(onClick = {
+                    haptic.performHapticFeedback(HapticFeedbackType.Confirm)
+                    onClick()
+                }) else modifier
+            ),
     ) {
         Column(
             modifier = Modifier

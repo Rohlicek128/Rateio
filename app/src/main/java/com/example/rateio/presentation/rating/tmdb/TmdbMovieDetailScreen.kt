@@ -48,8 +48,8 @@ import com.example.rateio.presentation.components.AdaptiveImageCarousel
 import com.example.rateio.presentation.components.CollapsibleHeader
 import com.example.rateio.presentation.components.GenreChips
 import com.example.rateio.presentation.components.ImageSize
+import com.example.rateio.presentation.components.ItemRatingStatCard
 import com.example.rateio.presentation.components.ItemStatCard
-import com.example.rateio.presentation.components.LibraryToggle
 import com.example.rateio.presentation.components.ModalEnumSelector
 import com.example.rateio.presentation.components.PersonCard
 import com.example.rateio.presentation.components.ReviewCard
@@ -57,6 +57,7 @@ import com.example.rateio.presentation.components.ScreenError
 import com.example.rateio.presentation.components.ScreenLoading
 import com.example.rateio.presentation.rating.RateItemDetailScreen
 import com.example.rateio.presentation.rating.display.RatingColorBucketConstants
+import com.example.rateio.presentation.rating.display.RatingTransformationsConstants
 import com.example.rateio.presentation.rating.display.getCurrentRatingColorBuckets
 import com.example.rateio.presentation.settings.ListItemPosition
 import com.example.rateio.presentation.settings.ModalSettings
@@ -172,7 +173,7 @@ fun TmdbMovieDetailScreen(
                 }.ifBlank { null },
                 categoryName = CategoryRegistry.forType(CategoryType.TMDB_MOVIES)?.name,
                 description = movie.overview,
-                coverImageUrl = coverOverride ?: movie.posterPath?.let {
+                coverImageUrl = (if (!isSaved) null else coverOverride) ?: movie.posterPath?.let {
                     "https://image.tmdb.org/t/p/original$it"
                 },
                 backdropImageUrl = movie.backdropPath?.let {
@@ -183,13 +184,14 @@ fun TmdbMovieDetailScreen(
                 ratingLabel = savedRank?.let { formatItemRankLabel(it, CategoryType.TMDB_MOVIES) },
                 ratingColorBucketsOverride = if (!isSaved) RatingColorBucketConstants.RC_IMDB_MOVIES else getCurrentRatingColorBuckets(),
                 onRatingSaved = onRatingSaved,
-                review = "",
+                review = if (state.savedItem != null) "" else null,
                 onBackClick = onBackClick,
                 onOpenSettings = if (isSaved) {
                     { showSettings = true }
                 } else null,
-                canAddToLibrary = false,
-                debug = "${state.savedItem?.id}, ${state.savedItem?.parentId}, ${state.savedItem?.categoryId}, ${state.savedItem?.externalId}",
+                savedInLibrary = state.savedItem != null,
+                onChangeLibrary = { viewModel.onToggleSaved(state.movie!!) },
+                //debug = "${state.savedItem?.id}, ${state.savedItem?.parentId}, ${state.savedItem?.categoryId}, ${state.savedItem?.externalId}",
                 headerExtraContent = {
                     //Stats
                     item {
@@ -218,32 +220,54 @@ fun TmdbMovieDetailScreen(
                     }
                 },
                 extraContent = {
-                    // Library
+
+                    // Ratings
                     item {
                         Row(
-                            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp),
-                            horizontalArrangement = Arrangement.Center,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(10.dp),
+                            horizontalArrangement = Arrangement.SpaceEvenly,
                         ) {
-                            LibraryToggle(
-                                checked = state.savedItem != null,
-                                onCheckedChange = {
-                                    viewModel.onToggleSaved(state.movie!!)
-                                },
-                                itemName = movie.title,
+                            if (isSaved) {
+                                ItemRatingStatCard(
+                                    rating = state.imdbRating?.averageRating,
+                                    votes = state.imdbRating?.numVotes,
+                                    source = "IMDb",
+                                    transformationOverride = RatingTransformationsConstants.TF_IMDB,
+                                    colorBucketsOverride = RatingColorBucketConstants.RC_IMDB_MOVIES,
+                                    onClickUrl = movie.imdbId?.let { "https://www.imdb.com/title/$it" },
+                                )
+                            }
+                            ItemRatingStatCard(
+                                rating = movie.voteAverage?.div(10f),
+                                votes = movie.voteCount,
+                                source = "TMDB",
+                                transformationOverride = RatingTransformationsConstants.TF_PERCENTAGE,
+                                colorBucketsOverride = RatingColorBucketConstants.RC_IMDB_MOVIES,
+                                onClickUrl = "https://www.themoviedb.org/movie/${movie.id}",
                             )
+                            if (!isSaved) {
+                                ItemRatingStatCard(
+                                    rating = state.savedItem?.rating,
+                                    votes = null,
+                                    source = "Yours",
+                                    showNullVotes = false,
+                                )
+                            }
                         }
                     }
-
 
                     // Genres
                     if (movie.genres.isNotEmpty()) {
                         item {
                             GenreChips(
                                 genres = movie.genres.map { it.name },
-                                modifier = Modifier.padding(horizontal = 16.dp),
+                                modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp),
                             )
                         }
                     }
+
 
                     // Status
                     if (isSaved) {
