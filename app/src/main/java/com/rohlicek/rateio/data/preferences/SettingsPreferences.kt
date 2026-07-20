@@ -1,6 +1,7 @@
 package com.rohlicek.rateio.data.preferences
 
 import android.content.Context
+import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
@@ -12,11 +13,22 @@ val Context.dataStore by preferencesDataStore(name = "settings")
 
 class SyncPreferences(private val context: Context) {
     companion object {
+        private val IS_FIRST_LAUNCH_KEY = booleanPreferencesKey("is_first_launch")
         private val LAST_SYNC_KEY = longPreferencesKey("last_imdb_sync")
+    }
+
+    val isFirstLaunch: Flow<Boolean> = context.dataStore.data.map { preferences ->
+        preferences[IS_FIRST_LAUNCH_KEY] ?: true
     }
 
     val lastSyncTime: Flow<Long?> = context.dataStore.data.map { preferences ->
         preferences[LAST_SYNC_KEY]
+    }
+
+    suspend fun setFirstLaunchCompleted() {
+        context.dataStore.edit { preferences ->
+            preferences[IS_FIRST_LAUNCH_KEY] = false
+        }
     }
 
     suspend fun saveLastSyncTime(timestamp: Long) {

@@ -1,14 +1,18 @@
 package com.rohlicek.rateio.presentation.components
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.material3.MaterialShapes
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.toShape
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -39,7 +43,7 @@ fun ItemStatCard(
     ) {
         Text(
             statistic,
-            fontWeight = FontWeight.ExtraBold,
+            fontWeight = FontWeight.Bold,
             style = MaterialTheme.typography.headlineLarge,
         )
         Text(
@@ -96,7 +100,7 @@ fun ItemRatingStatCard(
                 text = source,
                 style = MaterialTheme.typography.headlineSmall,
                 //color = MaterialTheme.colorScheme.onSurfaceVariant,
-                fontWeight = FontWeight.ExtraBold,
+                fontWeight = FontWeight.Bold,
             )
             Column(
                 verticalArrangement = Arrangement.spacedBy(2.dp),

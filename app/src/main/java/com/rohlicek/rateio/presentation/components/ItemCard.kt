@@ -88,9 +88,9 @@ fun ItemCard(
                         }
                     }
 
-                    Spacer(modifier = Modifier.width(6.dp))
-
                     if (trailingContent != null) {
+                        Spacer(modifier = Modifier.width(6.dp))
+
                         trailingContent()
                     }
                 }

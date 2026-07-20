@@ -91,7 +91,7 @@ fun RateBox(
                 Text(
                     text = display,
                     fontSize = size.textSize,
-                    fontWeight = FontWeight.Black,
+                    fontWeight = FontWeight.ExtraBold,
                     fontFamily = GoogleSansRounded,
                     letterSpacing = 0.sp,
                     maxLines = 1,

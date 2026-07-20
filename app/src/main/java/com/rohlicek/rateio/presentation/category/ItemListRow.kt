@@ -14,6 +14,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.rohlicek.rateio.model.CategoryType
 import com.rohlicek.rateio.model.RateItem
 import com.rohlicek.rateio.presentation.components.RateItemGridCard
 import com.rohlicek.rateio.presentation.components.SectionHeader
@@ -61,7 +62,8 @@ fun ItemListRow(
                         subtitle = item.subtitle,
                         coverImagePath = item.coverImageOverride ?: item.coverImageLowUrl,
                         rating = item.rating,
-                        //placeholderRatio = if (item.externalSource == CategoryType.TMDB_EPISODES) 16f / 9f else 2f / 3f,
+                        placeholderRatio = if (item.externalSource == CategoryType.TMDB_EPISODES || item.externalSource == CategoryType.OPEN_LIBRARY_CHAPTER)
+                            16f / 9f else 2f / 3f,
                         padding = PaddingValues(0.dp),
                         rank = if (showRanking) index + 1 else null,
                         onClick = { onItemClick(item) },

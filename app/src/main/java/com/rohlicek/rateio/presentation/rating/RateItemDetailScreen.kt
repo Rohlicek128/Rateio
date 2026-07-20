@@ -111,7 +111,7 @@ fun RateItemDetailScreen(
     }
 
     var posterPalette by remember { mutableStateOf<Palette?>(null) }
-    val dominantColor = posterPalette?.dominantSwatch?.rgb?.let { Color(it) } ?: Color.Transparent
+    val dominantColor = posterPalette?.vibrantSwatch?.rgb?.let { Color(it) } ?: Color.Transparent
 
     var expandDescription by remember { mutableStateOf(false) }
     var editedReview by remember { mutableStateOf(review) }

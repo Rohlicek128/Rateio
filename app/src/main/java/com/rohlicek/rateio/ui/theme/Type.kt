@@ -99,6 +99,22 @@ val GoogleSansRounded = FontFamily(
             FontVariation.Setting("ROND", GoogleSansFlexRond)
         )
     ),
+    androidx.compose.ui.text.font.Font(
+        resId = R.font.google_sans_flex_variable,
+        weight = FontWeight.ExtraBold,
+        variationSettings = FontVariation.Settings(
+            FontVariation.weight(FontWeight.ExtraBold.weight),
+            FontVariation.Setting("ROND", GoogleSansFlexRond)
+        )
+    ),
+    androidx.compose.ui.text.font.Font(
+        resId = R.font.google_sans_flex_variable,
+        weight = FontWeight.Black,
+        variationSettings = FontVariation.Settings(
+            FontVariation.weight(FontWeight.Black.weight),
+            FontVariation.Setting("ROND", GoogleSansFlexRond)
+        )
+    ),
 )
 
 val TypographyRounded = Typography(

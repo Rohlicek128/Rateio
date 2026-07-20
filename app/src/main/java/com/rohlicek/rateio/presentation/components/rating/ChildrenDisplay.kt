@@ -97,17 +97,12 @@ fun ChildrenDisplay(
             }
     }
     val sortedChildrenBestRated = sortedChildrenBest.filter { it.rating != null }
-    val sortedChildrenTop = when {
-        sortedChildrenBestRated.size >= 10 -> {
-            sortedChildrenBestRated.take(round(sortedChildrenBestRated.size * 0.1f).toInt().coerceIn(3, 10))
-        }
-        sortedChildrenBestRated.size in 5..<10 -> {
-            sortedChildrenBestRated.take(1)
-        }
-        else -> {
-            emptyList()
-        }
+    val sortedTopLimit = when {
+        sortedChildrenBestRated.size >= 10 -> round(sortedChildrenBestRated.size * 0.1f).toInt().coerceIn(3, 10)
+        sortedChildrenBestRated.size in 5..<10 -> 1
+        else -> 0
     }
+    val sortedChildrenTop = if (sortedTopLimit > 0) sortedChildrenBestRated.take(sortedTopLimit) else emptyList()
 
     val sortedChildren = remember(childrenGroups, selectedSortMode) {
         childrenGroups
@@ -256,6 +251,7 @@ fun ChildrenDisplay(
                                     modifier = Modifier.padding(horizontal = 16.dp),
                                     displayNotNullCounter = true,
                                     sortedChildren = sortedChildrenTop,
+                                    sortedTopLimit = sortedTopLimit,
                                     spoilers = spoilers,
                                     spoilName = spoilName,
                                     showChildRatedCompletion = showChildRatedCompletion,
@@ -266,7 +262,10 @@ fun ChildrenDisplay(
                                     items = if (selectedOrder == SortOrder.ASCENDING) sortedChildren else sortedChildren.asReversed(),
                                     onChildClick = onChildClick,
                                     modifier = Modifier.padding(horizontal = 16.dp),
-                                    sortedChildren = sortedChildrenTop,
+                                    sortedChildren = sortedChildren,
+                                    sortedTopLimit = if (selectedSortMode == SortModeShow.RATING) sortedTopLimit else 0,
+                                    reverseSorting = selectedSortMode == SortModeShow.RATING || selectedSortMode == SortModeShow.RUNTIME,
+                                    showRanking = true,
                                     spoilers = spoilers,
                                     spoilName = spoilName,
                                 )

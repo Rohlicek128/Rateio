@@ -33,8 +33,10 @@ fun ChildrenList(
     modifier: Modifier = Modifier,
     displayNotNullCounter: Boolean = false,
     sortedChildren: List<RateItem> = emptyList(),
+    sortedTopLimit: Int = 1,
     spoilers: Boolean = true,
     spoilName: Boolean = true,
+    showRanking: Boolean = false,
     showChildRatedCompletion: Boolean = false,
 ) {
     Column(
@@ -99,8 +101,10 @@ fun ChildrenList(
                     onChildClick = onChildClick,
                     modifier = Modifier.padding(start = 12.dp, end = 12.dp, bottom = 32.dp),
                     sortedChildren = sortedChildren,
+                    sortedTopLimit = sortedTopLimit,
                     spoilers = spoilers,
                     spoilName = spoilName,
+                    showRanking = showRanking,
                 )
             }
         }
@@ -113,18 +117,28 @@ fun RateItemList(
     onChildClick: (RateItem) -> Unit,
     modifier: Modifier = Modifier,
     sortedChildren: List<RateItem> = emptyList(),
+    sortedTopLimit: Int = 1,
+    reverseSorting: Boolean = false,
     spoilers: Boolean = true,
     spoilName: Boolean = true,
+    showRanking: Boolean = false,
 ) {
     Column(
         modifier = modifier,
     ) {
         items.forEach { item ->
-            val topIndex = sortedChildren.indexOf(item)
+            val index = sortedChildren.indexOf(item)
+            val rank = when {
+                index == -1 -> -1
+                reverseSorting -> sortedChildren.size - index
+                else -> index + 1
+            }
+            val isTop = rank <= sortedTopLimit && rank != -1
             RateItemCard(
                 title = item.title,
                 subtitle = item.subtitle,
-                overlineText = if (topIndex != -1) "RATED #${topIndex + 1}" else null,
+                overlineText = if (isTop) "RATED #${rank}" else null,
+                rank = if (showRanking && rank != -1 && item.rating != null) rank else null,
                 coverImagePath = item.coverImageUrl,
                 rating = item.rating,
                 placeholderRatio = 16f / 9f,

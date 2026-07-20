@@ -3,7 +3,10 @@ package com.rohlicek.rateio.data.remote.imdb
 import android.content.Context
 import androidx.work.Constraints
 import androidx.work.ExistingPeriodicWorkPolicy
+import androidx.work.ExistingWorkPolicy
 import androidx.work.NetworkType
+import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.OutOfQuotaPolicy
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import java.util.concurrent.TimeUnit
@@ -33,6 +36,18 @@ object ImdbSyncScheduler {
             UNIQUE_WORK_NAME,
             ExistingPeriodicWorkPolicy.KEEP, // KEEP means: if already scheduled, don't reset the 7-day timer
             syncRequest
+        )
+    }
+
+    fun triggerImmediateFirstLaunchSync(context: Context) {
+        val firstLaunchRequest = OneTimeWorkRequestBuilder<ManualSyncWorker>()
+            .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
+            .build()
+
+        WorkManager.getInstance(context).enqueueUniqueWork(
+            "first_launch_imdb_sync",
+            ExistingWorkPolicy.KEEP,
+            firstLaunchRequest
         )
     }
 }

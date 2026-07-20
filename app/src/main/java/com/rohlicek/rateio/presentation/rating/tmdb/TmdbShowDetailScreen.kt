@@ -340,10 +340,10 @@ fun TmdbShowDetailScreen(
                 backdropImageUrl = show.backdropPath?.let {
                     "https://image.tmdb.org/t/p/w1280$it"
                 },
-                rating = if (!isSaved) state.imdbRating?.averageRating else customRating,
+                rating = if (!isSaved) state.imdbRating?.averageRating else showAverage,
                 ratingVotes = if (!isSaved) state.imdbRating?.numVotes else null,
                 ratingLabel = savedRank?.let { formatItemRankLabel(it, CategoryType.TMDB_SHOWS) },
-                ratingColorBucketsOverride = if (!isSaved) RatingColorBucketConstants.RC_IMDB_SHOWS else getCurrentRatingColorBuckets(),
+                ratingColorBucketsOverride = if (!isSaved || true) RatingColorBucketConstants.RC_IMDB_SHOWS else getCurrentRatingColorBuckets(),
                 onRatingSaved = onRatingSaved,
                 //review = if (state.savedItem != null) "" else null,
                 onBackClick = onBackClick,
