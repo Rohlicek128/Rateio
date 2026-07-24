@@ -16,6 +16,8 @@ import androidx.compose.foundation.text.input.clearText
 import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Leaderboard
+import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.ExpandedFullScreenSearchBar
 import androidx.compose.material3.HorizontalDivider
@@ -38,6 +40,8 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.rohlicek.rateio.model.CategoryType
 import com.rohlicek.rateio.presentation.category.CategoryItemListScreen
 import com.rohlicek.rateio.presentation.components.ConnectedItemSelector
+import com.rohlicek.rateio.presentation.settings.ListItemPosition
+import com.rohlicek.rateio.presentation.settings.SettingListItem
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlin.time.Duration.Companion.milliseconds
@@ -46,6 +50,7 @@ import kotlin.time.Duration.Companion.milliseconds
 @Composable
 fun BrowseScreen(
     onItemClick: (externalId: String, type: CategoryType) -> Unit,
+    onTopRatedClick: (category: CategoryType) -> Unit,
     contentPadding: PaddingValues,
     viewModel: BrowseViewModel = viewModel(),
 ) {
@@ -127,6 +132,21 @@ fun BrowseScreen(
                             sortBy = "vote_count.desc",
                             category = state.selectedCategory!!,
                             onItemClick = onItemClick
+                        )
+                    }
+
+                    item {
+                        SettingListItem(
+                            modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp),
+                            title = "Top Rated",
+                            description = "Leaderboard of ${state.selectedCategory?.type?.displayName}",
+                            icon = Icons.Default.Leaderboard,
+                            position = ListItemPosition.SINGLE,
+                            onClick = {
+                                if (state.selectedCategory?.type != null) {
+                                    onTopRatedClick(state.selectedCategory!!.type)
+                                }
+                            },
                         )
                     }
                 }

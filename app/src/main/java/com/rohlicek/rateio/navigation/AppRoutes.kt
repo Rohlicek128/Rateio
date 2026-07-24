@@ -1,5 +1,6 @@
 package com.rohlicek.rateio.navigation
 
+import com.rohlicek.rateio.model.CategoryType
 import kotlinx.serialization.Serializable
 
 
@@ -21,6 +22,7 @@ sealed interface Route {
         @Serializable data object Categories : SettingsLevel()
     }
 
+    @Serializable data class TmdbLeaderboard(val category: CategoryType) : Route
 
     @Serializable data class CategoryDetail(val categoryId: Long) : Route
 

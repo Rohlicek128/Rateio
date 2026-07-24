@@ -37,6 +37,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.StrokeCap
@@ -58,6 +59,7 @@ import androidx.compose.ui.unit.sp
 import androidx.graphics.shapes.toPath
 import com.rohlicek.rateio.model.RateItem
 import com.rohlicek.rateio.presentation.components.RateItemCard
+import com.rohlicek.rateio.presentation.rating.display.RatingTransformation
 import com.rohlicek.rateio.presentation.rating.display.getCurrentRatingTransformations
 import com.rohlicek.rateio.presentation.rating.display.getRatingColor
 import com.rohlicek.rateio.presentation.rating.display.getRoundedRating
@@ -543,6 +545,7 @@ fun ChildrenTimeline(
                     title = child.title,
                     subtitle = child.subtitle,
                     overlineText = if (topIndex != -1) "RATED #${topIndex + 1}" else null,
+                    overlineTextColor = Color(0xFFF4D03F),
                     coverImagePath = child.coverImageUrl,
                     rating = child.rating,
                     bubbleText = if (child.length != null && child.length > 0f) formatTime(child.length.toInt()) else null,
@@ -655,4 +658,61 @@ private fun calculateMovingAverage(points: List<ChildPoint>, windowSize: Int = 3
         averages.add(rated[i].globalIndex to averageRating)
     }
     return averages
+}
+
+
+fun generateGridSteps(
+    rtf: RatingTransformation = getCurrentRatingTransformations(),
+    axisLengthPx: Float,
+    minPxBetweenLines: Float = 120f,
+    zoom: Float = 0f
+): List<Float> {
+    // 1. Calculate the Visual domain boundaries (V)
+    val vMin = rtf.offset / rtf.divider
+    val vMax = (rtf.stepCount.toFloat() + rtf.offset) / rtf.divider
+    val vTotalRange = vMax - vMin
+
+    // 2. Map normalized zoom (0f..1f) to a scale factor.
+    // At zoom = 0f, scale = 1f.
+    // At zoom = 1f, scale = vTotalRange * rtf.divider (maximum resolution allowed by stepCount).
+    val maxZoomScale = max(1f, vTotalRange * rtf.divider)
+    val plotScale = 1f + (maxZoomScale - 1f) * zoom.coerceIn(0f, 1f)
+
+    // 3. Determine visible range and desired step count
+    val vVisibleRange = vTotalRange / plotScale
+    val desiredSteps = max(2, (axisLengthPx / max(1f, minPxBetweenLines)).toInt())
+
+    // 4. Calculate "Nice Step" interval
+    val roughStep = vVisibleRange / desiredSteps
+    val stepExponent = floor(log10(roughStep + 1e-9f))
+    val fraction = roughStep / 10f.pow(stepExponent)
+    val niceFraction = when {
+        fraction <= 1.5f -> 1f
+        fraction <= 3f -> 2f
+        fraction <= 7f -> 5f
+        else -> 10f
+    }
+    val niceVStep = niceFraction * 10f.pow(stepExponent)
+
+    // 5. Clamp step size to the smallest tick allowed by the transformation
+    val vMinAllowedStep = 1f / rtf.divider
+    val clampedVStep = max(niceVStep, vMinAllowedStep)
+
+    // 6. Calculate required dynamic decimal precision
+    val requiredDecimals = max(0, -stepExponent.toInt())
+    val currentDecimals = rtf.decimalPlaces.toInt()
+    //val decimalOffset = max(0, requiredDecimals - currentDecimals).toUInt()
+
+    // 7. Iterate and collect normalized points (0f..1f)
+    val result = mutableListOf<Float>()
+    val startV = ceil(vMin / clampedVStep) * clampedVStep
+    var currentV = startV
+
+    while (currentV <= vMax + 1e-5f) {
+        val r = (currentV * rtf.divider - rtf.offset) / rtf.stepCount.toFloat()
+        result.add(r)
+        currentV += clampedVStep
+    }
+
+    return result
 }

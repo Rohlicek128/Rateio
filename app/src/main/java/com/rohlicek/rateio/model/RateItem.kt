@@ -39,29 +39,32 @@ enum class ItemStatus(override val displayName: String): HasDisplayName {
 }
 
 
-fun RateItem.computedRating(children: List<RateItem>): Float? {
-    if (children.isEmpty()) return rating
+fun computeWeightedRating(aggregateRating: Float?, length: Int?): Float? {
+    if (aggregateRating == null || length == null || length <= 0) return null
 
-    val rated = children.mapNotNull { it.rating }
-    return if (!rated.isEmpty()) null
-    else rated.average().toFloat()
-}
-
-fun computeAggregateRatingWeighted(ratings: List<Float>): Float? {
     val ratingWeight = 0.9f
     val lengthWeight = 1f - ratingWeight
     val maxLength = 150
 
-    val ratingWeighted = if (ratings.isNotEmpty())
-        ratings.average().toFloat() * ratingWeight
-    else return null
-
-    val lengthWeighted = (log10(ratings.size.toFloat()) / log10(maxLength.toFloat())) * lengthWeight
+    val ratingWeighted = aggregateRating * ratingWeight
+    val lengthWeighted = (log10(length.toFloat()) / log10(maxLength.toFloat()))
+        .coerceAtMost(1f) * lengthWeight
 
     return ratingWeighted + lengthWeighted
 }
 
-fun computeAggregateRatingAverage(children: List<RateItem>): Float? {
+fun computeAggregateRatingWeighted(ratings: List<Float>): Float? {
+    return computeWeightedRating(computeAggregateRating(ratings), ratings.size)
+}
+
+
+fun computeAggregateRating(ratings: List<Float>): Float? {
+    return if (ratings.isNotEmpty())
+        ratings.average().toFloat()
+    else null
+}
+
+fun computeAggregateChildrenRating(children: List<RateItem>): Float? {
     val flatRatings = children.mapNotNull { it.rating }
-    return if (flatRatings.isNotEmpty()) flatRatings.average().toFloat() else null
+    return computeAggregateRating(flatRatings)
 }

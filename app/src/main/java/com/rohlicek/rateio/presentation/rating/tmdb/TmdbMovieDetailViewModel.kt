@@ -56,6 +56,7 @@ class TmdbMovieDetailViewModel(
                 _state.update { it.copy(movie = movie, isLoading = false) }
 
                 launch {
+                    imdbRepository.linkImdbToTmdb(movie.imdbId, id)
                     _state.update { it.copy(imdbRating = imdbRepository.getRatingByImdbId(movie.imdbId)) }
                 }
 
@@ -77,11 +78,11 @@ class TmdbMovieDetailViewModel(
 
                 launch {
                     val moviesCategory = categoryRepository.getCategoryByType(CategoryType.TMDB_MOVIES)
-                    moviesCategory?.let { cat ->
-                        val existing = itemRepository.getByExternalId(
+                    moviesCategory?.let { category ->
+                        val existing = itemRepository.findAndUpdateMetadata(
                             externalId = movie.id.toString(),
-                            categoryId = cat.id,
-                        )
+                            categoryId = category.id,
+                        ) { movie.toRateItem() }
                         if (existing != null) _state.update { it.copy(savedItem = existing) }
                     }
                 }

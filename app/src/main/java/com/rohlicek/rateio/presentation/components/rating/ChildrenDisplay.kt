@@ -249,7 +249,6 @@ fun ChildrenDisplay(
                                     onChildClick = onChildClick,
                                     expandedParents = expandedParents,
                                     modifier = Modifier.padding(horizontal = 16.dp),
-                                    displayNotNullCounter = true,
                                     sortedChildren = sortedChildrenTop,
                                     sortedTopLimit = sortedTopLimit,
                                     spoilers = spoilers,

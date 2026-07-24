@@ -5,6 +5,7 @@ import retrofit2.http.GET
 import retrofit2.http.Header
 import retrofit2.http.Path
 import retrofit2.http.Query
+import java.util.Locale
 
 interface TmdbService {
     // Shows
@@ -24,6 +25,19 @@ interface TmdbService {
         @Query("language") language: String = "en-US",
         @Query("page") page: Int = 1,
         @Query("sort_by") sortBy: String = "popularity.desc",
+        @Header("accept") accept: String = "application/json",
+        @Header("Authorization") bearer: String = "Bearer " + BuildConfig.TMDB_API_KEY,
+    ): TmdbShowSearchResponse
+
+    @GET("discover/tv")
+    suspend fun topRatedShows(
+        @Query("include_adult") includeAdult: Boolean = false,
+        @Query("include_video") includeVideo: Boolean = false,
+        @Query("language") language: String = "en-US",
+        @Query("page") page: Int = 1,
+        @Query("sort_by") sortBy: String = "vote_average.desc",
+        @Query("vote_count.gte") voteCountGte: Float = 200f,
+        @Query("without_genres") withoutGenres: String = "99,10755",
         @Header("accept") accept: String = "application/json",
         @Header("Authorization") bearer: String = "Bearer " + BuildConfig.TMDB_API_KEY,
     ): TmdbShowSearchResponse
@@ -122,6 +136,19 @@ interface TmdbService {
         @Query("language") language: String = "en-US",
         @Query("page") page: Int = 1,
         @Query("sort_by") sortBy: String = "popularity.desc",
+        @Header("accept") accept: String = "application/json",
+        @Header("Authorization") bearer: String = "Bearer " + BuildConfig.TMDB_API_KEY,
+    ): TmdbMovieSearchResponse
+
+    @GET("discover/movie")
+    suspend fun topRatedMovies(
+        @Query("include_adult") includeAdult: Boolean = false,
+        @Query("include_video") includeVideo: Boolean = false,
+        @Query("language") language: String = "en-US",
+        @Query("page") page: Int = 1,
+        @Query("sort_by") sortBy: String = "vote_average.desc",
+        @Query("vote_count.gte") voteCountGte: Float = 200f,
+        @Query("without_genres") withoutGenres: String = "99,10755",
         @Header("accept") accept: String = "application/json",
         @Header("Authorization") bearer: String = "Bearer " + BuildConfig.TMDB_API_KEY,
     ): TmdbMovieSearchResponse

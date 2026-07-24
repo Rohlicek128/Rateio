@@ -111,13 +111,14 @@ fun ItemRatingStatCard(
                     colorBucketsOverride = colorBucketsOverride,
                     transformationOverride = transformationOverride,
                 )
-                if (showNullVotes || correctedVotes != null)
-                Text(
-                    if (correctedVotes != null) formatCompact(correctedVotes.toLong()) else "N/A",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.75f),
-                    fontWeight = FontWeight.SemiBold,
-                )
+                if (showNullVotes || correctedVotes != null) {
+                    Text(
+                        if (correctedVotes != null) formatCompact(correctedVotes.toLong()) else "N/A",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.75f),
+                        fontWeight = FontWeight.SemiBold,
+                    )
+                }
             }
 
         }

@@ -100,6 +100,28 @@ class RateItemRepository(private val dao: RateItemDao) {
     }
 
 
+    suspend fun findAndUpdateMetadata(
+        externalId: String,
+        categoryId: Long,
+        parentId: Long? = null,
+        build: () -> RateItem,
+    ): RateItem? {
+        val existing = dao.getByExternalId(externalId, categoryId) ?: return null
+
+        val built = build()
+        val updated = existing.copy(
+            parentId = parentId,
+            title = built.title,
+            subtitle = built.subtitle,
+            length = built.length,
+            coverImageUrl = built.coverImageUrl ?: existing.coverImageUrl,
+            coverImageLowUrl = built.coverImageLowUrl ?: existing.coverImageLowUrl,
+            metadataJSON = built.metadataJSON ?: existing.metadataJSON,
+        )
+        dao.update(updated)
+        return updated.toDomain()
+    }
+
     /** Finds an existing item by external id or inserts a new skeleton one */
     suspend fun findOrCreate(
         externalId: String,
@@ -107,21 +129,13 @@ class RateItemRepository(private val dao: RateItemDao) {
         parentId: Long? = null,
         build: () -> RateItem,
     ): Long {
-        val existing = dao.getByExternalId(externalId, categoryId)
-        if (existing != null) {
-            val built = build()
-            val updated = existing.copy(
-                parentId = parentId,
-                title = built.title,
-                subtitle = built.subtitle,
-                length = built.length,
-                coverImageUrl = built.coverImageUrl,
-                coverImageLowUrl = built.coverImageLowUrl,
-                metadataJSON = built.metadataJSON,
-            )
-            dao.update(updated)
-            return existing.id
-        }
+        val existing = findAndUpdateMetadata(
+            externalId = externalId,
+            categoryId = categoryId,
+            parentId = parentId,
+            build = build,
+        )
+        if (existing != null) return existing.id
         return dao.insert(build().copy(id = 0, parentId = parentId, rating = null).toEntity())
     }
 
@@ -130,6 +144,9 @@ class RateItemRepository(private val dao: RateItemDao) {
 
     suspend fun rate(id: Long, rating: Float?) =
         dao.updateRating(id, rating?.coerceIn(0f, 1f))
+
+    suspend fun setWeight(id: Long, weight: Float?) =
+        dao.updateWeight(id, weight)
 
     suspend fun setStatus(id: Long, status: ItemStatus) =
         dao.updateStatus(id, status.name)

@@ -59,6 +59,7 @@ class DiscoverViewModel(
                                         val imdbId = if (category.type == CategoryType.TMDB_MOVIES)
                                             TmdbClient.tmdb.getMovieExternalIds(item.externalId.toInt()).imdbId
                                         else TmdbClient.tmdb.getShowExternalIds(item.externalId.toInt()).imdbId
+                                        imdbRepository.linkImdbToTmdb(imdbId, item.externalId.toInt())
                                         imdbRepository.getRatingByImdbId(imdbId)?.averageRating
                                     }
 

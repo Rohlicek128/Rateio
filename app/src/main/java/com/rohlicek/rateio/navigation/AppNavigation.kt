@@ -46,6 +46,7 @@ import com.rohlicek.rateio.model.CategoryType
 import com.rohlicek.rateio.presentation.browse.BrowseScreen
 import com.rohlicek.rateio.presentation.category.EnhancedCategoryScreen
 import com.rohlicek.rateio.presentation.leaderboard.LeaderboardScreen
+import com.rohlicek.rateio.presentation.leaderboard.TmdbLeaderboardScreen
 import com.rohlicek.rateio.presentation.profile.ProfileScreen
 import com.rohlicek.rateio.presentation.rating.SavedRateItemScreen
 import com.rohlicek.rateio.presentation.rating.display.RatingTransformationsConstants
@@ -207,7 +208,29 @@ fun AppNavigation(
                                     navController.navigate(Route.OLWorkDetail(externalId))
                                 else -> {}
                             }
+                        },
+                        onTopRatedClick = { category ->
+                            navController.navigate(Route.TmdbLeaderboard(category)) {
+                                popUpTo<Route.TopLevel.Browse>()
+                            }
                         }
+                    )
+                }
+
+                composable<Route.TmdbLeaderboard> { back ->
+                    val route = back.toRoute<Route.TmdbLeaderboard>()
+                    TmdbLeaderboardScreen(
+                        category = route.category,
+                        onItemClick = { tmdbId ->
+                            when (route.category) {
+                                CategoryType.TMDB_SHOWS  ->
+                                    navController.navigate(Route.TmdbShowDetail(tmdbId))
+                                CategoryType.TMDB_MOVIES ->
+                                    navController.navigate(Route.TmdbMovieDetail(tmdbId))
+                                else -> {}
+                            }
+                        },
+                        onBackClick = { navController.popBackStack() }
                     )
                 }
 

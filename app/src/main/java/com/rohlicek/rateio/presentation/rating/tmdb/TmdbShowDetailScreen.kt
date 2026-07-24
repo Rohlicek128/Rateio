@@ -25,7 +25,9 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.ToggleButtonDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -49,8 +51,10 @@ import com.rohlicek.rateio.data.repository.RateItemRepository
 import com.rohlicek.rateio.model.CategoryType
 import com.rohlicek.rateio.model.ItemStatus
 import com.rohlicek.rateio.model.RateItem
-import com.rohlicek.rateio.model.computeAggregateRatingAverage
+import com.rohlicek.rateio.model.computeAggregateChildrenRating
+import com.rohlicek.rateio.model.computeAggregateRating
 import com.rohlicek.rateio.model.computeAggregateRatingWeighted
+import com.rohlicek.rateio.model.computeWeightedRating
 import com.rohlicek.rateio.presentation.components.AdaptiveImageCarousel
 import com.rohlicek.rateio.presentation.components.CollapsibleHeader
 import com.rohlicek.rateio.presentation.components.DateProgressBar
@@ -67,6 +71,7 @@ import com.rohlicek.rateio.presentation.components.ScreenError
 import com.rohlicek.rateio.presentation.components.ScreenLoading
 import com.rohlicek.rateio.presentation.components.rating.ChildrenDisplay
 import com.rohlicek.rateio.presentation.components.rating.ItemProgressBar
+import com.rohlicek.rateio.presentation.profile.RatingsBarChart
 import com.rohlicek.rateio.presentation.rating.RateItemDetailScreen
 import com.rohlicek.rateio.presentation.rating.display.RatingColorBucketConstants
 import com.rohlicek.rateio.presentation.rating.display.RatingTransformationsConstants
@@ -92,6 +97,7 @@ fun TmdbShowDetailScreen(
     customRating: Float? = null,
     savedRank: Int? = null,
     onRatingSaved: ((Float?) -> Unit)? = null,
+    onWeightSaved: ((Float?) -> Unit)? = null,
     onStatusSaved: ((ItemStatus) -> Unit)? = null,
     onCoverOverrideSaved: ((String?) -> Unit)? = null,
     onMetadataSaved: ((String?) -> Unit)? = null,
@@ -128,10 +134,12 @@ fun TmdbShowDetailScreen(
         }
         state.show != null -> {
             val show = state.show!!
-            val metadata = remember(state.savedItem?.metadataJSON) {
-                state.savedItem?.metadataJSON?.let {
-                    runCatching { Json.decodeFromString<TmdbShowMetadata>(it) }.getOrNull()
-                } ?: TmdbShowMetadata()
+            var metadata by remember(state.savedItem?.metadataJSON) {
+                mutableStateOf(
+                    state.savedItem?.metadataJSON?.let {
+                        runCatching { Json.decodeFromString<TmdbShowMetadata>(it) }.getOrNull()
+                    } ?: TmdbShowMetadata()
+                )
             }
 
             val seasons = show.seasons.filter { it.seasonNumber > 0 }.sortedBy { it.seasonNumber }
@@ -148,7 +156,16 @@ fun TmdbShowDetailScreen(
             var selectedRatings by remember { mutableStateOf(if (!isSaved) RatingsSource.IMDB else RatingsSource.USER) }
 
             val userRatings = viewModel.userRatingsState.collectAsStateWithLifecycle()
-            val listOfRatings = userRatings.value.values.flatMap { it.values }.filterNotNull()
+            val listOfRatings by remember(userRatings) {
+                derivedStateOf {
+                    userRatings.value.values.flatMap { it.values }.filterNotNull()
+                }
+            }
+            if (onWeightSaved != null) {
+                LaunchedEffect(listOfRatings) {
+                    onWeightSaved(listOfRatings.size.toFloat())
+                }
+            }
 
             val ratings: Map<Int, Map<Int, Float?>> = remember(userRatings, selectedRatings, episodesState) {
                 when (selectedRatings) {
@@ -192,7 +209,7 @@ fun TmdbShowDetailScreen(
                             title = "Season $seasonNumber",
                             subtitle = "${(season.airDate ?: "N/A").take(4)} | ${season.episodeCount} episodes",
                             length = season.episodeCount.toFloat(),
-                            rating = computeAggregateRatingAverage(items),
+                            rating = computeAggregateChildrenRating(items),
                             coverImageUrl = season.posterPath.let { "https://image.tmdb.org/t/p/original$it" },
                             coverImageLowUrl = season.posterPath.let { "https://image.tmdb.org/t/p/w342$it" },
                             externalId = season.id.toString(),
@@ -208,7 +225,18 @@ fun TmdbShowDetailScreen(
                 }
             }
 
-            val showAverage = remember(childrenGroups) { computeAggregateRatingWeighted(listOfRatings) }
+            val ratingByAverage = true
+            val showAverage = remember(childrenGroups) {
+                computeAggregateRating(listOfRatings)
+            }
+            val showWeighted = remember(showAverage, listOfRatings.size) {
+                computeWeightedRating(showAverage, listOfRatings.size)
+            }
+            if (isSaved && ratingByAverage && onRatingSaved != null) {
+                LaunchedEffect(showAverage) {
+                    onRatingSaved(showAverage)
+                }
+            }
 
             if (listOfRatings.size >= show.numberOfEpisodes)
                 onStatusSaved?.invoke(ItemStatus.COMPLETED)
@@ -237,7 +265,6 @@ fun TmdbShowDetailScreen(
 
 
             val spoilers = metadata.showSpoilers || !isSaved
-            var spoilName by remember { mutableStateOf(true) }
             val spoilEpisode = { seasonNumber: Int, episodeNumber: Int ->
                 spoilers || selectedRatings != RatingsSource.USER ||
                         (selectedRatings == RatingsSource.USER && userRatings.value[seasonNumber]?.get(episodeNumber) != null)
@@ -265,10 +292,10 @@ fun TmdbShowDetailScreen(
                                 SettingsSwitch(
                                     checked = !metadata.showSpoilers,
                                     onCheckedChange = {
+                                        metadata = metadata.copy(showSpoilers = !it)
                                         onMetadataSaved?.invoke(
-                                            Json.encodeToString(metadata.copy(showSpoilers = !it))
+                                            Json.encodeToString(metadata)
                                         )
-                                        viewModel.updateSavedItem()
                                     }
                                 )
                             }
@@ -282,8 +309,13 @@ fun TmdbShowDetailScreen(
                             position = ListItemPosition.END,
                             trailingContent = {
                                 SettingsSwitch(
-                                    checked = !spoilName,
-                                    onCheckedChange = { spoilName = !it }
+                                    checked = !metadata.showSpoilersName,
+                                    onCheckedChange = {
+                                        metadata = metadata.copy(showSpoilersName = !it)
+                                        onMetadataSaved?.invoke(
+                                            Json.encodeToString(metadata)
+                                        )
+                                    }
                                 )
                             }
                         )
@@ -340,11 +372,15 @@ fun TmdbShowDetailScreen(
                 backdropImageUrl = show.backdropPath?.let {
                     "https://image.tmdb.org/t/p/w1280$it"
                 },
-                rating = if (!isSaved) state.imdbRating?.averageRating else showAverage,
+                rating = when {
+                    !isSaved -> state.imdbRating?.averageRating
+                    ratingByAverage -> showWeighted
+                    else -> customRating
+                },
                 ratingVotes = if (!isSaved) state.imdbRating?.numVotes else null,
                 ratingLabel = savedRank?.let { formatItemRankLabel(it, CategoryType.TMDB_SHOWS) },
-                ratingColorBucketsOverride = if (!isSaved || true) RatingColorBucketConstants.RC_IMDB_SHOWS else getCurrentRatingColorBuckets(),
-                onRatingSaved = onRatingSaved,
+                ratingColorBucketsOverride = if (!isSaved || ratingByAverage) RatingColorBucketConstants.RC_IMDB_SHOWS else getCurrentRatingColorBuckets(),
+                onRatingSaved = if (!ratingByAverage) onRatingSaved else null,
                 //review = if (state.savedItem != null) "" else null,
                 onBackClick = onBackClick,
                 savedInLibrary = state.savedItem != null,
@@ -497,7 +533,7 @@ fun TmdbShowDetailScreen(
                                             //)
                                         },
                                         spoilers = spoilers,
-                                        spoilName = spoilName,
+                                        spoilName = metadata.showSpoilersName,
                                         //modifier = Modifier.width(260.dp)
                                     )
                                 }
@@ -543,7 +579,7 @@ fun TmdbShowDetailScreen(
                                             //)
                                         },
                                         spoilers = spoilEpisode(episode.seasonNumber, episode.episodeNumber),
-                                        spoilName = spoilName,
+                                        spoilName = metadata.showSpoilersName,
                                     )
                                 }
                             }
@@ -733,10 +769,29 @@ fun TmdbShowDetailScreen(
                                     expandedParents = state.expandedSeasons,
                                     isLoading = episodesState.isLoadingEpisodes,
                                     spoilers = spoilers,
-                                    spoilName = spoilName,
+                                    spoilName = metadata.showSpoilersName,
                                     showChildRatedCompletion = selectedRatings == RatingsSource.USER,
                                 )
                             }
+                        }
+                    }
+
+                    // Stats
+                    item {
+                        val headerName = "Statistics"
+                        CollapsibleHeader(
+                            headerName,
+                            isOpened = headerName !in state.collapsedHeaders,
+                            onClick = {
+                                if (it) state.collapsedHeaders.remove(headerName)
+                                else state.collapsedHeaders.add(headerName)
+                            }
+                        ) {
+                            RatingsBarChart(
+                                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                                title = "${show.name}'s Ratings",
+                                entries = childrenGroups.flatMap { it.value },
+                            )
                         }
                     }
 

@@ -7,20 +7,15 @@ import androidx.compose.animation.expandVertically
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.em
 import com.rohlicek.rateio.model.RateItem
-import com.rohlicek.rateio.model.computeAggregateRatingAverage
+import com.rohlicek.rateio.model.computeAggregateChildrenRating
 import com.rohlicek.rateio.presentation.components.RateItemCard
 import com.rohlicek.rateio.utils.formatTime
 
@@ -31,7 +26,6 @@ fun ChildrenList(
     onChildClick: (RateItem) -> Unit,
     expandedParents: MutableSet<String?>,
     modifier: Modifier = Modifier,
-    displayNotNullCounter: Boolean = false,
     sortedChildren: List<RateItem> = emptyList(),
     sortedTopLimit: Int = 1,
     spoilers: Boolean = true,
@@ -60,7 +54,7 @@ fun ChildrenList(
                 titleStyle = MaterialTheme.typography.headlineSmall,
                 subtitle = parent.subtitle,
                 coverImagePath = parent.coverImageUrl,
-                rating = computeAggregateRatingAverage(children),
+                rating = computeAggregateChildrenRating(children),
                 padding = PaddingValues(vertical = 6.dp),
                 tonalElevation = if (isExpanded) 4.dp else 1.dp,
                 onClick = {
@@ -70,17 +64,11 @@ fun ChildrenList(
                     }
                 },
                 leadingRateBoxContent = {
-                    if (showChildRatedCompletion && displayNotNullCounter && children.isNotEmpty() && flatRatings.isNotEmpty()) {
-                        Text(
-                            "${flatRatings.size}/${children.size}",
-                            style = MaterialTheme.typography.titleMedium,
-                            //color =  if (flatRatings.size >= season.episodeCount) MaterialTheme.colorScheme.secondary else Color.Unspecified,
-                            fontWeight = if (flatRatings.size >= children.size) FontWeight.ExtraBold else null,
-                            lineHeight = 1.em,
-                            maxLines = 1,
-                            overflow = TextOverflow.Clip,
+                    if (showChildRatedCompletion) {
+                        ParentCompletionText(
+                            numberOfCompleted = flatRatings.size,
+                            numberOfAll = children.size,
                         )
-                        Spacer(modifier = Modifier.width(6.dp))
                     }
                 },
             )
@@ -138,6 +126,7 @@ fun RateItemList(
                 title = item.title,
                 subtitle = item.subtitle,
                 overlineText = if (isTop) "RATED #${rank}" else null,
+                overlineTextColor = Color(0xFFF4D03F),
                 rank = if (showRanking && rank != -1 && item.rating != null) rank else null,
                 coverImagePath = item.coverImageUrl,
                 rating = item.rating,

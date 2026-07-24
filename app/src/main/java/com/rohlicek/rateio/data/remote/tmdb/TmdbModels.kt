@@ -20,6 +20,7 @@ data class TmdbShow(
     @SerializedName("poster_path")   val posterPath: String?,
     @SerializedName("first_air_date") val firstAirDate: String?,
     @SerializedName("vote_average")  val voteAverage: Float?,
+    @SerializedName("vote_count") val voteCount: Int?,
     @SerializedName("origin_country") val originCountry: List<String>,
 )
 
@@ -177,6 +178,7 @@ data class TmdbMovie(
     @SerializedName("backdrop_path") val backdropPath: String?,
     @SerializedName("release_date") val releaseDate: String?,
     @SerializedName("vote_average") val voteAverage: Float?,
+    @SerializedName("vote_count") val voteCount: Int?,
     @SerializedName("original_language") val originalLanguage: String?,
 )
 
@@ -280,7 +282,7 @@ data class TmdbAuthorDetail(
 @Serializable
 data class TmdbShowMetadata(
     val showSpoilers: Boolean = true,
-    val numberOfEpisodes: Int = -1,
+    val showSpoilersName: Boolean = true,
 )
 
 @Serializable
@@ -292,13 +294,15 @@ data class TmdbEpisodeMetadata(
     val imdbId: String? = null,
 )
 
-fun TmdbShow.toRateItem(categoryId: Long = 0) = RateItem(
+fun TmdbShow.toRateItem(categoryId: Long = 0, weight: Float = 1f) = RateItem(
     id = 0,
     categoryId = categoryId,
     title = name,
     subtitle = firstAirDate?.take(4),
     coverImageUrl = posterPath?.let { "https://image.tmdb.org/t/p/original$it" },
     coverImageLowUrl = posterPath?.let { "https://image.tmdb.org/t/p/w342$it" },
+    rating = voteAverage?.div(10f),
+    ratingWeight = weight,
     externalId = id.toString(),
     externalSource = CategoryType.TMDB_SHOWS,
 )
@@ -307,6 +311,7 @@ fun TmdbShowDetail.toRateItem(categoryId: Long = 0) = RateItem(
     categoryId = categoryId,
     title = name,
     subtitle = firstAirDate?.take(4),
+    length = numberOfEpisodes.toFloat(),
     coverImageUrl = posterPath?.let { "https://image.tmdb.org/t/p/original$it" },
     coverImageLowUrl = posterPath?.let { "https://image.tmdb.org/t/p/w342$it" },
     externalId = id.toString(),
@@ -319,6 +324,7 @@ fun TmdbSeasonDetail.toRateItem(categoryId: Long = 0, parentId: Long) = RateItem
     title = if (seasonNumber > 0) "Season $seasonNumber" else "Specials",
     subtitle = "${episodes.size} episodes",
     coverImageUrl = posterPath?.let { "https://image.tmdb.org/t/p/original$it" },
+    length = episodes.size.toFloat(),
     coverImageLowUrl = posterPath?.let { "https://image.tmdb.org/t/p/w185$it" },
     externalId = id.toString(),
     externalSource = CategoryType.TMDB_SEASONS,
@@ -329,6 +335,7 @@ fun TmdbEpisodeDetail.toRateItem(categoryId: Long = 0, showId: Int, parentId: Lo
     parentId = parentId,
     title = name,
     subtitle = "$showId $seasonNumber $episodeNumber",
+    length = runtime.toFloat(),
     coverImageUrl = stillPath?.let { "https://image.tmdb.org/t/p/original$it" },
     coverImageLowUrl = stillPath?.let { "https://image.tmdb.org/t/p/w300$it" },
     externalId = id.toString(),
@@ -342,7 +349,7 @@ fun TmdbEpisodeDetail.toRateItem(categoryId: Long = 0, showId: Int, parentId: Lo
 )
 
 
-fun TmdbMovie.toRateItem(categoryId: Long = 0) = RateItem(
+fun TmdbMovie.toRateItem(categoryId: Long = 0, weight: Float = 1f) = RateItem(
     id = 0,
     categoryId = categoryId,
     title = title,
@@ -350,6 +357,7 @@ fun TmdbMovie.toRateItem(categoryId: Long = 0) = RateItem(
     coverImageUrl = posterPath?.let { "https://image.tmdb.org/t/p/original$it" },
     coverImageLowUrl = posterPath?.let { "https://image.tmdb.org/t/p/w342$it" },
     rating = voteAverage?.div(10f),
+    ratingWeight = weight,
     externalId = id.toString(),
     externalSource = CategoryType.TMDB_MOVIES,
 )
@@ -358,6 +366,7 @@ fun TmdbMovieDetail.toRateItem(categoryId: Long = 0) = RateItem(
     categoryId = categoryId,
     title = title,
     subtitle = releaseDate?.take(4),
+    length = runtime.toFloat(),
     coverImageUrl = posterPath?.let { "https://image.tmdb.org/t/p/original$it" },
     coverImageLowUrl = posterPath?.let { "https://image.tmdb.org/t/p/w342$it" },
     externalId = id.toString(),

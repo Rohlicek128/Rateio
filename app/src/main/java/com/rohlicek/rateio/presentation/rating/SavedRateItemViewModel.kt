@@ -64,6 +64,12 @@ class SavedRateItemViewModel(
         }
     }
 
+    fun updateWeight(weight: Float?) {
+        viewModelScope.launch {
+            itemRepository.setWeight(id, weight)
+        }
+    }
+
     fun updateStatus(status: ItemStatus) {
         viewModelScope.launch {
             itemRepository.setStatus(id, status)

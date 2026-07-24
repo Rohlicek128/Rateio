@@ -43,7 +43,7 @@ enum class SortModeShow(override val displayName: String): HasDisplayName {
 
 enum class RatingsSource(override val displayName: String): HasDisplayName {
     IMDB("IMDb"),
-    TMDB("TMDb"),
+    TMDB("TMDB"),
     USER("Yours"),
 }
 
@@ -81,6 +81,7 @@ class TmdbShowDetailViewModel(
                 _state.update { it.copy(show = show, isLoading = false) }
 
                 launch {
+                    imdbRepository.linkImdbToTmdb(show.externalIds?.imdbId, showId)
                     _state.update { it.copy(imdbRating = imdbRepository.getRatingByImdbId(show.externalIds?.imdbId)) }
                 }
 
@@ -96,11 +97,11 @@ class TmdbShowDetailViewModel(
 
                 launch {
                     val showsCategory = categoryRepository.getCategoryByType(CategoryType.TMDB_SHOWS)
-                    showsCategory?.let { cat ->
-                        val existing = itemRepository.getByExternalId(
+                    showsCategory?.let { category ->
+                        val existing = itemRepository.findAndUpdateMetadata(
                             externalId = show.id.toString(),
-                            categoryId = cat.id,
-                        )
+                            categoryId = category.id,
+                        ) { show.toRateItem() }
                         if (existing != null) _state.update { it.copy(savedItem = existing) }
                         //itemRepository.deleteId(271)
                     }

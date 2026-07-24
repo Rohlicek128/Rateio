@@ -67,6 +67,7 @@ fun SavedRateItemScreen(
                         customRating = item.rating,
                         savedRank = state.itemRank,
                         onRatingSaved = viewModel::saveRating,
+                        onWeightSaved = viewModel::updateWeight,
                         onStatusSaved = viewModel::updateStatus,
                         onCoverOverrideSaved = viewModel::updateCoverOverride,
                         onMetadataSaved = viewModel::updateMetadata,

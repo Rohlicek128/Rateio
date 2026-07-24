@@ -34,11 +34,14 @@ interface ImdbRatingDao {
     suspend fun getRatingByImdbId(tconst: String): ImdbRatingEntity?
 
     @Query("SELECT * FROM imdb_ratings WHERE tconst IN (:tconsts)")
-    suspend fun getRatingsBatch(tconsts: List<String>): List<ImdbRatingEntity>
+    suspend fun getRatingsByImdbIdBatch(tconsts: List<String>): List<ImdbRatingEntity>
 
 
     @Query("SELECT * FROM imdb_ratings WHERE tmdbId = :tmdbId LIMIT 1")
     suspend fun getRatingByTmdbId(tmdbId: Int): ImdbRatingEntity?
+
+    @Query("SELECT * FROM imdb_ratings WHERE tmdbId IN (:tmdbIds)")
+    suspend fun getRatingsByTmdbIdBatch(tmdbIds: List<Int>): List<ImdbRatingEntity>
 
     @Query("UPDATE imdb_ratings SET tmdbId = :tmdbId WHERE tconst = :tconst")
     suspend fun updateTmdbId(tconst: String, tmdbId: Int)

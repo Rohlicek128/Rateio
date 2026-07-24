@@ -23,6 +23,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -33,6 +34,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.rohlicek.rateio.model.RateItem
+import com.rohlicek.rateio.presentation.rating.display.getCurrentRatingTransformations
+import com.rohlicek.rateio.presentation.rating.display.getRatingColor
+import com.rohlicek.rateio.presentation.rating.display.getTransformedRating
 
 data class BarChartEntry(
     val label: String,
@@ -46,9 +51,32 @@ data class BarChartEntry(
 fun RatingsBarChart(
     modifier: Modifier = Modifier,
     title: String,
-    entries: List<BarChartEntry>,
+    entries: List<RateItem>,
     onSelect: ((String) -> Unit)? = null,
+    //showNull: Boolean = true,
 ) {
+    val rtf = getCurrentRatingTransformations()
+    val barChartEntries = remember(entries) {
+        val groups = entries.groupBy { if (it.rating != null) getTransformedRating(it.rating) else null }
+        val groupEntries = groups.mapValues {
+            BarChartEntry(
+                label = it.key ?: "Null",
+                itemCount = it.value.size.coerceAtLeast(0),
+                order = it.value.first().rating ?: 0.0f,
+                color = getRatingColor(it.value.last().rating).backgroundColor
+            )
+        }.toMutableMap()
+        for (i in 0..rtf.stepCount.toInt()) {
+            val ratingGroup = getTransformedRating(i.toFloat() / rtf.stepCount.toFloat())
+            groupEntries.putIfAbsent(ratingGroup, BarChartEntry(
+                label = ratingGroup,
+                itemCount = 0,
+                order = i.toFloat() / rtf.stepCount.toFloat(),
+            ))
+        }
+        groupEntries.map { it.value }.sortedBy { it.order }
+    }
+
     Card(
         shape = RoundedCornerShape(28.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.25f)),
@@ -66,7 +94,7 @@ fun RatingsBarChart(
                 color = MaterialTheme.colorScheme.onSurface
             )
 
-            BarChart(entries = entries, onSelect = onSelect)
+            BarChart(entries = barChartEntries, onSelect = onSelect)
         }
     }
 }

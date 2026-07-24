@@ -33,7 +33,7 @@ data class LibraryCategoryState(
 class LibraryCategoryViewModel(
     private val categoryId: Long,
     categoryRepository: CategoryRepository,
-    private val itemRepository: RateItemRepository,
+    itemRepository: RateItemRepository,
 ) : ViewModel() {
 
     val state: StateFlow<LibraryCategoryState> = combine(

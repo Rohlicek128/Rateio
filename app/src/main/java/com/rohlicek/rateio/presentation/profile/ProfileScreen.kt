@@ -48,8 +48,6 @@ import com.rohlicek.rateio.model.CategoryType
 import com.rohlicek.rateio.presentation.category.ItemListRow
 import com.rohlicek.rateio.presentation.components.AdaptiveAsyncImage
 import com.rohlicek.rateio.presentation.components.FloatingIconButton
-import com.rohlicek.rateio.presentation.rating.display.getCurrentRatingTransformations
-import com.rohlicek.rateio.presentation.rating.display.getRatingColor
 import com.rohlicek.rateio.presentation.rating.display.getTransformedRating
 
 
@@ -76,27 +74,9 @@ fun ProfileScreen(
 
     CategoryType.entries.forEach { state.selectedCategories.add(it) }
 
-
-    val rtf = getCurrentRatingTransformations()
-    val barChartGroups = state.items
+    val groups = state.items
         .filter { it.externalSource in state.selectedCategories }
         .groupBy { if (it.rating != null) getTransformedRating(it.rating) else null }
-    val barChartEntries = barChartGroups.mapValues {
-            BarChartEntry(
-                label = it.key ?: "Null",
-                itemCount = it.value.size.coerceAtLeast(0),
-                order = it.value.first().rating ?: 0.0f,
-                color = getRatingColor(it.value.last().rating).backgroundColor
-            )
-        }.toMutableMap()
-    for (i in 0..rtf.stepCount.toInt()) {
-        val ratingGroup = getTransformedRating(i.toFloat() / rtf.stepCount.toFloat())
-        barChartEntries.putIfAbsent(ratingGroup, BarChartEntry(
-            label = ratingGroup,
-            itemCount = 0,
-            order = i.toFloat() / rtf.stepCount.toFloat(),
-        ))
-    }
 
     var selectedRatingGroup by remember { mutableStateOf("Null") }
 
@@ -190,7 +170,7 @@ fun ProfileScreen(
 
                     item {
                         StatCardRow(
-                            itemCount = barChartGroups.values.sumOf { it.size },
+                            itemCount = groups.values.sumOf { it.size },
                             categoryCount = state.selectedCategories.size,
                             modifier = Modifier.padding(horizontal = 20.dp, vertical = 10.dp),
                         )
@@ -200,7 +180,7 @@ fun ProfileScreen(
                         RatingsBarChart(
                             modifier = Modifier.padding(horizontal = 20.dp, vertical = 10.dp),
                             title = "All Ratings",
-                            entries = barChartEntries.map { it.value }.sortedBy { it.order },
+                            entries = state.items.filter { it.externalSource in state.selectedCategories },
                             onSelect = {
                                 selectedRatingGroup = it
                             }
@@ -225,7 +205,7 @@ fun ProfileScreen(
                                         color = MaterialTheme.colorScheme.onSurface
                                     )
 
-                                    val selectedItems = barChartGroups[selectedRatingGroup]
+                                    val selectedItems = groups[selectedRatingGroup]
                                     if (selectedItems != null) {
                                         ItemListRow(
                                             title = "",

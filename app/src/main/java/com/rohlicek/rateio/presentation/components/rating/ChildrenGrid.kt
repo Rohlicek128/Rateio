@@ -16,7 +16,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.rohlicek.rateio.model.RateItem
-import com.rohlicek.rateio.model.computeAggregateRatingAverage
+import com.rohlicek.rateio.model.computeAggregateChildrenRating
 import com.rohlicek.rateio.presentation.components.RateBox
 import com.rohlicek.rateio.presentation.components.RateBoxSizeDefaults
 
@@ -149,7 +149,7 @@ private fun AverageRatingBox(
     children: List<RateItem>,
 ) {
     RateBox(
-        rating = computeAggregateRatingAverage(children),
+        rating = computeAggregateChildrenRating(children),
         widthConstrained = true,
         size = RateBoxSizeDefaults.REGULAR_GRID,
     )

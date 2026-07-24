@@ -38,8 +38,10 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.rohlicek.rateio.data.db.RateioDatabase
 import com.rohlicek.rateio.data.repository.CategoryRepository
 import com.rohlicek.rateio.data.repository.RateItemRepository
+import com.rohlicek.rateio.model.CategoryType
 import com.rohlicek.rateio.model.ItemStatus
 import com.rohlicek.rateio.model.RateItem
+import com.rohlicek.rateio.model.computeWeightedRating
 import com.rohlicek.rateio.presentation.ScreenScaffold
 import com.rohlicek.rateio.presentation.components.ExpressiveScrollBar
 import com.rohlicek.rateio.presentation.components.ModalSortableEnumSelector
@@ -47,6 +49,9 @@ import com.rohlicek.rateio.presentation.components.RateItemCard
 import com.rohlicek.rateio.presentation.components.RateItemGridCard
 import com.rohlicek.rateio.presentation.components.SortByButton
 import com.rohlicek.rateio.presentation.components.SortOrder
+import com.rohlicek.rateio.presentation.components.rating.ParentCompletionText
+import com.rohlicek.rateio.presentation.rating.display.RatingColorBucketConstants
+import com.rohlicek.rateio.presentation.rating.display.getCurrentRatingColorBuckets
 import com.rohlicek.rateio.ui.theme.GoogleSans
 import com.rohlicek.rateio.utils.formatDate
 import com.rohlicek.rateio.utils.parseDate
@@ -86,6 +91,8 @@ fun EnhancedCategoryScreen(
             .sortedByDescending { it.status }
     }
 
+    val isAggregate = state.category?.type != null && state.category?.type == CategoryType.TMDB_SHOWS
+
     // Filter and sort the main list based on user selection
     val filteredAndSortedItems = remember(state.items, selectedStatus, currentSort, currentOrder) {
         val filtered = if (selectedStatus == null) {
@@ -96,7 +103,11 @@ fun EnhancedCategoryScreen(
 
         val sorted = when (currentSort) {
             SortModeLibrary.NAME -> filtered.sortedBy { it.title }
-            SortModeLibrary.RATING -> filtered.sortedBy { it.rating ?: (if (currentOrder == SortOrder.ASCENDING) 2f else -1f) }
+            SortModeLibrary.RATING -> filtered.sortedBy {
+                (if (isAggregate) {
+                    computeWeightedRating(it.rating, it.ratingWeight.toInt())
+                } else it.rating) ?: (if (currentOrder == SortOrder.ASCENDING) 2f else -1f)
+            }
             SortModeLibrary.UPDATED -> filtered.sortedBy { it.updatedAt }
             SortModeLibrary.CREATED -> filtered.sortedBy { it.createdAt }
         }
@@ -163,10 +174,13 @@ fun EnhancedCategoryScreen(
                                     title = item.title,
                                     subtitle = item.subtitle,
                                     coverImagePath = item.coverImageOverride ?: item.coverImageLowUrl,
-                                    rating = item.rating,
+                                    rating = if (isAggregate) {
+                                        computeWeightedRating(item.rating, item.ratingWeight.toInt())
+                                    } else item.rating,
                                     placeholderRatio = 2f / 3f,
                                     padding = PaddingValues(horizontal = 0.dp, vertical = 6.dp),
                                     showNullRatings = item.status != ItemStatus.WATCHLIST,
+                                    colorBucketsOverride = if (isAggregate) RatingColorBucketConstants.RC_IMDB_SHOWS else getCurrentRatingColorBuckets(),
                                     onClick = { onItemClick(item) },
                                 )
                             }
@@ -238,11 +252,25 @@ fun EnhancedCategoryScreen(
                             else -> item.subtitle
                         },
                         coverImagePath = item.coverImageOverride ?: item.coverImageLowUrl,
-                        rating = item.rating,
+                        rating = if (isAggregate) {
+                            computeWeightedRating(item.rating, item.ratingWeight.toInt())
+                        } else item.rating,
                         placeholderRatio = 2f / 3f,
                         padding = PaddingValues(start = 18.dp, top = 6.dp, bottom = 6.dp),
                         rank = if (currentSort == SortModeLibrary.RATING) index + 1 else null,
                         onClick = { onItemClick(item) },
+                        //bubbleText = if (item.externalSource == CategoryType.TMDB_MOVIES && item.length != null)
+                        //    formatTime(item.length.toInt())
+                        //else null,
+                        colorBucketsOverride = if (isAggregate) RatingColorBucketConstants.RC_IMDB_SHOWS else getCurrentRatingColorBuckets(),
+                        leadingRateBoxContent = if (isAggregate) {
+                            {
+                                ParentCompletionText(
+                                    numberOfCompleted = item.ratingWeight.toInt(),
+                                    numberOfAll = item.length?.toInt() ?: 0,
+                                )
+                            }
+                        } else null,
                     )
                 }
 
