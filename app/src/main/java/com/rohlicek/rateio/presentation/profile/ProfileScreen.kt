@@ -177,7 +177,7 @@ fun ProfileScreen(
                     }
 
                     item {
-                        RatingsBarChart(
+                        RatingsTransformationBarChart(
                             modifier = Modifier.padding(horizontal = 20.dp, vertical = 10.dp),
                             title = "All Ratings",
                             entries = state.items.filter { it.externalSource in state.selectedCategories },

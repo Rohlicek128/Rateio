@@ -35,6 +35,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.rohlicek.rateio.model.RateItem
+import com.rohlicek.rateio.presentation.rating.display.getCurrentRatingColorBuckets
 import com.rohlicek.rateio.presentation.rating.display.getCurrentRatingTransformations
 import com.rohlicek.rateio.presentation.rating.display.getRatingColor
 import com.rohlicek.rateio.presentation.rating.display.getTransformedRating
@@ -48,16 +49,19 @@ data class BarChartEntry(
 
 
 @Composable
-fun RatingsBarChart(
+fun RatingsTransformationBarChart(
     modifier: Modifier = Modifier,
     title: String,
     entries: List<RateItem>,
     onSelect: ((String) -> Unit)? = null,
-    //showNull: Boolean = true,
 ) {
     val rtf = getCurrentRatingTransformations()
     val barChartEntries = remember(entries) {
-        val groups = entries.groupBy { if (it.rating != null) getTransformedRating(it.rating) else null }
+        val groups = entries.groupBy {
+            it.rating?.let { rating ->
+                getTransformedRating(rating)
+            }
+        }
         val groupEntries = groups.mapValues {
             BarChartEntry(
                 label = it.key ?: "Null",
@@ -77,6 +81,62 @@ fun RatingsBarChart(
         groupEntries.map { it.value }.sortedBy { it.order }
     }
 
+    BardChartCard(
+        modifier = modifier,
+        title = title,
+        entries =  barChartEntries,
+        onSelect = onSelect
+    )
+}
+
+@Composable
+fun RatingsColorBarChart(
+    modifier: Modifier = Modifier,
+    title: String,
+    entries: List<RateItem>,
+    onSelect: ((String) -> Unit)? = null,
+) {
+    val rcb = getCurrentRatingColorBuckets()
+    val barChartEntries = remember(entries) {
+        val groups = entries.groupBy {
+            it.rating?.let { rating ->
+                getRatingColor(rating)
+            }
+        }
+        val groupEntries = groups.mapValues {
+            BarChartEntry(
+                label = it.key?.equalOrGreaterThen?.let { egt -> "≥${getTransformedRating(egt)}" } ?: "Null",
+                itemCount = it.value.size.coerceAtLeast(0),
+                order = it.key?.equalOrGreaterThen ?: 0.0f,
+                color = it.key?.backgroundColor ?: rcb.nullBucket.backgroundColor
+            )
+        }.toMutableMap()
+        for ((_, element) in rcb.buckets.withIndex()) {
+            groupEntries.putIfAbsent(
+                element, BarChartEntry(
+                label = "≥${getTransformedRating(element.equalOrGreaterThen)}",
+                itemCount = 0,
+                order = element.equalOrGreaterThen ?: 0.0f,
+            ))
+        }
+        groupEntries.map { it.value }.sortedBy { it.order }
+    }
+
+    BardChartCard(
+        modifier = modifier,
+        title = title,
+        entries =  barChartEntries,
+        onSelect = onSelect
+    )
+}
+
+@Composable
+private fun BardChartCard(
+    modifier: Modifier = Modifier,
+    title: String,
+    entries: List<BarChartEntry>,
+    onSelect: ((String) -> Unit)? = null,
+) {
     Card(
         shape = RoundedCornerShape(28.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.25f)),
@@ -94,7 +154,7 @@ fun RatingsBarChart(
                 color = MaterialTheme.colorScheme.onSurface
             )
 
-            BarChart(entries = barChartEntries, onSelect = onSelect)
+            BarChart(entries = entries, onSelect = onSelect)
         }
     }
 }

@@ -1,5 +1,10 @@
 package com.rohlicek.rateio.presentation.components
 
+import androidx.compose.animation.core.EaseInOut
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -11,9 +16,12 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
@@ -28,6 +36,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.ToggleButtonDefaults
+import androidx.compose.material3.carousel.CarouselState
 import androidx.compose.material3.carousel.HorizontalUncontainedCarousel
 import androidx.compose.material3.carousel.rememberCarouselState
 import androidx.compose.runtime.Composable
@@ -264,6 +273,63 @@ fun FullScreenImageModal(
                 }
 
             }
+        }
+    }
+}
+
+
+@Composable
+fun CarouselDotsIndicator(
+    itemCount: Int,
+    carouselState: CarouselState,
+    clickable: Boolean = true,
+) {
+    val haptic = LocalHapticFeedback.current
+    val coroutineScope = rememberCoroutineScope()
+
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        val currentIndex = carouselState.currentItem % itemCount
+        repeat(itemCount) { index ->
+            val isSelected = currentIndex == index
+
+            val width by animateDpAsState(
+                targetValue = if (isSelected) 24.dp else 8.dp,
+                label = "dotWidth"
+            )
+
+            Box(
+                modifier = Modifier
+                    .height(8.dp)
+                    .width(width)
+                    .clip(CircleShape)
+                    .background(
+                        if (isSelected)
+                            MaterialTheme.colorScheme.primary
+                        else
+                            MaterialTheme.colorScheme.surfaceContainerHigh
+                    )
+                    .then(
+                        if (clickable) {
+                            Modifier.clickable {
+                                coroutineScope.launch {
+                                    haptic.performHapticFeedback(HapticFeedbackType.SegmentFrequentTick)
+                                    val difference = index - currentIndex
+                                    val targetIndex = carouselState.currentItem + difference
+                                    carouselState.animateScrollToItem(
+                                        item = targetIndex,
+                                        //animationSpec = tween(
+                                        //    durationMillis = 750,
+                                        //    easing = FastOutSlowInEasing,
+                                        //)
+                                    )
+                                }
+                            }
+                        } else Modifier
+                    )
+            )
         }
     }
 }

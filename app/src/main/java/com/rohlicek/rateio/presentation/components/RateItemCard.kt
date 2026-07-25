@@ -1,5 +1,6 @@
 package com.rohlicek.rateio.presentation.components
 
+import android.graphics.Bitmap
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
@@ -47,9 +48,13 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
 import androidx.palette.graphics.Palette
+import coil3.toBitmap
 import com.rohlicek.rateio.presentation.rating.display.RatingColorBuckets
 import com.rohlicek.rateio.presentation.rating.display.getCurrentRatingColorBuckets
 import com.rohlicek.rateio.presentation.rating.display.getRatingColor
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kotlin.math.floor
 import kotlin.math.log10
 
@@ -80,10 +85,10 @@ fun RateItemCard(
 ) {
     val haptic = LocalHapticFeedback.current
 
-    val scope = rememberCoroutineScope()
-    var coverPalette by remember { mutableStateOf<Palette?>(null) }
-    val coverColorSwatch = coverPalette?.lightVibrantSwatch ?: coverPalette?.vibrantSwatch
-    val ratingColor = getRatingColor(rating, buckets = colorBucketsOverride)
+    //val scope = rememberCoroutineScope()
+    //var coverPalette by remember { mutableStateOf<Palette?>(null) }
+    //val coverColorSwatch = coverPalette?.lightVibrantSwatch ?: coverPalette?.vibrantSwatch
+    //val ratingColor = getRatingColor(rating, buckets = colorBucketsOverride)
 
     val coverImageSize = 120.dp
 

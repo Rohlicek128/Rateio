@@ -17,6 +17,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.time.LocalDate
 
 
 data class DiscoverState(
@@ -26,7 +27,7 @@ data class DiscoverState(
 )
 
 class DiscoverViewModel(
-    category: Category,
+    category: CategoryType,
     sortBy: String,
     private val imdbRepository: ImdbRatingRepository
 ) : ViewModel() {
@@ -37,26 +38,34 @@ class DiscoverViewModel(
         viewModelScope.launch {
             _state.update { it.copy(isLoading = true) }
             try {
-                val results = when (category.type) {
-                    CategoryType.TMDB_SHOWS -> TmdbClient.tmdb.discoverShows(sortBy = sortBy)
-                        .results.map { it.toRateItem() }
-                    CategoryType.TMDB_MOVIES -> TmdbClient.tmdb.discoverMovies(sortBy = sortBy)
-                        .results.map { it.toRateItem() }
+                val today = LocalDate.now()
+
+                val results = when (category) {
+                    CategoryType.TMDB_SHOWS -> TmdbClient.tmdb.discoverShows(
+                        sortBy = sortBy,
+                        airDateGte = today.minusMonths(6).toString(),
+                        airDateLte = today.toString(),
+                    ).results.map { it.toRateItem() }
+                    CategoryType.TMDB_MOVIES -> TmdbClient.tmdb.discoverMovies(
+                        sortBy = sortBy,
+                        releaseDateGte = today.minusMonths(6).toString(),
+                        releaseDateLte = today.toString(),
+                    ).results.map { it.toRateItem() }
                     CategoryType.STEAM_GAMES -> SteamClient.steamApi.getMostPlayedGames()
                         .response.ranks.sortedByDescending { it.peakInGame }.map { it.toRateItem() }
                     else -> emptyList()
                 }
                 _state.update { it.copy(results = results, isLoading = false) }
 
-                when {
-                    category.type == CategoryType.TMDB_MOVIES || category.type == CategoryType.TMDB_SHOWS -> {
+                when (category) {
+                    CategoryType.TMDB_MOVIES, CategoryType.TMDB_SHOWS -> {
                         results.mapIndexed { index, item ->
                             if (item.externalId != null) {
                                 launch {
                                     val cachedRating = imdbRepository.getRatingByTmdbId(item.externalId.toInt())?.averageRating
                                     val rating = if (cachedRating != null) cachedRating
                                     else {
-                                        val imdbId = if (category.type == CategoryType.TMDB_MOVIES)
+                                        val imdbId = if (category == CategoryType.TMDB_MOVIES)
                                             TmdbClient.tmdb.getMovieExternalIds(item.externalId.toInt()).imdbId
                                         else TmdbClient.tmdb.getShowExternalIds(item.externalId.toInt()).imdbId
                                         imdbRepository.linkImdbToTmdb(imdbId, item.externalId.toInt())
@@ -74,7 +83,7 @@ class DiscoverViewModel(
                             }
                         }
                     }
-                    category.type == CategoryType.STEAM_GAMES -> {
+                    CategoryType.STEAM_GAMES -> {
                         results.mapIndexed { index, item ->
                             launch {
                                 val rating = runCatching {
@@ -104,9 +113,7 @@ class DiscoverViewModel(
                             }
                         }
                     }
-                    else -> {
-
-                    }
+                    else -> {}
                 }
             } catch (e: Exception) {
                 _state.update { it.copy(error = e.message, isLoading = false) }
@@ -115,7 +122,7 @@ class DiscoverViewModel(
     }
 
     companion object {
-        fun factory(category: Category, sortBy: String, imdbRepository: ImdbRatingRepository) = viewModelFactory {
+        fun factory(category: CategoryType, sortBy: String, imdbRepository: ImdbRatingRepository) = viewModelFactory {
             initializer { DiscoverViewModel(category, sortBy, imdbRepository) }
         }
     }

@@ -1,11 +1,17 @@
 package com.rohlicek.rateio.data.remote.tmdb
 
 import com.rohlicek.rateio.BuildConfig
+import com.rohlicek.rateio.model.HasDisplayName
 import retrofit2.http.GET
 import retrofit2.http.Header
 import retrofit2.http.Path
 import retrofit2.http.Query
-import java.util.Locale
+
+
+enum class TmdbTimeWindow(override val displayName: String): HasDisplayName {
+    DAY("Day"),
+    WEEK("Week")
+}
 
 interface TmdbService {
     // Shows
@@ -25,6 +31,16 @@ interface TmdbService {
         @Query("language") language: String = "en-US",
         @Query("page") page: Int = 1,
         @Query("sort_by") sortBy: String = "popularity.desc",
+
+        @Query("air_date.gte") airDateGte: String? = null,
+        @Query("air_date.lte") airDateLte: String? = null,
+
+        @Query("vote_count.gte") minVoteCount: Int = 100,
+        @Query("vote_average.gte") minVoteAverage: Double = 6.0,
+
+        @Query("without_genres") withoutGenres: String = "99,10763,10764,10767,10766",
+        //@Query("with_status") withStatus: String? = "0,2,3",
+
         @Header("accept") accept: String = "application/json",
         @Header("Authorization") bearer: String = "Bearer " + BuildConfig.TMDB_API_KEY,
     ): TmdbShowSearchResponse
@@ -38,6 +54,14 @@ interface TmdbService {
         @Query("sort_by") sortBy: String = "vote_average.desc",
         @Query("vote_count.gte") voteCountGte: Float = 200f,
         @Query("without_genres") withoutGenres: String = "99,10755",
+        @Header("accept") accept: String = "application/json",
+        @Header("Authorization") bearer: String = "Bearer " + BuildConfig.TMDB_API_KEY,
+    ): TmdbShowSearchResponse
+
+    @GET("trending/tv/{time_window}")
+    suspend fun trendingShows(
+        @Path("time_window") timeWindow: String,
+        @Query("language") language: String = "en-US",
         @Header("accept") accept: String = "application/json",
         @Header("Authorization") bearer: String = "Bearer " + BuildConfig.TMDB_API_KEY,
     ): TmdbShowSearchResponse
@@ -136,6 +160,16 @@ interface TmdbService {
         @Query("language") language: String = "en-US",
         @Query("page") page: Int = 1,
         @Query("sort_by") sortBy: String = "popularity.desc",
+
+        @Query("primary_release_date.gte") releaseDateGte: String? = null,
+        @Query("primary_release_date.lte") releaseDateLte: String? = null,
+
+        @Query("vote_count.gte") minVoteCount: Int = 150,
+        @Query("vote_average.gte") minVoteAverage: Double = 5.5,
+
+        @Query("with_release_type") withReleaseType: String = "2|3|4",
+        @Query("without_genres") withoutGenres: String = "10770",
+
         @Header("accept") accept: String = "application/json",
         @Header("Authorization") bearer: String = "Bearer " + BuildConfig.TMDB_API_KEY,
     ): TmdbMovieSearchResponse
@@ -149,6 +183,14 @@ interface TmdbService {
         @Query("sort_by") sortBy: String = "vote_average.desc",
         @Query("vote_count.gte") voteCountGte: Float = 200f,
         @Query("without_genres") withoutGenres: String = "99,10755",
+        @Header("accept") accept: String = "application/json",
+        @Header("Authorization") bearer: String = "Bearer " + BuildConfig.TMDB_API_KEY,
+    ): TmdbMovieSearchResponse
+
+    @GET("trending/movie/{time_window}")
+    suspend fun trendingMovies(
+        @Path("time_window") timeWindow: String,
+        @Query("language") language: String = "en-US",
         @Header("accept") accept: String = "application/json",
         @Header("Authorization") bearer: String = "Bearer " + BuildConfig.TMDB_API_KEY,
     ): TmdbMovieSearchResponse

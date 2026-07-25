@@ -14,12 +14,13 @@ data class TmdbShowSearchResponse(
 )
 
 data class TmdbShow(
-    @SerializedName("id")            val id: Int,
-    @SerializedName("name")          val name: String,
-    @SerializedName("overview")      val overview: String?,
-    @SerializedName("poster_path")   val posterPath: String?,
+    @SerializedName("id") val id: Int,
+    @SerializedName("name") val name: String,
+    @SerializedName("overview") val overview: String?,
+    @SerializedName("poster_path") val posterPath: String?,
+    @SerializedName("backdrop_path") val backdropPath: String?,
     @SerializedName("first_air_date") val firstAirDate: String?,
-    @SerializedName("vote_average")  val voteAverage: Float?,
+    @SerializedName("vote_average") val voteAverage: Float?,
     @SerializedName("vote_count") val voteCount: Int?,
     @SerializedName("origin_country") val originCountry: List<String>,
 )

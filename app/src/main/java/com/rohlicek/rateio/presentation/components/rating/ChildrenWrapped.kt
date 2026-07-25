@@ -21,6 +21,8 @@ import com.rohlicek.rateio.model.RateItem
 import com.rohlicek.rateio.model.computeAggregateChildrenRating
 import com.rohlicek.rateio.presentation.components.RateBox
 import com.rohlicek.rateio.presentation.components.RateBoxSizeDefaults
+import com.rohlicek.rateio.presentation.rating.display.RatingColorBucket
+import com.rohlicek.rateio.presentation.rating.display.getRatingColor
 import com.rohlicek.rateio.presentation.rating.display.getTransformedRating
 
 
@@ -31,6 +33,7 @@ fun ChildrenWrapped(
     columns: Int,
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues(0.dp),
+    highlightedBucket: RatingColorBucket? = null,
 ) {
     val scrollState = rememberScrollState()
     Column(
@@ -47,6 +50,7 @@ fun ChildrenWrapped(
                     columns = columns.coerceAtLeast(1),
                     onChildClick = onChildClick,
                     modifier = Modifier.padding(contentPadding),
+                    highlightedBucket = highlightedBucket,
                 )
             }
     }
@@ -59,6 +63,7 @@ private fun ChildrenSection(
     columns: Int,
     onChildClick: (RateItem) -> Unit,
     modifier: Modifier = Modifier,
+    highlightedBucket: RatingColorBucket? = null,
 ) {
     val gridGap = 6.dp
     Column(
@@ -105,7 +110,8 @@ private fun ChildrenSection(
                             size = RateBoxSizeDefaults.REGULAR_GRID,
                             onClick = {
                                 onChildClick(children[index])
-                            }
+                            },
+                            modifier = Modifier.darken(highlightedBucket != null && getRatingColor(children[index].rating) != highlightedBucket)
                         )
                     } else {
                         Spacer(modifier = Modifier.weight(1f))

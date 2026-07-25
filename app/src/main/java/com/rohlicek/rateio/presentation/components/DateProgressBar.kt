@@ -51,6 +51,10 @@ fun DateProgressBar(
     val daysLeft = floor(hoursLeft.toFloat() / 24f).toLong()
     hoursLeft = (hoursLeft % 24f).toLong()
 
+    val daysString = if (daysLeft > 0L) "$daysLeft day${if (daysLeft != 1L) "s" else ""}" else null
+    val hoursString = if (daysLeft <= 7L) "$hoursLeft hour${if (hoursLeft != 1L) "s" else ""}" else null
+    val divider = if (daysString != null && hoursString != null) ", " else ""
+
     val progress = remember(endDate, startDate) {
         if (startDate != null) {
             dateProgress(startDate, endDate)
@@ -73,7 +77,7 @@ fun DateProgressBar(
                 text = when {
                     todayDate > endDate -> "Aired"
                     todayDate == endDate -> "Airs Today"
-                    else -> "Airs in ${if (daysLeft > 0L) "$daysLeft day${if (daysLeft != 1L) "s" else ""}, " else ""}$hoursLeft hour${if (hoursLeft != 1L) "s" else ""}"
+                    else -> "Airs in ${daysString ?: ""}${divider}${hoursString ?: ""}"
                 },
                 style = MaterialTheme.typography.labelMedium,
                 fontWeight = FontWeight.Bold

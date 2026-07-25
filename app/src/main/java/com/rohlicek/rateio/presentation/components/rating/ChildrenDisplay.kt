@@ -50,6 +50,9 @@ import com.rohlicek.rateio.presentation.components.ConnectedItemSelector
 import com.rohlicek.rateio.presentation.components.ModalSortableEnumSelector
 import com.rohlicek.rateio.presentation.components.SortByButton
 import com.rohlicek.rateio.presentation.components.SortOrder
+import com.rohlicek.rateio.presentation.rating.display.RatingColorBucket
+import com.rohlicek.rateio.presentation.rating.display.getCurrentRatingColorBuckets
+import com.rohlicek.rateio.presentation.rating.display.getRatingColor
 import com.rohlicek.rateio.presentation.rating.tmdb.SortModeShow
 import com.rohlicek.rateio.presentation.settings.ListItemPosition
 import com.rohlicek.rateio.presentation.settings.SettingListItem
@@ -125,13 +128,26 @@ fun ChildrenDisplay(
             }
     }
 
+    val showGridLegend = true
+    val usedBuckets = remember(childrenGroups) {
+        if (showGridLegend) {
+            childrenGroups
+                .flatMap { it.value }
+                .filter { it.rating != null }
+                .groupBy { getRatingColor(it.rating) }
+                .keys.toList().sortedByDescending { it.equalOrGreaterThen }
+        }
+        else emptyList()
+    }
+    var selectedBucket by remember { mutableStateOf<RatingColorBucket?>(null) }
+
     if (expandIfSingleGroup && childrenGroups.keys.size == 1)
         expandedParents.add(childrenGroups.keys.first()?.title)
 
     var showSortBySheet by remember { mutableStateOf(false) }
     var invertedGrid by remember { mutableStateOf(false) }
     var columnsWrapped by remember { mutableFloatStateOf(4f) }
-    var trendline by remember { mutableStateOf(false) }
+    var trendline by remember { mutableStateOf(true) }
 
     val timelineCategories = if (childrenGroups.values.isNotEmpty() && childrenGroups.keys.isNotEmpty()) {
         listOfNotNull(
@@ -293,6 +309,14 @@ fun ChildrenDisplay(
                                 )
                             }
                         }
+                        if (showGridLegend) {
+                            BucketLegendChips(
+                                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 14.dp),
+                                usedBuckets = usedBuckets,
+                                selected = selectedBucket,
+                                onSelect = { selectedBucket = it }
+                            )
+                        }
                         if (childrenGroups.values.isNotEmpty()) {
                             ChildrenGrid(
                                 contentPadding = PaddingValues(horizontal = 12.dp),
@@ -300,6 +324,7 @@ fun ChildrenDisplay(
                                 rowText = rowText,
                                 columnText = columnText,
                                 onChildClick = onChildClick,
+                                highlightedBucket = selectedBucket,
                                 inverted = invertedGrid,
                             )
                         }
@@ -328,12 +353,21 @@ fun ChildrenDisplay(
                                 )
                             }
                         )
+                        if (showGridLegend) {
+                            BucketLegendChips(
+                                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 14.dp),
+                                usedBuckets = usedBuckets,
+                                selected = selectedBucket,
+                                onSelect = { selectedBucket = it }
+                            )
+                        }
                         if (childrenGroups.values.isNotEmpty()) {
                             ChildrenWrapped(
                                 contentPadding = PaddingValues(horizontal = 20.dp),
                                 childrenGroups = childrenGroups,
                                 columns = columnsWrapped.toInt() + 1,
                                 onChildClick = onChildClick,
+                                highlightedBucket = selectedBucket,
                             )
                         }
                     }
@@ -370,6 +404,12 @@ fun ChildrenDisplay(
                                     fontWeight = FontWeight.Bold,
                                 )
                             }
+                        }
+                        if (showGridLegend) {
+                            BucketLegendChips(
+                                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 14.dp),
+                                usedBuckets = usedBuckets,
+                            )
                         }
                         ChildrenTimeline(
                             modifier = Modifier

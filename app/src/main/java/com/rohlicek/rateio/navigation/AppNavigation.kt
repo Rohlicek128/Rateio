@@ -85,13 +85,9 @@ fun AppNavigation(
 
     val transitionMillis = 400
 
-    val rateColors = getRatingColor(1f)
     val colors = NavigationBarItemDefaults.colors().copy(
-        selectedIndicatorColor = rateColors.backgroundColor,
-        selectedIconColor = rateColors.foregroundColor,
-        selectedTextColor = rateColors.foregroundColor,
-        unselectedTextColor = MaterialTheme.colorScheme.tertiaryContainer,
-        unselectedIconColor = MaterialTheme.colorScheme.tertiaryContainer,
+        selectedIndicatorColor = NavigationBarItemDefaults.colors().unselectedIconColor,
+        selectedIconColor = MaterialTheme.colorScheme.surfaceContainerLow,
     )
     val style = MaterialTheme.typography.bodySmall
 

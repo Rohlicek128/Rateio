@@ -53,7 +53,6 @@ import com.rohlicek.rateio.model.ItemStatus
 import com.rohlicek.rateio.model.RateItem
 import com.rohlicek.rateio.model.computeAggregateChildrenRating
 import com.rohlicek.rateio.model.computeAggregateRating
-import com.rohlicek.rateio.model.computeAggregateRatingWeighted
 import com.rohlicek.rateio.model.computeWeightedRating
 import com.rohlicek.rateio.presentation.components.AdaptiveImageCarousel
 import com.rohlicek.rateio.presentation.components.CollapsibleHeader
@@ -71,11 +70,13 @@ import com.rohlicek.rateio.presentation.components.ScreenError
 import com.rohlicek.rateio.presentation.components.ScreenLoading
 import com.rohlicek.rateio.presentation.components.rating.ChildrenDisplay
 import com.rohlicek.rateio.presentation.components.rating.ItemProgressBar
-import com.rohlicek.rateio.presentation.profile.RatingsBarChart
+import com.rohlicek.rateio.presentation.profile.RatingsColorBarChart
+import com.rohlicek.rateio.presentation.profile.RatingsTransformationBarChart
 import com.rohlicek.rateio.presentation.rating.RateItemDetailScreen
 import com.rohlicek.rateio.presentation.rating.display.RatingColorBucketConstants
 import com.rohlicek.rateio.presentation.rating.display.RatingTransformationsConstants
 import com.rohlicek.rateio.presentation.rating.display.getCurrentRatingColorBuckets
+import com.rohlicek.rateio.presentation.rating.display.getTransformedRating
 import com.rohlicek.rateio.presentation.settings.ListItemPosition
 import com.rohlicek.rateio.presentation.settings.ModalSettings
 import com.rohlicek.rateio.presentation.settings.SettingListItem
@@ -378,7 +379,8 @@ fun TmdbShowDetailScreen(
                     else -> customRating
                 },
                 ratingVotes = if (!isSaved) state.imdbRating?.numVotes else null,
-                ratingLabel = savedRank?.let { formatItemRankLabel(it, CategoryType.TMDB_SHOWS) },
+                //ratingLabel = savedRank?.let { formatItemRankLabel(it, CategoryType.TMDB_SHOWS) },
+                ratingLabel = showAverage?.let { "Average of ${getTransformedRating(it)}" },
                 ratingColorBucketsOverride = if (!isSaved || ratingByAverage) RatingColorBucketConstants.RC_IMDB_SHOWS else getCurrentRatingColorBuckets(),
                 onRatingSaved = if (!ratingByAverage) onRatingSaved else null,
                 //review = if (state.savedItem != null) "" else null,
@@ -787,9 +789,9 @@ fun TmdbShowDetailScreen(
                                 else state.collapsedHeaders.add(headerName)
                             }
                         ) {
-                            RatingsBarChart(
+                            RatingsColorBarChart(
                                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-                                title = "${show.name}'s Ratings",
+                                title = "${show.name}'s Buckets",
                                 entries = childrenGroups.flatMap { it.value },
                             )
                         }

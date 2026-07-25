@@ -10,6 +10,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.rohlicek.rateio.presentation.settings.ErrorCard
 
@@ -25,7 +26,7 @@ fun ScreenError(error: String?) {
 }
 
 @Composable
-fun ScreenLoading(glowColor: Color = Color.Transparent) {
+fun ScreenLoading(glowColor: Color = Color.Transparent, size: Dp = 90.dp) {
     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
         //CircularWavyProgressIndicator()
         /*Box(
@@ -45,7 +46,7 @@ fun ScreenLoading(glowColor: Color = Color.Transparent) {
                 )
         )*/
         LoadingIndicator(
-            modifier = Modifier.size(90.dp),
+            modifier = Modifier.size(size),
             color = MaterialTheme.colorScheme.surfaceBright,
         )
     }
