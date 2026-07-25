@@ -47,6 +47,7 @@ fun ChildrenGrid(
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues(0.dp),
     highlightedBucket: RatingColorBucket? = null,
+    nullIsLoading: Boolean = false,
     inverted: Boolean = false,
 ) {
     val scrollState = rememberScrollState()
@@ -85,6 +86,7 @@ fun ChildrenGrid(
                         columnText = columnText,
                         children = children,
                         highlightedBucket = highlightedBucket,
+                        nullIsLoading = nullIsLoading,
                         onChildClick = onChildClick,
                     )
                 }
@@ -130,6 +132,7 @@ private fun ChildrenColumn(
     columnText: (Int) -> String,
     children: List<RateItem>?,
     highlightedBucket: RatingColorBucket? = null,
+    nullIsLoading: Boolean = false,
     onChildClick: (RateItem) -> Unit,
 ) {
     Column(
@@ -152,6 +155,7 @@ private fun ChildrenColumn(
                 onClick = {
                     onChildClick(child)
                 },
+                isLoading = nullIsLoading && child.rating == null,
                 modifier = Modifier.darken(highlightedBucket != null && getRatingColor(child.rating) != highlightedBucket)
             )
         }
@@ -228,7 +232,7 @@ fun BucketLegendChips(
 
 @Composable
 fun Modifier.darken(darken: Boolean): Modifier {
-    val overlayColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.55f)
+    val overlayColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.6f)
 
     return this.drawWithContent {
         drawContent()

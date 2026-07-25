@@ -165,6 +165,19 @@ fun EnhancedCategoryScreen(
                             modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)
                         )
 
+                        /*HeaderCarousel(
+                            padding = PaddingValues(16.dp),
+                            preferredItemWidth = 266.dp,
+                            itemHeight = 400.dp,
+                            items = inProgressItems,
+                            subtitleBuilder = { it.subtitle },
+                            isLoading = state.isLoading,
+                            //autoScroll = true,
+                            dotIndicator = true,
+                            colorBucketsOverride = if (isAggregate) RatingColorBucketConstants.RC_IMDB_SHOWS else getCurrentRatingColorBuckets(),
+                            onItemClick = { onItemClick(it) },
+                        )*/
+
                         LazyRow (
                             contentPadding = PaddingValues(horizontal = 16.dp),
                             horizontalArrangement = Arrangement.spacedBy(12.dp)

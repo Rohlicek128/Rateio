@@ -59,6 +59,7 @@ import com.rohlicek.rateio.presentation.components.CollapsibleHeader
 import com.rohlicek.rateio.presentation.components.DateProgressBar
 import com.rohlicek.rateio.presentation.components.ConnectedItemSelector
 import com.rohlicek.rateio.presentation.components.GenreChips
+import com.rohlicek.rateio.presentation.components.HeroCarousel
 import com.rohlicek.rateio.presentation.components.ImageSize
 import com.rohlicek.rateio.presentation.components.ItemRatingStatCard
 import com.rohlicek.rateio.presentation.components.ItemStatCard
@@ -70,8 +71,9 @@ import com.rohlicek.rateio.presentation.components.ScreenError
 import com.rohlicek.rateio.presentation.components.ScreenLoading
 import com.rohlicek.rateio.presentation.components.rating.ChildrenDisplay
 import com.rohlicek.rateio.presentation.components.rating.ItemProgressBar
+import com.rohlicek.rateio.presentation.components.rating.getTopRatedChildren
+import com.rohlicek.rateio.presentation.components.rating.getTopRatedLimit
 import com.rohlicek.rateio.presentation.profile.RatingsColorBarChart
-import com.rohlicek.rateio.presentation.profile.RatingsTransformationBarChart
 import com.rohlicek.rateio.presentation.rating.RateItemDetailScreen
 import com.rohlicek.rateio.presentation.rating.display.RatingColorBucketConstants
 import com.rohlicek.rateio.presentation.rating.display.RatingTransformationsConstants
@@ -84,7 +86,6 @@ import com.rohlicek.rateio.presentation.settings.SettingsListHeader
 import com.rohlicek.rateio.presentation.settings.SettingsSwitch
 import com.rohlicek.rateio.presentation.settings.SettingsTextField
 import com.rohlicek.rateio.utils.formatDate
-import com.rohlicek.rateio.utils.formatItemRankLabel
 import com.rohlicek.rateio.utils.formatTime
 import com.rohlicek.rateio.utils.parseDate
 import kotlinx.serialization.json.Json
@@ -239,6 +240,19 @@ fun TmdbShowDetailScreen(
                 }
             }
 
+            val topRatedEpisodes = remember(childrenGroups) {
+                getTopRatedChildren(childrenGroups.flatMap { it.value }).map { episode ->
+                    val metadata = episode.metadataJSON?.let {
+                        runCatching {
+                            Json.decodeFromString<TmdbEpisodeMetadata>(it)
+                        }.getOrNull()
+                    }
+                    episode.copy(
+                        subtitle = "Season ${metadata?.seasonNumber ?: "?"}, Episode ${metadata?.episodeNumber ?: "?"}"
+                    )
+                }
+            }
+
             if (listOfRatings.size >= show.numberOfEpisodes)
                 onStatusSaved?.invoke(ItemStatus.COMPLETED)
             var status by remember(state.savedItem?.status) { mutableStateOf(
@@ -330,7 +344,9 @@ fun TmdbShowDetailScreen(
                             position = ListItemPosition.SINGLE,
                             supportingContent = {
                                 SettingsTextField(
-                                    modifier = Modifier.fillMaxWidth().padding(top = 6.dp),
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(top = 6.dp),
                                     value = coverOverride ?: "",
                                     onValueChange = { value ->
                                         coverOverride = value
@@ -589,6 +605,53 @@ fun TmdbShowDetailScreen(
                         }
                     }
 
+                    // Best Episodes
+                    if (topRatedEpisodes.isNotEmpty()) {
+                        item {
+                            val headerName = "Best Episodes"
+                            CollapsibleHeader(
+                                headerName,
+                                isOpened = headerName !in state.collapsedHeaders,
+                                onClick = {
+                                    if (it) state.collapsedHeaders.remove(headerName)
+                                    else state.collapsedHeaders.add(headerName)
+                                }
+                            ) {
+                                Column(
+                                    Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+                                    verticalArrangement = Arrangement.spacedBy(10.dp),
+                                ) {
+                                    /*Text(
+                                        modifier = Modifier.fillMaxWidth().padding(horizontal = 14.dp),
+                                        text = if (topRatedEpisodes.size > 1)
+                                            "The top ${topRatedEpisodes.size} best rated episodes"
+                                        else "The best rated episode",
+                                        style = MaterialTheme.typography.labelLarge,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        //fontWeight = FontWeight.SemiBold,
+                                    )*/
+
+                                    HeroCarousel(
+                                        padding = PaddingValues(bottom = 6.dp),
+                                        preferredItemWidth = 330.dp,
+                                        itemHeight = 186.dp,
+                                        items = topRatedEpisodes,
+                                        subtitleBuilder = { it.subtitle},
+                                        isLoading = episodesState.isLoadingEpisodes || episodesState.isLoadingRatings,
+                                        showOrderedRank = true,
+                                        autoScroll = false,
+                                        loop = false,
+                                        dotIndicator = true,
+                                        spoilThumbnail = spoilers,
+                                        spoilName = metadata.showSpoilersName,
+                                        placeholderPageCount = 5,
+                                        onItemClick = onChildClick,
+                                    )
+                                }
+                            }
+                        }
+                    }
+
                     // Creators
                     show.createdBy.takeIf { it.isNotEmpty() }?.let { creator ->
                         item {
@@ -770,6 +833,7 @@ fun TmdbShowDetailScreen(
                                     onOrderChange = viewModel::onSortOrderChange,
                                     expandedParents = state.expandedSeasons,
                                     isLoading = episodesState.isLoadingEpisodes,
+                                    isLoadingRatings = episodesState.isLoadingRatings,
                                     spoilers = spoilers,
                                     spoilName = metadata.showSpoilersName,
                                     showChildRatedCompletion = selectedRatings == RatingsSource.USER,

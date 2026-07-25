@@ -51,7 +51,6 @@ import com.rohlicek.rateio.presentation.components.ModalSortableEnumSelector
 import com.rohlicek.rateio.presentation.components.SortByButton
 import com.rohlicek.rateio.presentation.components.SortOrder
 import com.rohlicek.rateio.presentation.rating.display.RatingColorBucket
-import com.rohlicek.rateio.presentation.rating.display.getCurrentRatingColorBuckets
 import com.rohlicek.rateio.presentation.rating.display.getRatingColor
 import com.rohlicek.rateio.presentation.rating.tmdb.SortModeShow
 import com.rohlicek.rateio.presentation.settings.ListItemPosition
@@ -85,6 +84,7 @@ fun ChildrenDisplay(
     expandedParents: MutableSet<String?>,
     modifier: Modifier = Modifier,
     isLoading: Boolean = false,
+    isLoadingRatings: Boolean = false,
     spoilers: Boolean = true,
     spoilName: Boolean = true,
     expandIfSingleGroup: Boolean = true,
@@ -100,11 +100,7 @@ fun ChildrenDisplay(
             }
     }
     val sortedChildrenBestRated = sortedChildrenBest.filter { it.rating != null }
-    val sortedTopLimit = when {
-        sortedChildrenBestRated.size >= 10 -> round(sortedChildrenBestRated.size * 0.1f).toInt().coerceIn(3, 10)
-        sortedChildrenBestRated.size in 5..<10 -> 1
-        else -> 0
-    }
+    val sortedTopLimit = getTopRatedLimit(sortedChildrenBestRated.size)
     val sortedChildrenTop = if (sortedTopLimit > 0) sortedChildrenBestRated.take(sortedTopLimit) else emptyList()
 
     val sortedChildren = remember(childrenGroups, selectedSortMode) {
@@ -118,7 +114,7 @@ fun ChildrenDisplay(
                                 Json.decodeFromString<TmdbEpisodeMetadata>(it)
                             }.getOrNull()
                         }
-                        metadata?.runtime
+                        episode.length?.toInt() ?: metadata?.runtime
                     }
                     SortModeShow.NAME -> episodes.sortedBy { episode ->
                         episode.title
@@ -270,6 +266,7 @@ fun ChildrenDisplay(
                                     spoilers = spoilers,
                                     spoilName = spoilName,
                                     showChildRatedCompletion = showChildRatedCompletion,
+                                    nullIsLoading = isLoadingRatings,
                                 )
                             }
                             else -> {
@@ -283,6 +280,7 @@ fun ChildrenDisplay(
                                     showRanking = true,
                                     spoilers = spoilers,
                                     spoilName = spoilName,
+                                    nullIsLoading = isLoadingRatings,
                                 )
                             }
                         }
@@ -325,6 +323,7 @@ fun ChildrenDisplay(
                                 columnText = columnText,
                                 onChildClick = onChildClick,
                                 highlightedBucket = selectedBucket,
+                                nullIsLoading = isLoadingRatings,
                                 inverted = invertedGrid,
                             )
                         }
@@ -368,6 +367,7 @@ fun ChildrenDisplay(
                                 columns = columnsWrapped.toInt() + 1,
                                 onChildClick = onChildClick,
                                 highlightedBucket = selectedBucket,
+                                nullIsLoading = isLoadingRatings
                             )
                         }
                     }
@@ -446,4 +446,21 @@ fun expandGroupWhenFirstNull(
             return
         }
     }
+}
+
+
+fun getTopRatedLimit(childrenCount: Int): Int {
+    return when {
+        childrenCount >= 10 -> round(childrenCount * 0.1f).toInt().coerceIn(3, 10)
+        childrenCount in 5..<10 -> 1
+        else -> 0
+    }
+}
+
+fun getTopRatedChildren(childrenUnsorted: List<RateItem>): List<RateItem> {
+    val sortedChildrenBestRated = childrenUnsorted
+        .sortedByDescending { episode -> episode.rating ?: -1f }
+        .filter { it.rating != null }
+    val sortedTopLimit = getTopRatedLimit(sortedChildrenBestRated.size)
+    return if (sortedTopLimit > 0) sortedChildrenBestRated.take(sortedTopLimit) else emptyList()
 }

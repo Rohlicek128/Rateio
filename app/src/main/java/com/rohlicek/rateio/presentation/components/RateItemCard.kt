@@ -123,13 +123,13 @@ fun RateItemCard(
             headlineContent = {
                 Text(
                     title,
-                    modifier = Modifier
-                        .then(if (!spoilers && !spoilName)
+                    modifier = Modifier.then(
+                        if (!spoilers && !spoilName)
                             Modifier
                                 .clip(RoundedCornerShape(6.dp))
                                 .blur(12.dp)
                         else Modifier
-                        ),
+                    ),
                     style = titleStyle,
                     fontWeight = FontWeight.Bold,
                     lineHeight = 1.em,

@@ -32,6 +32,7 @@ fun ChildrenList(
     spoilName: Boolean = true,
     showRanking: Boolean = false,
     showChildRatedCompletion: Boolean = false,
+    nullIsLoading: Boolean = false,
 ) {
     Column(
         modifier = modifier,
@@ -47,6 +48,7 @@ fun ChildrenList(
             }
             val isExpanded = parent.title in expandedParents
             val flatRatings = children.mapNotNull { it.rating }
+            val averageRating = computeAggregateChildrenRating(children)
 
             RateItemCard(
                 modifier = Modifier.heightIn(min = 100.dp),
@@ -54,9 +56,10 @@ fun ChildrenList(
                 titleStyle = MaterialTheme.typography.headlineSmall,
                 subtitle = parent.subtitle,
                 coverImagePath = parent.coverImageUrl,
-                rating = computeAggregateChildrenRating(children),
+                rating = averageRating,
                 padding = PaddingValues(vertical = 6.dp),
                 tonalElevation = if (isExpanded) 4.dp else 1.dp,
+                isLoading = nullIsLoading && averageRating == null,
                 onClick = {
                     if (children.isNotEmpty()) {
                         if (isExpanded) expandedParents.remove(parent.title)
@@ -93,6 +96,7 @@ fun ChildrenList(
                     spoilers = spoilers,
                     spoilName = spoilName,
                     showRanking = showRanking,
+                    nullIsLoading = nullIsLoading
                 )
             }
         }
@@ -110,6 +114,7 @@ fun RateItemList(
     spoilers: Boolean = true,
     spoilName: Boolean = true,
     showRanking: Boolean = false,
+    nullIsLoading: Boolean = false,
 ) {
     Column(
         modifier = modifier,
@@ -136,6 +141,7 @@ fun RateItemList(
                 onClick = { onChildClick(item) },
                 spoilers = spoilers || item.rating != null,
                 spoilName = spoilName,
+                isLoading = nullIsLoading && !(showRanking && rank != -1 && item.rating != null),
             )
         }
     }

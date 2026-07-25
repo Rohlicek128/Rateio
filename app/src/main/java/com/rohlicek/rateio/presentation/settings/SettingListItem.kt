@@ -389,3 +389,16 @@ fun SettingsValueText(
         textAlign = TextAlign.End,
     )
 }
+
+@Composable
+fun SettingsPlaceholderText(
+    value: String,
+    modifier: Modifier = Modifier,
+) {
+    Text(
+        modifier = modifier,
+        text = value,
+        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.75f),
+        fontWeight = FontWeight.Light
+    )
+}

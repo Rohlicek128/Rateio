@@ -34,6 +34,7 @@ fun ChildrenWrapped(
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues(0.dp),
     highlightedBucket: RatingColorBucket? = null,
+    nullIsLoading: Boolean = false,
 ) {
     val scrollState = rememberScrollState()
     Column(
@@ -51,6 +52,7 @@ fun ChildrenWrapped(
                     onChildClick = onChildClick,
                     modifier = Modifier.padding(contentPadding),
                     highlightedBucket = highlightedBucket,
+                    nullIsLoading = nullIsLoading,
                 )
             }
     }
@@ -64,6 +66,7 @@ private fun ChildrenSection(
     onChildClick: (RateItem) -> Unit,
     modifier: Modifier = Modifier,
     highlightedBucket: RatingColorBucket? = null,
+    nullIsLoading: Boolean = false,
 ) {
     val gridGap = 6.dp
     Column(
@@ -111,6 +114,8 @@ private fun ChildrenSection(
                             onClick = {
                                 onChildClick(children[index])
                             },
+
+                            isLoading = nullIsLoading && children[index].rating == null,
                             modifier = Modifier.darken(highlightedBucket != null && getRatingColor(children[index].rating) != highlightedBucket)
                         )
                     } else {

@@ -1,6 +1,8 @@
 package com.rohlicek.rateio.presentation.rating.display
 
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.lerp
+import com.rohlicek.rateio.utils.lerpPerceptual
 import kotlin.collections.forEach
 
 
@@ -9,12 +11,26 @@ data class RatingColorBucket(
     val backgroundColor: Color,
     val foregroundColor: Color,
     val label: String? = null,
-)
+) {
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other !is RatingColorBucket) return false
+
+        return this.label == other.label && this.equalOrGreaterThen == other.equalOrGreaterThen
+    }
+
+    override fun hashCode(): Int {
+        var result = label?.hashCode() ?: 0
+        result = 31 * result + (equalOrGreaterThen?.hashCode() ?: 0)
+        return result
+    }
+}
 
 data class RatingColorBuckets(
     val name: String,
     val buckets: List<RatingColorBucket>,
     val nullBucket: RatingColorBucket,
+    val gradient: Boolean = false,
 )
 
 fun getRatingColor(
@@ -25,7 +41,38 @@ fun getRatingColor(
     if (rating == null) return buckets.nullBucket
     val transformedRating = getRoundedRating(rating, rtf = rtf)!!
 
-    buckets.buckets.forEach { if (it.equalOrGreaterThen != null && transformedRating >= it.equalOrGreaterThen) return it }
+    val lowestBucket = buckets.buckets.last()
+    if (transformedRating < lowestBucket.equalOrGreaterThen!!) {
+        return lowestBucket
+    }
+
+    if (!buckets.gradient) {
+        buckets.buckets.forEach { if (it.equalOrGreaterThen != null && transformedRating >= it.equalOrGreaterThen) return it }
+        return buckets.nullBucket
+    }
+
+    for (i in buckets.buckets.indices) {
+        val upperBucket = buckets.buckets[if (i == 0) 0 else i - 1]
+        val lowerBucket = buckets.buckets[i]
+
+        val upperThreshold = if (i == 0) 1f else upperBucket.equalOrGreaterThen!!
+        val lowerThreshold = lowerBucket.equalOrGreaterThen!!
+
+        if (transformedRating in lowerThreshold..upperThreshold) {
+            val range = upperThreshold - lowerThreshold
+
+            val fraction = if (range > 0f) {
+                ((transformedRating - lowerThreshold) / range).coerceIn(0f, 1f)
+            } else 0f
+
+            return RatingColorBucket(
+                equalOrGreaterThen = transformedRating,
+                backgroundColor = lerpPerceptual(lowerBucket.backgroundColor, upperBucket.backgroundColor, fraction),
+                foregroundColor = if (fraction < 0.5f) lowerBucket.foregroundColor else upperBucket.foregroundColor,
+                label = lowerBucket.label
+            )
+        }
+    }
     return buckets.nullBucket
 }
 

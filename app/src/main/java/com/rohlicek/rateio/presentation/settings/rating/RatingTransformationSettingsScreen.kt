@@ -46,6 +46,7 @@ import com.rohlicek.rateio.presentation.settings.ListItemPosition
 import com.rohlicek.rateio.presentation.settings.SettingListItem
 import com.rohlicek.rateio.presentation.settings.SettingsListHeader
 import com.rohlicek.rateio.presentation.settings.SettingsNumberField
+import com.rohlicek.rateio.presentation.settings.SettingsPlaceholderText
 import com.rohlicek.rateio.presentation.settings.SettingsTextField
 import com.rohlicek.rateio.presentation.settings.WarningCard
 
@@ -198,7 +199,7 @@ fun RatingTransformationSettingsScreen(
                             onValueChange = { value ->
                                 viewModel.updateTransformations { it.copy(stepCount = value.toUInt()) }
                             },
-                            placeholder = { Text("eg. 0.0") }
+                            placeholder = { SettingsPlaceholderText("eg. 0.0") }
                         )
                     }
                 )
@@ -215,7 +216,7 @@ fun RatingTransformationSettingsScreen(
                             onValueChange = { value ->
                                 viewModel.updateTransformations { it.copy(offset = value) }
                             },
-                            placeholder = { Text("eg. 0.0") }
+                            placeholder = { SettingsPlaceholderText("eg. 0.0") }
                         )
                     },
                 )
@@ -232,7 +233,7 @@ fun RatingTransformationSettingsScreen(
                             onValueChange = { value ->
                                 viewModel.updateTransformations { it.copy(divider = value) }
                             },
-                            placeholder = { Text("eg. 1.0") }
+                            placeholder = { SettingsPlaceholderText("eg. 1.0") }
                         )
                     },
                 )
@@ -269,7 +270,7 @@ fun RatingTransformationSettingsScreen(
                             onValueChange = { value ->
                                 viewModel.updateTransformations { it.copy(leadingString = value) }
                             },
-                            placeholder = { Text("eg. #") },
+                            placeholder = { SettingsPlaceholderText("eg. #") },
                         )
                     }
                 )
@@ -286,7 +287,7 @@ fun RatingTransformationSettingsScreen(
                             onValueChange = { value ->
                                 viewModel.updateTransformations { it.copy(trailingString = value) }
                             },
-                            placeholder = { Text("eg. %") }
+                            placeholder = { SettingsPlaceholderText("eg. %") }
                         )
                     }
                 )
@@ -303,7 +304,7 @@ fun RatingTransformationSettingsScreen(
                             onValueChange = { value ->
                                 viewModel.updateTransformations { it.copy(nullString = value) }
                             },
-                            placeholder = { Text("eg. ?") }
+                            placeholder = { SettingsPlaceholderText("eg. ?") }
                         )
                     }
                 )

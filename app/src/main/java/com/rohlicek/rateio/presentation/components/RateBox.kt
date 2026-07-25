@@ -4,18 +4,16 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.CircularWavyProgressIndicator
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
@@ -32,6 +30,7 @@ import com.rohlicek.rateio.presentation.rating.display.getMaxCharWidth
 import com.rohlicek.rateio.presentation.rating.display.getRatingColor
 import com.rohlicek.rateio.presentation.rating.display.getTransformedRating
 import com.rohlicek.rateio.ui.theme.GoogleSansRounded
+import com.rohlicek.rateio.utils.shimmerLoading
 
 
 @Composable
@@ -57,20 +56,27 @@ fun RateBox(
 
     Surface(
         color = colors.backgroundColor,
-        contentColor = colors.foregroundColor.copy(alpha = 0.9f),
+        contentColor = colors.foregroundColor.copy(alpha = if (isLoading) 0.3f else 0.9f),
         shape = RoundedCornerShape(size.rounding),
         border = null,
         modifier = modifier
             .clip(RoundedCornerShape(size.rounding))
             .then(
-                if (onClick != null) modifier.clickable(onClick = {
+                if (onClick != null) Modifier.clickable(onClick = {
                     haptic.performHapticFeedback(HapticFeedbackType.Confirm)
                     onClick()
-                }) else modifier
+                }) else Modifier
             ),
     ) {
         Column(
             modifier = Modifier
+                .then(
+                    if (isLoading) {
+                        Modifier.shimmerLoading(
+                            highlightColor = Color.White.copy(alpha = 0.25f)
+                        )
+                    } else Modifier
+                )
                 .padding(horizontal = size.paddingWidth, vertical = size.height)
                 .widthIn(
                     min = if (widthConstrained) modifiedWidth else size.width,
@@ -79,27 +85,17 @@ fun RateBox(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center,
         ) {
-            if (isLoading) {
-                CircularWavyProgressIndicator(
-                    modifier = Modifier.size(28.dp),
-                    color = MaterialTheme.colorScheme.secondaryFixedDim,
-                    trackColor = MaterialTheme.colorScheme.surfaceBright,
-                    wavelength = 12.dp,
-                )
-            }
-            else {
-                Text(
-                    text = display,
-                    fontSize = size.textSize,
-                    fontWeight = FontWeight.ExtraBold,
-                    fontFamily = GoogleSansRounded,
-                    letterSpacing = 0.sp,
-                    maxLines = 1,
-                    modifier = Modifier.wrapContentWidth(unbounded = true),
-                    overflow = TextOverflow.Visible,
-                    softWrap = false,
-                )
-            }
+            Text(
+                text = display,
+                fontSize = size.textSize,
+                fontWeight = FontWeight.ExtraBold,
+                fontFamily = GoogleSansRounded,
+                letterSpacing = 0.sp,
+                maxLines = 1,
+                modifier = Modifier.wrapContentWidth(unbounded = true),
+                overflow = TextOverflow.Visible,
+                softWrap = false,
+            )
         }
     }
 }
