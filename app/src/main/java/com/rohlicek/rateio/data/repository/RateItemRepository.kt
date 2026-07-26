@@ -116,6 +116,8 @@ class RateItemRepository(private val dao: RateItemDao) {
             length = built.length,
             coverImageUrl = built.coverImageUrl ?: existing.coverImageUrl,
             coverImageLowUrl = built.coverImageLowUrl ?: existing.coverImageLowUrl,
+            backdropImageUrl = built.backdropImageUrl ?: existing.backdropImageUrl,
+            backdropImageLowUrl = built.backdropImageLowUrl ?: existing.backdropImageLowUrl,
             metadataJSON = built.metadataJSON ?: existing.metadataJSON,
         )
         dao.update(updated)

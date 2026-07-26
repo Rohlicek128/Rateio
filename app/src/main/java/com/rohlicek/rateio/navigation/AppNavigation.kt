@@ -2,6 +2,7 @@ package com.rohlicek.rateio.navigation
 
 import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
@@ -10,6 +11,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Leaderboard
@@ -24,12 +26,15 @@ import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavDestination.Companion.hasRoute
@@ -40,17 +45,23 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
+import androidx.work.ExistingWorkPolicy
+import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.OutOfQuotaPolicy
+import androidx.work.WorkInfo
+import androidx.work.WorkManager
+import com.rohlicek.rateio.data.remote.imdb.ManualSyncWorker
 import com.rohlicek.rateio.data.remote.tmdb.TmdbEpisodeMetadata
 import com.rohlicek.rateio.features.home.HomeScreen
 import com.rohlicek.rateio.model.CategoryType
 import com.rohlicek.rateio.presentation.browse.BrowseScreen
 import com.rohlicek.rateio.presentation.category.EnhancedCategoryScreen
+import com.rohlicek.rateio.presentation.components.RatingsSyncToast
 import com.rohlicek.rateio.presentation.leaderboard.LeaderboardScreen
 import com.rohlicek.rateio.presentation.leaderboard.TmdbLeaderboardScreen
 import com.rohlicek.rateio.presentation.profile.ProfileScreen
 import com.rohlicek.rateio.presentation.rating.SavedRateItemScreen
 import com.rohlicek.rateio.presentation.rating.display.RatingTransformationsConstants
-import com.rohlicek.rateio.presentation.rating.display.getRatingColor
 import com.rohlicek.rateio.presentation.rating.openlibrary.OLWorkDetailScreen
 import com.rohlicek.rateio.presentation.rating.steam.SteamGameDetailScreen
 import com.rohlicek.rateio.presentation.rating.tmdb.TmdbEpisodeDetailScreen
@@ -74,6 +85,8 @@ fun AppNavigation(
     onThemeChange: (AppTheme) -> Unit,
     navController: NavHostController = rememberNavController(),
 ) {
+    val context = LocalContext.current
+
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = navBackStackEntry?.destination
 
@@ -81,7 +94,7 @@ fun AppNavigation(
             !currentDestination.hasRoute<Route.TopLevel.Leaderboard>() &&
             !currentDestination.hasRoute<Route.TopLevel.Browse>() &&
             !currentDestination.hasRoute<Route.TopLevel.Profile>()
-    val isVisible = !isDetailScreen && currentDestination != null
+    val isNavBarVisible = !isDetailScreen && currentDestination != null
 
     val transitionMillis = 400
 
@@ -91,10 +104,25 @@ fun AppNavigation(
     )
     val style = MaterialTheme.typography.bodySmall
 
+
+    val navBarOffset by animateDpAsState(
+        targetValue = if (isNavBarVisible) 104.dp else 28.dp,
+        label = "navBarOffset"
+    )
+
+    val workManager = remember { WorkManager.getInstance(context) }
+    val workInfos by workManager.getWorkInfosForUniqueWorkFlow("manual_imdb_sync")
+        .collectAsState(initial = emptyList())
+
+    val activeWork = workInfos.firstOrNull()
+    val syncRunning = activeWork?.state == WorkInfo.State.RUNNING
+    val syncProgress = activeWork?.progress?.getInt("PROGRESS", 0) ?: 0
+
+
     Scaffold(
         bottomBar = {
             AnimatedVisibility(
-                visible = isVisible,
+                visible = isNavBarVisible,
                 enter = slideInVertically(initialOffsetY = { it }),
                 exit = slideOutVertically(targetOffsetY = { it }),
             ) {
@@ -296,6 +324,19 @@ fun AppNavigation(
                 }
                 composable<Route.SettingsLevel.Database> {
                     SettingsDatabaseScreen(
+                        syncRunning = syncRunning,
+                        syncProgress = syncProgress,
+                        onSyncRequest = {
+                            val syncRequest = OneTimeWorkRequestBuilder<ManualSyncWorker>()
+                                .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
+                                .build()
+
+                            workManager.enqueueUniqueWork(
+                                "manual_imdb_sync",
+                                ExistingWorkPolicy.REPLACE,
+                                syncRequest
+                            )
+                        },
                         onBackClick = { navController.popBackStack() },
                     )
                 }
@@ -424,7 +465,7 @@ fun AppNavigation(
             }
 
             AnimatedVisibility(
-                visible = isVisible,
+                visible = isNavBarVisible,
                 enter = slideInVertically(initialOffsetY = { it }),
                 exit = slideOutVertically(targetOffsetY = { it }),
                 modifier = Modifier.align(Alignment.BottomCenter),
@@ -444,6 +485,20 @@ fun AppNavigation(
                         )
                 )
             }
+
+            RatingsSyncToast(
+                isVisible = syncRunning,
+                progress = syncProgress,
+                onClick = {
+                    val isAlreadyThere = navController.currentDestination?.hasRoute<Route.SettingsLevel.Database>() == true
+                    if (!isAlreadyThere) {
+                        navController.navigate(Route.SettingsLevel.Database)
+                    }
+                },
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .padding(bottom = navBarOffset)
+            )
         }
     }
 

@@ -13,11 +13,14 @@ data class RateItem(
     val coverImageUrl: String? = null,
     val coverImageLowUrl: String? = null,
     val coverImageOverride: String? = null,
+    val backdropImageUrl: String? = null,
+    val backdropImageLowUrl: String? = null,
 
     val externalId: String? = null,
     val externalSource: CategoryType? = null,
 
     val rating: Float? = null,
+    val ratingOverride: Float? = null,
     val ratingWeight: Float = 1.0f,
     val review: String? = null,
 

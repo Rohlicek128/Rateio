@@ -36,6 +36,7 @@ import com.rohlicek.rateio.presentation.rating.display.RatingColorBucket
 import com.rohlicek.rateio.presentation.rating.display.RatingColorBuckets
 import com.rohlicek.rateio.presentation.rating.display.getCurrentRatingColorBuckets
 import com.rohlicek.rateio.presentation.rating.display.getRatingColor
+import com.rohlicek.rateio.utils.shimmerLoading
 
 
 @Composable
@@ -193,6 +194,11 @@ fun BucketLegendChips(
                 modifier = Modifier
                     .padding(3.dp)
                     .clip(MaterialTheme.shapes.extraLarge)
+                    .then(
+                        if (isSelected) {
+                            Modifier.shimmerLoading(highlightColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.2f))
+                        } else Modifier
+                    )
                     .then(
                         if (onSelect != null) Modifier.clickable(onClick = {
                             haptic.performHapticFeedback(HapticFeedbackType.ToggleOn)

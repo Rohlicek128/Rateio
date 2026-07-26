@@ -41,6 +41,9 @@ import com.rohlicek.rateio.presentation.rating.display.RatingColorBucketConstant
 
 @Composable
 fun SettingsDatabaseScreen(
+    syncRunning: Boolean,
+    syncProgress: Int?,
+    onSyncRequest: () -> Unit,
     onBackClick: () -> Unit,
 ) {
     val context = LocalContext.current
@@ -51,19 +54,10 @@ fun SettingsDatabaseScreen(
 
     val haptic = LocalHapticFeedback.current
 
-    val workManager = remember { WorkManager.getInstance(context) }
     val preferences = remember { SyncPreferences(context) }
 
     // 1. Observe Last Sync Time
     val lastSyncTimestamp by preferences.lastSyncTime.collectAsState(initial = null)
-
-    // 2. Observe active WorkManager tasks matching our sync name
-    val workInfos by workManager.getWorkInfosForUniqueWorkFlow("manual_imdb_sync")
-        .collectAsState(initial = emptyList())
-
-    val activeWork = workInfos.firstOrNull()
-    val isRunning = activeWork?.state == WorkInfo.State.RUNNING
-    val progress = activeWork?.progress?.getInt("PROGRESS", 0) ?: 0
 
 
     var rating by remember(lastSyncTimestamp) { mutableStateOf<ImdbRatingEntity?>(null) }
@@ -113,28 +107,26 @@ fun SettingsDatabaseScreen(
                             horizontalAlignment = Alignment.CenterHorizontally,
                             verticalArrangement = Arrangement.Center
                         ) {
-                            if (isRunning) {
+                            if (syncRunning) {
                                 Text("Downloading and processing ratings...")
                                 Spacer(modifier = Modifier.height(8.dp))
-                                LinearProgressIndicator(
-                                    progress = { progress / 100f },
-                                    modifier = Modifier.fillMaxWidth()
-                                )
-                                Text("$progress%")
+                                if (syncProgress != null) {
+                                    LinearProgressIndicator(
+                                        progress = { syncProgress / 100f },
+                                        modifier = Modifier.fillMaxWidth()
+                                    )
+                                    Text("$syncProgress%")
+                                }
+                                else {
+                                    LinearProgressIndicator(
+                                        modifier = Modifier.fillMaxWidth()
+                                    )
+                                }
                             } else {
                                 Button(
                                     onClick = {
                                         haptic.performHapticFeedback(HapticFeedbackType.Confirm)
-                                        // Trigger manual EXPEDITED sync
-                                        val syncRequest = OneTimeWorkRequestBuilder<ManualSyncWorker>()
-                                            .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
-                                            .build()
-
-                                        workManager.enqueueUniqueWork(
-                                            "manual_imdb_sync",
-                                            ExistingWorkPolicy.REPLACE, // Replace if they press sync again
-                                            syncRequest
-                                        )
+                                        onSyncRequest()
                                     }
                                 ) {
                                     Text("Sync IMDb Ratings Now (Take ~20s)")

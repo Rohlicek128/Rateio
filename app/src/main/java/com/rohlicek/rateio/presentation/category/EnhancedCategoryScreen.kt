@@ -44,6 +44,7 @@ import com.rohlicek.rateio.model.RateItem
 import com.rohlicek.rateio.model.computeWeightedRating
 import com.rohlicek.rateio.presentation.ScreenScaffold
 import com.rohlicek.rateio.presentation.components.ExpressiveScrollBar
+import com.rohlicek.rateio.presentation.components.HeroCarousel
 import com.rohlicek.rateio.presentation.components.ModalSortableEnumSelector
 import com.rohlicek.rateio.presentation.components.RateItemCard
 import com.rohlicek.rateio.presentation.components.RateItemGridCard
@@ -52,7 +53,6 @@ import com.rohlicek.rateio.presentation.components.SortOrder
 import com.rohlicek.rateio.presentation.components.rating.ParentCompletionText
 import com.rohlicek.rateio.presentation.rating.display.RatingColorBucketConstants
 import com.rohlicek.rateio.presentation.rating.display.getCurrentRatingColorBuckets
-import com.rohlicek.rateio.ui.theme.GoogleSans
 import com.rohlicek.rateio.utils.formatDate
 import com.rohlicek.rateio.utils.parseDate
 
@@ -134,7 +134,6 @@ fun EnhancedCategoryScreen(
                     text = state.items.size.toString(),
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.Bold,
-                    fontFamily = GoogleSans,
                     maxLines = 1,
                     modifier = Modifier.wrapContentWidth(unbounded = true),
                     overflow = TextOverflow.Visible,
@@ -158,44 +157,59 @@ fun EnhancedCategoryScreen(
                 // --- SECTION 1: IN PROGRESS CAROUSEL ---
                 if (inProgressItems.isNotEmpty()) {
                     item {
-                        Text(
+                        /*Text(
                             text = "Currently Watching/Playing",
                             style = MaterialTheme.typography.titleLarge,
                             color = MaterialTheme.colorScheme.primary,
                             modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)
-                        )
-
-                        /*HeaderCarousel(
-                            padding = PaddingValues(16.dp),
-                            preferredItemWidth = 266.dp,
-                            itemHeight = 400.dp,
-                            items = inProgressItems,
-                            subtitleBuilder = { it.subtitle },
-                            isLoading = state.isLoading,
-                            //autoScroll = true,
-                            dotIndicator = true,
-                            colorBucketsOverride = if (isAggregate) RatingColorBucketConstants.RC_IMDB_SHOWS else getCurrentRatingColorBuckets(),
-                            onItemClick = { onItemClick(it) },
                         )*/
 
-                        LazyRow (
-                            contentPadding = PaddingValues(horizontal = 16.dp),
-                            horizontalArrangement = Arrangement.spacedBy(12.dp)
-                        ) {
-                            items(inProgressItems) { item ->
-                                RateItemGridCard(
-                                    title = item.title,
-                                    subtitle = item.subtitle,
-                                    coverImagePath = item.coverImageOverride ?: item.coverImageLowUrl,
-                                    rating = if (isAggregate) {
-                                        computeWeightedRating(item.rating, item.ratingWeight.toInt())
-                                    } else item.rating,
-                                    placeholderRatio = 2f / 3f,
-                                    padding = PaddingValues(horizontal = 0.dp, vertical = 6.dp),
-                                    showNullRatings = item.status != ItemStatus.WATCHLIST,
-                                    colorBucketsOverride = if (isAggregate) RatingColorBucketConstants.RC_IMDB_SHOWS else getCurrentRatingColorBuckets(),
-                                    onClick = { onItemClick(item) },
-                                )
+                        if (state.category?.type != null &&
+                            state.category?.type == CategoryType.TMDB_SHOWS || state.category?.type == CategoryType.TMDB_MOVIES) {
+                            HeroCarousel(
+                                padding = PaddingValues(top = 12.dp, bottom = 8.dp, start = 16.dp, end = 2.dp),
+                                //preferredItemWidth = 266.dp,
+                                //itemHeight = 400.dp,
+                                items = inProgressItems,
+                                subtitleBuilder = {
+                                    if (state.category?.type == CategoryType.TMDB_SHOWS && it.length != null && it.ratingWeight > 0f) {
+                                        "${it.subtitle}  |  ${it.ratingWeight.toInt()}/${it.length.toInt()} Rated"
+                                    }
+                                    else it.subtitle
+                                },
+                                customRatingTransform = {
+                                    if (isAggregate) {
+                                        computeWeightedRating(it.rating, it.ratingWeight.toInt())
+                                    } else it.rating
+                                },
+                                isLoading = state.isLoading,
+                                //autoScroll = true,
+                                dotIndicator = true,
+                                showNullRating = false,
+                                colorBucketsOverride = if (isAggregate) RatingColorBucketConstants.RC_IMDB_SHOWS else getCurrentRatingColorBuckets(),
+                                onItemClick = { onItemClick(it) },
+                            )
+                        }
+                        else {
+                            LazyRow (
+                                contentPadding = PaddingValues(horizontal = 16.dp),
+                                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                            ) {
+                                items(inProgressItems) { item ->
+                                    RateItemGridCard(
+                                        title = item.title,
+                                        subtitle = item.subtitle,
+                                        coverImagePath = item.coverImageOverride ?: item.coverImageLowUrl,
+                                        rating = if (isAggregate) {
+                                            computeWeightedRating(item.rating, item.ratingWeight.toInt())
+                                        } else item.rating,
+                                        placeholderRatio = 2f / 3f,
+                                        padding = PaddingValues(horizontal = 0.dp, vertical = 6.dp),
+                                        showNullRatings = item.status != ItemStatus.WATCHLIST,
+                                        colorBucketsOverride = if (isAggregate) RatingColorBucketConstants.RC_IMDB_SHOWS else getCurrentRatingColorBuckets(),
+                                        onClick = { onItemClick(item) },
+                                    )
+                                }
                             }
                         }
 

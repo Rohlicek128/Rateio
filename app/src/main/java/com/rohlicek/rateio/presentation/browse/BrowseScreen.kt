@@ -162,7 +162,7 @@ fun BrowseScreen(
                 }
             }
 
-            item { Spacer(modifier = Modifier.height(150.dp)) }
+            item { Spacer(modifier = Modifier.height(200.dp)) }
         }
     }
 }

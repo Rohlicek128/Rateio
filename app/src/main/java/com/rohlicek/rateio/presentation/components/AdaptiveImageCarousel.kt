@@ -23,7 +23,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
@@ -311,11 +310,11 @@ fun HeroCarousel(
     spoilThumbnail: Boolean = true,
     spoilName: Boolean = true,
     spoilRated: Boolean = true,
+    showNullRating: Boolean = true,
     colorBucketsOverride: RatingColorBuckets = getCurrentRatingColorBuckets(),
+    customRatingTransform: (RateItem) -> Float? = { it.rating },
     onItemClick: (RateItem) -> Unit,
 ) {
-    val haptic = LocalHapticFeedback.current
-
     val realPageCount = if (items.isNotEmpty()) items.size else placeholderPageCount
     val shape = MaterialTheme.shapes.extraLarge
 
@@ -366,118 +365,162 @@ fun HeroCarousel(
                 .wrapContentHeight(),
         ) { index ->
             val item = if (!isLoading && items.isNotEmpty()) items[index % realPageCount] else null
-            Box(
-                modifier = Modifier
-                    .maskClip(shape)
-                    .clickable {
-                        if (item != null) {
-                            haptic.performHapticFeedback(HapticFeedbackType.Confirm)
-                            onItemClick(item)
-                        }
+
+            HeroItemCard(
+                clipShape = Modifier.maskClip(shape),
+                title = item?.title,
+                subtitle = if (item != null) subtitleBuilder(item) else null,
+                rating = item?.let { customRatingTransform(it) },
+                imagePath = item?.backdropImageUrl ?: item?.backdropImageLowUrl ?: item?.coverImageUrl ?: item?.coverImageLowUrl,
+                itemHeight = itemHeight,
+                rank = if (showOrderedRank) index + 1 else null,
+                isLoading = isLoading,
+                spoilThumbnail = spoilThumbnail,
+                spoilName = spoilName,
+                spoilRated = spoilRated,
+                showNullRating = showNullRating,
+                colorBucketsOverride = colorBucketsOverride,
+                onItemClick = if (item != null) {
+                    {
+                        onItemClick(item)
                     }
-            ) {
-                AsyncImage(
-                    model = item?.coverImageOverride ?: item?.coverImageUrl,
-                    contentDescription = item?.title,
-                    modifier = Modifier
-                        .height(itemHeight)
-                        .maskClip(shape)
-                        .then(
-                            if (!spoilThumbnail && (item?.rating == null || !spoilRated)) Modifier.blur(24.dp)
-                            else Modifier
-                        ),
-                    contentScale = ContentScale.Crop,
-                    placeholder = ColorPainter(MaterialTheme.colorScheme.surfaceVariant),
-                    error = ColorPainter(MaterialTheme.colorScheme.surfaceContainer),
-                )
-
-                if (!isLoading && item != null) {
-                    Box(
-                        modifier = Modifier
-                            .matchParentSize()
-                            .maskClip(shape)
-                            .background(
-                                Brush.verticalGradient(
-                                    colors = listOf(
-                                        Color.Transparent,
-                                        Color.Black.copy(alpha = 0.2f),
-                                        Color.Black.copy(alpha = 0.8f),
-                                    )
-                                )
-                            )
-                    )
-
-                    Row(
-                        modifier = Modifier
-                            .align(Alignment.BottomCenter)
-                            .fillMaxWidth()
-                            .padding(16.dp),
-                        verticalAlignment = Alignment.Bottom,
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                    ) {
-                        Row(
-                            modifier = Modifier.weight(1f),
-                            horizontalArrangement = Arrangement.spacedBy(12.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            if (showOrderedRank) {
-                                Text(
-                                    text = "${index + 1}.",
-                                    style = MaterialTheme.typography.headlineLarge,
-                                    fontWeight = FontWeight.Black,
-                                    lineHeight = 1.em,
-                                    maxLines = 1,
-                                )
-                            }
-
-                            Column {
-                                val hideName = (item.rating == null || !spoilRated) && !spoilName && !spoilThumbnail
-                                val title = if (hideName) subtitleBuilder(item) else item.title
-                                Text(
-                                    text = title ?: "?",
-                                    style = MaterialTheme.typography.headlineMedium,
-                                    fontWeight = FontWeight.Black,
-                                    lineHeight = 1.em,
-                                    maxLines = 3,
-                                    overflow = TextOverflow.Ellipsis,
-                                )
-                                val subtitle = if (!hideName) subtitleBuilder(item) else null
-                                if (subtitle != null) {
-                                    Text(
-                                        text = subtitle,
-                                        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f),
-                                        style = MaterialTheme.typography.labelLarge,
-                                        fontWeight = FontWeight.Bold,
-                                        maxLines = 1,
-                                        overflow = TextOverflow.Ellipsis,
-                                    )
-                                }
-                            }
-                        }
-
-                        Spacer(modifier = Modifier.width(10.dp))
-
-                        RateBox(
-                            rating = item.rating,
-                            colorBucketsOverride = colorBucketsOverride,
-                        )
-                    }
-                }
-                else {
-                    if (carouselState.currentItem == index) {
-                        Box(
-                            modifier = Modifier
-                                .matchParentSize()
-                                .maskClip(shape)
-                        ) {
-                            ScreenLoading(size = 70.dp)
-                        }
-                    }
-                }
-            }
+                } else null,
+            )
         }
 
         if (dotIndicator && items.size > 1) CarouselDotsIndicator(realPageCount, carouselState)
+    }
+}
+
+@Composable
+fun HeroItemCard(
+    modifier: Modifier = Modifier,
+    title: String?,
+    subtitle: String?,
+    rating: Float?,
+    imagePath: String?,
+    itemHeight: Dp = 220.dp,
+    isLoading: Boolean = false,
+    rank: Int? = null,
+    spoilThumbnail: Boolean = true,
+    spoilName: Boolean = true,
+    spoilRated: Boolean = true,
+    showNullRating: Boolean = true,
+    colorBucketsOverride: RatingColorBuckets = getCurrentRatingColorBuckets(),
+    shape: Shape = MaterialTheme.shapes.extraLarge,
+    clipShape: Modifier = Modifier.clip(shape),
+    onItemClick: (() -> Unit)? = null,
+) {
+    val haptic = LocalHapticFeedback.current
+
+    Box(
+        modifier = modifier
+            .then(clipShape)
+            .clickable {
+                if (onItemClick != null) {
+                    haptic.performHapticFeedback(HapticFeedbackType.Confirm)
+                    onItemClick()
+                }
+            }
+    ) {
+        AsyncImage(
+            model = imagePath,
+            contentDescription = title,
+            modifier = Modifier
+                .height(itemHeight)
+                .then(clipShape)
+                .then(
+                    if (!spoilThumbnail && (rating == null || !spoilRated)) Modifier.blur(24.dp)
+                    else Modifier
+                ),
+            contentScale = ContentScale.Crop,
+            placeholder = ColorPainter(MaterialTheme.colorScheme.surfaceVariant),
+            error = ColorPainter(MaterialTheme.colorScheme.surfaceContainer),
+        )
+
+        if (!isLoading && title != null) {
+            Box(
+                modifier = Modifier
+                    .matchParentSize()
+                    .then(clipShape)
+                    .background(
+                        Brush.verticalGradient(
+                            colors = listOf(
+                                Color.Transparent,
+                                Color.Black.copy(alpha = 0.2f),
+                                Color.Black.copy(alpha = 0.8f),
+                            )
+                        )
+                    )
+            )
+
+            Row(
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                verticalAlignment = Alignment.Bottom,
+                horizontalArrangement = Arrangement.SpaceBetween,
+            ) {
+                Row(
+                    modifier = Modifier.weight(1f),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    if (rank != null) {
+                        Text(
+                            text = "${rank}.",
+                            style = MaterialTheme.typography.headlineLarge,
+                            fontWeight = FontWeight.Black,
+                            lineHeight = 1.em,
+                            maxLines = 1,
+                        )
+                    }
+
+                    Column {
+                        val hideName = (rating == null || !spoilRated) && !spoilName && !spoilThumbnail
+                        val title = if (hideName) subtitle else title
+                        Text(
+                            text = title ?: "?",
+                            style = MaterialTheme.typography.headlineMedium,
+                            fontWeight = FontWeight.Black,
+                            lineHeight = 1.em,
+                            maxLines = 3,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                        val subtitle = if (!hideName) subtitle else null
+                        if (subtitle != null) {
+                            Text(
+                                text = subtitle,
+                                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f),
+                                style = MaterialTheme.typography.labelLarge,
+                                fontWeight = FontWeight.Bold,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                            )
+                        }
+                    }
+                }
+
+                if (rating != null || showNullRating) {
+                    Spacer(modifier = Modifier.width(10.dp))
+
+                    RateBox(
+                        rating = rating,
+                        colorBucketsOverride = colorBucketsOverride,
+                    )
+                }
+            }
+        }
+        else {
+            Box(
+                modifier = Modifier
+                    .matchParentSize()
+                    .then(clipShape)
+            ) {
+                ScreenLoading(size = 70.dp)
+            }
+        }
     }
 }
 
