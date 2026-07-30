@@ -1,7 +1,11 @@
 package com.rohlicek.rateio.presentation.components
 
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.spring
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
@@ -11,6 +15,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -57,13 +62,25 @@ fun RateBox(
     val sizeAddition = ((maxLength - 3) * 8).coerceAtLeast(-7)
     val modifiedWidth = size.width + sizeAddition.dp
 
+
+    val isPressed by interactionSource.collectIsPressedAsState()
+    val animatedRadius by animateDpAsState(
+        targetValue = if (isPressed) size.rounding * 0.7f else size.rounding,
+        animationSpec = spring(
+            dampingRatio = Spring.DampingRatioMediumBouncy,
+            stiffness = Spring.StiffnessMedium
+        ),
+        label = "ratebox_morph_anim"
+    )
+    val currentShape = RoundedCornerShape(animatedRadius)
+
     Surface(
         color = colors.backgroundColor,
         contentColor = colors.foregroundColor.copy(alpha = if (isLoading) 0.3f else 0.9f),
-        shape = RoundedCornerShape(size.rounding),
+        shape = currentShape,
         border = null,
         modifier = modifier
-            .clip(RoundedCornerShape(size.rounding))
+            .clip(currentShape)
             .then(
                 if (onClick != null) Modifier.clickable(
                     onClick = {

@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.rohlicek.rateio.data.remote.tmdb.TmdbClient
+import com.rohlicek.rateio.data.remote.tmdb.TmdbRepository
 import com.rohlicek.rateio.data.remote.tmdb.toRateItem
 import com.rohlicek.rateio.data.repository.CategoryRepository
 import com.rohlicek.rateio.data.repository.RateItemRepository
@@ -31,6 +32,7 @@ class SavedRateItemViewModel(
     private val id: Long,
     private val itemRepository: RateItemRepository,
     private val categoryRepository: CategoryRepository,
+    private val tmdbRepository: TmdbRepository,
 ) : ViewModel() {
     private val _state = MutableStateFlow(SavedRateItemState())
     val state: StateFlow<SavedRateItemState> = _state.asStateFlow()
@@ -120,11 +122,7 @@ class SavedRateItemViewModel(
 
 
             // Season
-            val seasonDetail = runCatching {
-                TmdbClient.tmdb.getSeason(showId, seasonNumber)
-            }.getOrNull()
-            if (seasonDetail == null) return@launch
-
+            val seasonDetail = tmdbRepository.getSeason(showId, seasonNumber) ?: return@launch
             val seasonId = itemRepository.findOrCreate(
                 externalId = seasonDetail.id.toString(),
                 categoryId = showItem.categoryId,
@@ -134,17 +132,23 @@ class SavedRateItemViewModel(
             }
 
             // Episode
-            val episodeDetail = runCatching {
+            val episodeFromSeason = seasonDetail.episodes.find { it.episodeNumber == episodeNumber }
+
+            val episodeItem = episodeFromSeason?.toRateItem(
+                showItem.categoryId, showId = showId, parentId = seasonId, seasonEpisodeCount = seasonEpisodeCount
+            ) ?: runCatching {
                 TmdbClient.tmdb.getEpisode(showId, seasonNumber, episodeNumber)
-            }.getOrNull()
-            if (episodeDetail == null) return@launch
+            }.getOrNull()?.toRateItem(
+                showItem.categoryId, showId = showId, parentId = seasonId, seasonEpisodeCount = seasonEpisodeCount
+            )
+            if (episodeItem == null || episodeItem.externalId == null) return@launch
 
             val episodeId = itemRepository.findOrCreate(
-                externalId = episodeDetail.id.toString(),
+                externalId = episodeItem.externalId,
                 categoryId = showItem.categoryId,
                 parentId = seasonId,
             ) {
-                episodeDetail.toRateItem(showItem.categoryId, showId = showId, parentId = seasonId, seasonEpisodeCount = seasonEpisodeCount)
+                episodeItem
             }
 
             val savedShowId = itemRepository.getById(seasonId)?.parentId ?: 0
@@ -187,9 +191,22 @@ class SavedRateItemViewModel(
         }
     }
 
+    override fun onCleared() {
+        super.onCleared()
+        if (_state.value.category?.type != null && _state.value.category?.type == CategoryType.TMDB_SHOWS) {
+            tmdbRepository.clearSeasonCache()
+        }
+    }
+
     companion object {
-        fun factory(id: Long, itemRepository: RateItemRepository, categoryRepository: CategoryRepository) = viewModelFactory {
-            initializer { SavedRateItemViewModel(id, itemRepository, categoryRepository) }
+        fun factory(
+            id: Long,
+            itemRepository: RateItemRepository,
+            categoryRepository:
+            CategoryRepository,
+            tmdbRepository: TmdbRepository,
+        ) = viewModelFactory {
+            initializer { SavedRateItemViewModel(id, itemRepository, categoryRepository, tmdbRepository) }
         }
     }
 }

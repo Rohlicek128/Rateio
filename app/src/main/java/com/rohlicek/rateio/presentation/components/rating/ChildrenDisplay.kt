@@ -46,6 +46,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.rohlicek.rateio.data.remote.tmdb.TmdbEpisodeMetadata
 import com.rohlicek.rateio.model.RateItem
+import com.rohlicek.rateio.presentation.components.ConnectedButtonsExpressive
 import com.rohlicek.rateio.presentation.components.ConnectedItemSelector
 import com.rohlicek.rateio.presentation.components.OutlinedConnectedButtonsExpressive
 import com.rohlicek.rateio.presentation.components.ModalSortableEnumSelector
@@ -397,7 +398,7 @@ fun ChildrenDisplay(
                             horizontalArrangement = Arrangement.SpaceBetween,
                         ) {
                             if (timelineCategories.size > 1) {
-                                ConnectedItemSelector(
+                                OutlinedConnectedButtonsExpressive(
                                     selectedIndex = selectedCategoryIndex,
                                     onSelectionChanged = {
                                         selectedCategoryIndex = it

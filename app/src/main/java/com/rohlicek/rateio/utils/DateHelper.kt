@@ -50,9 +50,13 @@ fun formatDate(date: LocalDate?, locale: Locale = Locale.ENGLISH, pattern: Strin
 
 fun formatDateCompact(dateString: String?, locale: Locale = Locale.ENGLISH): String {
     val date = parseDate(dateString) ?: return "N/A"
-    return date.format(DateTimeFormatter.ofPattern("MMM. d, yyyy", locale))
+    return date.format(DateTimeFormatter.ofPattern(
+        "MMM${if (date.month?.name?.length != null && date.month.name.length > 3) "." else ""} d, yyyy", locale
+    ))
 }
 fun formatDateCompact(date: LocalDate?, locale: Locale = Locale.ENGLISH): String {
     if (date == null) return "N/A"
-    return date.format(DateTimeFormatter.ofPattern("MMM. d, yyyy", locale))
+    return date.format(DateTimeFormatter.ofPattern(
+        "MMM${if (date.month?.name?.length != null && date.month.name.length > 3) "." else ""} d, yyyy", locale
+    ))
 }

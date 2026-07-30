@@ -8,6 +8,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.rohlicek.rateio.data.db.RateioDatabase
 import com.rohlicek.rateio.data.remote.tmdb.TmdbEpisodeMetadata
+import com.rohlicek.rateio.data.remote.tmdb.TmdbRepository
 import com.rohlicek.rateio.data.repository.CategoryRepository
 import com.rohlicek.rateio.data.repository.RateItemRepository
 import com.rohlicek.rateio.model.CategoryType
@@ -26,6 +27,7 @@ import kotlinx.serialization.json.Json
 @Composable
 fun SavedRateItemScreen(
     itemId: Long,
+    tmdbRepository: TmdbRepository,
     onChildClick: (childId: Long, parentId: Long) -> Unit,
     onPersonClick: (Int) -> Unit,
     onBackClick: () -> Unit,
@@ -40,7 +42,7 @@ fun SavedRateItemScreen(
         CategoryRepository(db.categoryDao())
     }
     val viewModel: SavedRateItemViewModel = viewModel(
-        factory = SavedRateItemViewModel.factory(itemId, itemRepository, categoryRepository)
+        factory = SavedRateItemViewModel.factory(itemId, itemRepository, categoryRepository, tmdbRepository)
     )
     val state by viewModel.state.collectAsState()
 

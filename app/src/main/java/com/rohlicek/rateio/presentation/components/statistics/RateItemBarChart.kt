@@ -1,4 +1,4 @@
-package com.rohlicek.rateio.presentation.profile
+package com.rohlicek.rateio.presentation.components.statistics
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -7,6 +7,9 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -54,6 +57,7 @@ fun RatingsTransformationBarChart(
     title: String,
     entries: List<RateItem>,
     onSelect: ((String) -> Unit)? = null,
+    trailingTitleContent: @Composable (RowScope.() -> Unit)? = null,
 ) {
     val rtf = getCurrentRatingTransformations()
     val barChartEntries = remember(entries) {
@@ -85,7 +89,8 @@ fun RatingsTransformationBarChart(
         modifier = modifier,
         title = title,
         entries =  barChartEntries,
-        onSelect = onSelect
+        onSelect = onSelect,
+        trailingTitleContent = trailingTitleContent,
     )
 }
 
@@ -95,6 +100,7 @@ fun RatingsColorBarChart(
     title: String,
     entries: List<RateItem>,
     onSelect: ((String) -> Unit)? = null,
+    trailingTitleContent: @Composable (RowScope.() -> Unit)? = null,
 ) {
     val rcb = getCurrentRatingColorBuckets()
     val barChartEntries = remember(entries) {
@@ -126,7 +132,8 @@ fun RatingsColorBarChart(
         modifier = modifier,
         title = title,
         entries =  barChartEntries,
-        onSelect = onSelect
+        onSelect = onSelect,
+        trailingTitleContent = trailingTitleContent,
     )
 }
 
@@ -136,6 +143,7 @@ private fun BardChartCard(
     title: String,
     entries: List<BarChartEntry>,
     onSelect: ((String) -> Unit)? = null,
+    trailingTitleContent: @Composable (RowScope.() -> Unit)? = null,
 ) {
     Card(
         shape = RoundedCornerShape(28.dp),
@@ -146,13 +154,25 @@ private fun BardChartCard(
             modifier = Modifier.padding(horizontal = 0.dp, vertical = 20.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Text(
-                modifier = Modifier.padding(horizontal = 20.dp),
-                text = title,
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold,
-                color = MaterialTheme.colorScheme.onSurface
-            )
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    modifier = Modifier.weight(1f),
+                    text = title,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+
+                if (trailingTitleContent != null) {
+                    Spacer(modifier = Modifier.width(6.dp))
+                    trailingTitleContent()
+                }
+            }
+
 
             BarChart(entries = entries, onSelect = onSelect)
         }

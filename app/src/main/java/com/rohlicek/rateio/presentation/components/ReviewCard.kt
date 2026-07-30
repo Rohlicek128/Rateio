@@ -42,7 +42,9 @@ import androidx.compose.ui.graphics.asComposePath
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.fromHtml
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.LayoutDirection
@@ -175,7 +177,7 @@ fun ReviewCard(
             }
             else {
                 Text(
-                    content,
+                    text = AnnotatedString.fromHtml(content),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     maxLines = 5,
@@ -295,7 +297,7 @@ private fun FullReviewModal(
                     }
                     else {
                         Text(
-                            editedContent,
+                            AnnotatedString.fromHtml(editedContent),
                             style = MaterialTheme.typography.bodyLarge,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )

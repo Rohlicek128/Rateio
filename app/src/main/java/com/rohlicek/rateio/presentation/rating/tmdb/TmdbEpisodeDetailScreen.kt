@@ -1,7 +1,6 @@
 package com.rohlicek.rateio.presentation.rating.tmdb
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
@@ -20,12 +19,9 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
-import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.ButtonElevation
 import androidx.compose.material3.ButtonGroup
 import androidx.compose.material3.ElevatedButton
-import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -52,18 +48,17 @@ import com.rohlicek.rateio.data.remote.imdb.ImdbRatingRepository
 import com.rohlicek.rateio.data.remote.tmdb.toCarouselImage
 import com.rohlicek.rateio.model.CategoryType
 import com.rohlicek.rateio.presentation.components.AdaptiveImageCarousel
-import com.rohlicek.rateio.presentation.components.ButtonsExpressive
 import com.rohlicek.rateio.presentation.components.CollapsibleHeader
 import com.rohlicek.rateio.presentation.components.ImageSize
-import com.rohlicek.rateio.presentation.components.ItemRatingStatCard
-import com.rohlicek.rateio.presentation.components.ItemStatCard
+import com.rohlicek.rateio.presentation.components.statistics.ItemRatingStatCard
+import com.rohlicek.rateio.presentation.components.statistics.ItemStatCard
 import com.rohlicek.rateio.presentation.components.PersonCard
 import com.rohlicek.rateio.presentation.components.ScreenError
 import com.rohlicek.rateio.presentation.components.ScreenLoading
 import com.rohlicek.rateio.presentation.rating.RateItemDetailScreen
 import com.rohlicek.rateio.presentation.rating.display.RatingColorBucketConstants
 import com.rohlicek.rateio.presentation.rating.display.RatingTransformationsConstants
-import com.rohlicek.rateio.utils.formatDate
+import com.rohlicek.rateio.utils.formatDateCompact
 import com.rohlicek.rateio.utils.formatItemRankLabel
 import com.rohlicek.rateio.utils.formatTime
 
@@ -115,7 +110,7 @@ fun TmdbEpisodeDetailScreen(
             ) {
                 RateItemDetailScreen(
                     title = episode.name,
-                    subtitle = formatDate(episode.airDate),
+                    subtitle = "Season ${episode.seasonNumber}, Episode ${episode.episodeNumber}",
                     categoryName = "Episodes",
                     description = episode.overview,
                     coverImageUrl = episode.stillPath?.let {
@@ -130,7 +125,9 @@ fun TmdbEpisodeDetailScreen(
                     ratingLabel = savedRank?.let { formatItemRankLabel(it, CategoryType.TMDB_EPISODES) },
                     onRatingSaved = onRatingSaved,
                     onBackClick = onBackClick,
-                    debug = debug,
+                    debug = (if (!episode.productionCode.isNullOrBlank()) {
+                        episode.productionCode + "  "
+                    } else "") + (debug ?: ""),
                     headerExtraContent = {
                         //Stats
                         item {
@@ -139,19 +136,13 @@ fun TmdbEpisodeDetailScreen(
                                 horizontalArrangement = Arrangement.SpaceEvenly,
                             ) {
                                 ItemStatCard(
-                                    header = "Episode",
-                                    statistic = "S${episode.seasonNumber}E${episode.episodeNumber}",
+                                    header = "Release Date",
+                                    statistic = formatDateCompact(episode.airDate),
                                 )
                                 ItemStatCard(
                                     header = "Runtime",
                                     statistic = formatTime(episode.runtime),
                                 )
-                                if (!episode.productionCode.isNullOrBlank()) {
-                                    ItemStatCard(
-                                        header = "Code",
-                                        statistic = episode.productionCode,
-                                    )
-                                }
                             }
                         }
                     },

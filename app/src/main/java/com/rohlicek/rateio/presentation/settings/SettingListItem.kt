@@ -68,6 +68,7 @@ fun SettingListItem(
     onClick: (() -> Unit)? = null,
     position: ListItemPosition = ListItemPosition.SINGLE,
     showNavigateIconOnClick: Boolean = true,
+    boldTitle: Boolean = false,
 ) {
     val haptic = LocalHapticFeedback.current
 
@@ -102,7 +103,7 @@ fun SettingListItem(
             Text(
                 title,
                 style = titleStyle,
-                fontWeight = FontWeight.SemiBold,
+                fontWeight = if (boldTitle) FontWeight.Bold else FontWeight.SemiBold,
                 color = contentColor,
             )
         },

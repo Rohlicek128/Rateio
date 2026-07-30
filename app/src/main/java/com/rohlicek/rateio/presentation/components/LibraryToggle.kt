@@ -64,7 +64,7 @@ fun LibraryToggle(
         Text(
             if (checked) "Remove from library" else "Add to library",
             style = MaterialTheme.typography.titleSmall,
-            fontWeight = FontWeight.Bold,
+            fontWeight = FontWeight.ExtraBold,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
         )

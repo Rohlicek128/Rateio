@@ -19,6 +19,7 @@ fun ErrorCard(
     SettingListItem(
         modifier = modifier,
         title = title,
+        boldTitle = true,
         description = description,
         icon = Icons.Default.Error,
         containerColor = if (darker) MaterialTheme.colorScheme.onError
@@ -37,6 +38,7 @@ fun WarningCard(
     SettingListItem(
         modifier = modifier,
         title = title,
+        boldTitle = true,
         description = description,
         icon = Icons.Default.Warning,
         containerColor = MaterialTheme.colorScheme.errorContainer,

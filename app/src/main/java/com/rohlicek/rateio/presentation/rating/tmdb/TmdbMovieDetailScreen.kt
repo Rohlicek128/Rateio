@@ -48,8 +48,8 @@ import com.rohlicek.rateio.presentation.components.AdaptiveImageCarousel
 import com.rohlicek.rateio.presentation.components.CollapsibleHeader
 import com.rohlicek.rateio.presentation.components.GenreChips
 import com.rohlicek.rateio.presentation.components.ImageSize
-import com.rohlicek.rateio.presentation.components.ItemRatingStatCard
-import com.rohlicek.rateio.presentation.components.ItemStatCard
+import com.rohlicek.rateio.presentation.components.statistics.ItemRatingStatCard
+import com.rohlicek.rateio.presentation.components.statistics.ItemStatCard
 import com.rohlicek.rateio.presentation.components.ModalEnumSelector
 import com.rohlicek.rateio.presentation.components.PersonCard
 import com.rohlicek.rateio.presentation.components.ReviewCard

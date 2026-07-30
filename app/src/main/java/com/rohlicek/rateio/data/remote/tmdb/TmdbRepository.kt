@@ -6,6 +6,27 @@ import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 
 class TmdbRepository {
+    private val seasonCache = java.util.concurrent.ConcurrentHashMap<String, TmdbSeasonDetail>()
+
+    suspend fun getSeason(showId: Int, seasonNumber: Int): TmdbSeasonDetail? {
+        val cacheKey = "${showId}_$seasonNumber"
+        seasonCache[cacheKey]?.let { return it }
+
+        val seasonDetail = runCatching {
+            TmdbClient.tmdb.getSeason(showId, seasonNumber)
+        }.getOrNull()
+
+        if (seasonDetail != null) {
+            seasonCache[cacheKey] = seasonDetail
+        }
+
+        return seasonDetail
+    }
+
+    fun clearSeasonCache() {
+        seasonCache.clear()
+    }
+
     suspend fun getAllEpisodes(
         showId: Int,
         seasonNumbers: List<Int>,

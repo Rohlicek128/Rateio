@@ -63,6 +63,7 @@ import androidx.work.WorkInfo
 import androidx.work.WorkManager
 import com.rohlicek.rateio.data.remote.imdb.ManualSyncWorker
 import com.rohlicek.rateio.data.remote.tmdb.TmdbEpisodeMetadata
+import com.rohlicek.rateio.data.remote.tmdb.TmdbRepository
 import com.rohlicek.rateio.features.home.HomeScreen
 import com.rohlicek.rateio.model.CategoryType
 import com.rohlicek.rateio.presentation.browse.BrowseScreen
@@ -97,6 +98,8 @@ fun AppNavigation(
     navController: NavHostController = rememberNavController(),
 ) {
     val context = LocalContext.current
+
+    val tmdbRepository = remember { TmdbRepository() }
 
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = navBackStackEntry?.destination
@@ -471,6 +474,7 @@ fun AppNavigation(
                     val detail = backStackEntry.toRoute<Route.RateItemDetail>()
                     SavedRateItemScreen(
                         itemId = detail.itemId,
+                        tmdbRepository = tmdbRepository,
                         onChildClick = { childId, parentId ->
                             navController.navigate(Route.RateItemDetail(childId)) {
                                 popUpTo(Route.RateItemDetail(parentId))

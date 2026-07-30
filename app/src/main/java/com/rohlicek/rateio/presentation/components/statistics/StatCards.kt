@@ -1,4 +1,4 @@
-package com.rohlicek.rateio.presentation.profile
+package com.rohlicek.rateio.presentation.components.statistics
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement

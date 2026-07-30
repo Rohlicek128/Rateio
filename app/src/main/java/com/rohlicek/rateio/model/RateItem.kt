@@ -47,7 +47,7 @@ fun computeWeightedRating(aggregateRating: Float?, length: Int?): Float? {
 
     val ratingWeight = 0.9f
     val lengthWeight = 1f - ratingWeight
-    val maxLength = 150
+    val maxLength = 155
 
     val ratingWeighted = aggregateRating * ratingWeight
     val lengthWeighted = (log10(length.toFloat()) / log10(maxLength.toFloat()))

@@ -55,7 +55,7 @@ import com.rohlicek.rateio.presentation.components.CarouselImage
 import com.rohlicek.rateio.presentation.components.CollapsibleHeader
 import com.rohlicek.rateio.presentation.components.GenreChips
 import com.rohlicek.rateio.presentation.components.ImageSize
-import com.rohlicek.rateio.presentation.components.ItemStatCard
+import com.rohlicek.rateio.presentation.components.statistics.ItemStatCard
 import com.rohlicek.rateio.presentation.components.LibraryToggle
 import com.rohlicek.rateio.presentation.components.ModalEnumSelector
 import com.rohlicek.rateio.presentation.components.ScreenError

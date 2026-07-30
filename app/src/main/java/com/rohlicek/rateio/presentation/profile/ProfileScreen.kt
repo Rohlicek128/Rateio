@@ -48,6 +48,8 @@ import com.rohlicek.rateio.model.CategoryType
 import com.rohlicek.rateio.presentation.category.ItemListRow
 import com.rohlicek.rateio.presentation.components.AdaptiveAsyncImage
 import com.rohlicek.rateio.presentation.components.FloatingIconButton
+import com.rohlicek.rateio.presentation.components.statistics.RatingsTransformationBarChart
+import com.rohlicek.rateio.presentation.components.statistics.StatCardRow
 import com.rohlicek.rateio.presentation.rating.display.getTransformedRating
 
 

@@ -61,8 +61,8 @@ import com.rohlicek.rateio.presentation.components.DateProgressBar
 import com.rohlicek.rateio.presentation.components.GenreChips
 import com.rohlicek.rateio.presentation.components.HeroCarousel
 import com.rohlicek.rateio.presentation.components.ImageSize
-import com.rohlicek.rateio.presentation.components.ItemRatingStatCard
-import com.rohlicek.rateio.presentation.components.ItemStatCard
+import com.rohlicek.rateio.presentation.components.statistics.ItemRatingStatCard
+import com.rohlicek.rateio.presentation.components.statistics.ItemStatCard
 import com.rohlicek.rateio.presentation.components.ModalEnumSelector
 import com.rohlicek.rateio.presentation.components.PersonCard
 import com.rohlicek.rateio.presentation.components.RateItemCard
@@ -74,7 +74,7 @@ import com.rohlicek.rateio.presentation.components.rating.ChildrenDisplay
 import com.rohlicek.rateio.presentation.components.rating.DisplayMode
 import com.rohlicek.rateio.presentation.components.rating.ItemProgressBar
 import com.rohlicek.rateio.presentation.components.rating.getTopRatedChildren
-import com.rohlicek.rateio.presentation.profile.RatingsColorBarChart
+import com.rohlicek.rateio.presentation.components.statistics.RatingsColorBarChart
 import com.rohlicek.rateio.presentation.rating.RateItemDetailScreen
 import com.rohlicek.rateio.presentation.rating.display.RatingColorBucketConstants
 import com.rohlicek.rateio.presentation.rating.display.RatingTransformationsConstants
@@ -790,21 +790,18 @@ fun TmdbShowDetailScreen(
                         ShowTabs.STATISTICS -> {
                             // Statistics
                             item {
-                                val headerName = "Statistics"
-                                CollapsibleHeader(
-                                    headerName,
-                                    isOpened = headerName !in state.collapsedHeaders,
-                                    onClick = {
-                                        if (it) state.collapsedHeaders.remove(headerName)
-                                        else state.collapsedHeaders.add(headerName)
+                                RatingsColorBarChart(
+                                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                                    entries = childrenGroups.flatMap { it.value },
+                                    title = "${show.name}'s Buckets",
+                                    trailingTitleContent = {
+                                        ConnectedButtonsExpressive(
+                                            selectedIndex = 1,
+                                            onSelectionChanged = {},
+                                            options = listOf("Ratings", "Buckets"),
+                                        )
                                     }
-                                ) {
-                                    RatingsColorBarChart(
-                                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-                                        title = "${show.name}'s Buckets",
-                                        entries = childrenGroups.flatMap { it.value },
-                                    )
-                                }
+                                )
                             }
                         }
                         ShowTabs.IMAGES -> {

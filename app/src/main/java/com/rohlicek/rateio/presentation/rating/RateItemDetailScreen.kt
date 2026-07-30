@@ -294,7 +294,7 @@ fun RateItemDetailScreen(
 
 
                 // Debug
-                if (debug != null) {
+                if (!debug.isNullOrBlank()) {
                     item {
                         Text(
                             text = debug,

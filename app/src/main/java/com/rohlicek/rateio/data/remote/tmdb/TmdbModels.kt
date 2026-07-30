@@ -294,7 +294,7 @@ data class TmdbEpisodeMetadata(
     val seasonEpisodeCount: Int? = null,
 
     val runtime: Int? = null,
-    val imdbId: String? = null,
+    val imdbId: String? = null, // Deprecated
 )
 
 fun TmdbShow.toRateItem(categoryId: Long = 0, weight: Float = 1f) = RateItem(
@@ -353,6 +353,25 @@ fun TmdbEpisodeDetail.toRateItem(categoryId: Long = 0, showId: Int, parentId: Lo
         episodeNumber = episodeNumber,
         seasonEpisodeCount = seasonEpisodeCount,
         imdbId = externalIds?.imdbId,
+    ))
+)
+
+fun TmdbEpisodeSummary.toRateItem(categoryId: Long = 0, showId: Int, parentId: Long, seasonEpisodeCount: Int? = null) = RateItem(
+    id = 0,
+    categoryId = categoryId,
+    parentId = parentId,
+    title = name,
+    subtitle = "$showId $seasonNumber $episodeNumber",
+    length = runtime.toFloat(),
+    coverImageUrl = stillPath?.let { "https://image.tmdb.org/t/p/original$it" },
+    coverImageLowUrl = stillPath?.let { "https://image.tmdb.org/t/p/w300$it" },
+    externalId = id.toString(),
+    externalSource = CategoryType.TMDB_EPISODES,
+    metadataJSON = Json.encodeToString(TmdbEpisodeMetadata(
+        showId = showId,
+        seasonNumber = seasonNumber,
+        episodeNumber = episodeNumber,
+        seasonEpisodeCount = seasonEpisodeCount,
     ))
 )
 
