@@ -1,6 +1,7 @@
 package com.rohlicek.rateio.presentation.components
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
@@ -10,6 +11,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -44,6 +46,7 @@ fun RateBox(
     transformationOverride: RatingTransformation = getCurrentRatingTransformations(),
     isLoading: Boolean = false,
     onClick: (() -> Unit)? = null,
+    interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
 ) {
     val haptic = LocalHapticFeedback.current
 
@@ -62,10 +65,13 @@ fun RateBox(
         modifier = modifier
             .clip(RoundedCornerShape(size.rounding))
             .then(
-                if (onClick != null) Modifier.clickable(onClick = {
-                    haptic.performHapticFeedback(HapticFeedbackType.Confirm)
-                    onClick()
-                }) else Modifier
+                if (onClick != null) Modifier.clickable(
+                    onClick = {
+                        haptic.performHapticFeedback(HapticFeedbackType.Confirm)
+                        onClick()
+                    },
+                    interactionSource = interactionSource,
+                ) else Modifier
             ),
     ) {
         Column(
@@ -98,6 +104,15 @@ fun RateBox(
             )
         }
     }
+}
+
+fun calculateMaxWidthConstrained(
+    size: RateBoxSize,
+    rtf: RatingTransformation = getCurrentRatingTransformations(),
+): Dp {
+    val maxLength = rtf.getMaxCharWidth()
+    val sizeAddition = ((maxLength - 3) * 8).coerceAtLeast(-7)
+    return size.width + sizeAddition.dp + size.paddingWidth * 2
 }
 
 

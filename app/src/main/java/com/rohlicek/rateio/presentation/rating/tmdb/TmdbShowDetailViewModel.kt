@@ -47,12 +47,22 @@ enum class RatingsSource(override val displayName: String): HasDisplayName {
     USER("Yours"),
 }
 
+enum class ShowTabs(override val displayName: String): HasDisplayName {
+    EPISODES("Episodes"),
+    STATISTICS("Statistics"),
+    IMAGES("Images"),
+    REVIEWS("Reviews"),
+    RECOMMENDATIONS("Next to Watch"),
+}
+
 data class TmdbShowDetailState(
     val show: TmdbShowDetail? = null,
     val imdbRating: ImdbRatingEntity? = null,
     val images: TmdbImageResponse? = null,
     val reviews: TmdbReviews? = null,
     val savedItem: RateItem? = null,
+
+    val selectedTab: ShowTabs = ShowTabs.EPISODES,
 
     val selectedDisplayMode: DisplayMode = DisplayMode.LIST,
     val selectedSortMode: SortModeShow = SortModeShow.SEASON,
@@ -160,6 +170,10 @@ class TmdbShowDetailViewModel(
                 _state.update { it.copy(savedItem = item) }
             }
         }
+    }
+
+    fun onTabSelect(tab: ShowTabs) {
+        _state.update { it.copy(selectedTab = tab) }
     }
 
     fun onDisplayModeSelect(selectedMode: DisplayMode) {

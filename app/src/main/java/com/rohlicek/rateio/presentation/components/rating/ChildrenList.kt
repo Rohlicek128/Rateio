@@ -28,6 +28,7 @@ fun ChildrenList(
     modifier: Modifier = Modifier,
     sortedChildren: List<RateItem> = emptyList(),
     sortedTopLimit: Int = 1,
+    subtitleBuilder: (RateItem) -> String? = { item -> item.subtitle },
     spoilers: Boolean = true,
     spoilName: Boolean = true,
     showRanking: Boolean = false,
@@ -93,6 +94,7 @@ fun ChildrenList(
                     modifier = Modifier.padding(start = 12.dp, end = 12.dp, bottom = 32.dp),
                     sortedChildren = sortedChildren,
                     sortedTopLimit = sortedTopLimit,
+                    subtitleBuilder = subtitleBuilder,
                     spoilers = spoilers,
                     spoilName = spoilName,
                     showRanking = showRanking,
@@ -110,6 +112,7 @@ fun RateItemList(
     modifier: Modifier = Modifier,
     sortedChildren: List<RateItem> = emptyList(),
     sortedTopLimit: Int = 1,
+    subtitleBuilder: (RateItem) -> String? = { item -> item.subtitle },
     reverseSorting: Boolean = false,
     spoilers: Boolean = true,
     spoilName: Boolean = true,
@@ -129,7 +132,7 @@ fun RateItemList(
             val isTop = rank <= sortedTopLimit && rank != -1
             RateItemCard(
                 title = item.title,
-                subtitle = item.subtitle,
+                subtitle = subtitleBuilder(item),
                 overlineText = if (isTop) "RATED #${rank}" else null,
                 overlineTextColor = Color(0xFFF4D03F),
                 rank = if (showRanking && rank != -1 && item.rating != null) rank else null,

@@ -98,20 +98,23 @@ fun SavedRateItemScreen(
                             customRating = item.rating,
                             savedRank = state.itemRank,
                             onRatingSaved = viewModel::saveRatingAndComplete,
+                            seasonEpisodeCount = metadata.seasonEpisodeCount,
                             onBackClick = onBackClick,
-                            onNextClick = { nextSeason, nextEpisode ->
+                            onNextClick = { nextSeason, nextEpisode, nextEpisodeCount ->
                                 viewModel.findOrCreateEpisodeAndNavigate(
                                     showId = metadata.showId,
                                     seasonNumber = nextSeason,
                                     episodeNumber = nextEpisode,
+                                    seasonEpisodeCount = nextEpisodeCount,
                                     onNavigate = onChildClick,
                                 )
                             },
-                            onPreviousClick = { prevSeason, prevEpisode ->
+                            onPreviousClick = { prevSeason, prevEpisode, prevEpisodeCount ->
                                 viewModel.findOrCreateEpisodeAndNavigate(
                                     showId = metadata.showId,
                                     seasonNumber = prevSeason,
                                     episodeNumber = prevEpisode,
+                                    seasonEpisodeCount = prevEpisodeCount,
                                     onNavigate = onChildClick,
                                 )
                             },

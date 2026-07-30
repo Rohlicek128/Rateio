@@ -2,6 +2,8 @@ package com.rohlicek.rateio.presentation.components
 
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
@@ -16,11 +18,15 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDownward
 import androidx.compose.material.icons.filled.ArrowUpward
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.ButtonGroup
+import androidx.compose.material3.ButtonGroupScope
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
@@ -29,17 +35,25 @@ import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
+import androidx.compose.material3.ToggleButton
+import androidx.compose.material3.ToggleButtonDefaults
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.rohlicek.rateio.model.HasDisplayName
+import com.rohlicek.rateio.model.ItemStatus
 
 
 enum class SortOrder(override val displayName: String) : HasDisplayName {
@@ -235,13 +249,15 @@ fun OrderListItem(
     order: SortOrder,
     onChange: (SortOrder) -> Unit,
 ) {
+    val alpha = 0.65f
+
     ListItem(
         headlineContent = {
             Text(
                 modifier = Modifier.padding(bottom = 14.dp),
                 text = order.displayName,
                 style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold,
+                fontWeight = FontWeight.ExtraBold,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
@@ -279,10 +295,10 @@ fun OrderListItem(
             }
         },
         colors = ListItemDefaults.colors().copy(
-            containerColor = MaterialTheme.colorScheme.tertiaryContainer,
-            contentColor = MaterialTheme.colorScheme.onTertiaryContainer,
-            overlineContentColor = MaterialTheme.colorScheme.onTertiaryContainer,
-            supportingContentColor = MaterialTheme.colorScheme.onTertiaryContainer,
+            containerColor = MaterialTheme.colorScheme.secondary.copy(alpha = alpha),
+            contentColor = MaterialTheme.colorScheme.onSecondary,
+            overlineContentColor = MaterialTheme.colorScheme.onSecondary,
+            supportingContentColor = MaterialTheme.colorScheme.onSecondary,
         ),
         modifier = modifier
             .clip(MaterialTheme.shapes.extraLarge)
@@ -298,4 +314,112 @@ fun OrderListItem(
                 })
             })
     )
+}
+
+
+@Composable
+inline fun <reified T : Enum<T>> RowButtonEnumSelector(
+    modifier: Modifier = Modifier,
+    contentPadding: PaddingValues = PaddingValues(0.dp),
+    selectedOption: T?,
+    excludedOptions: List<T> = emptyList(),
+    crossinline onOptionSelected: (T?) -> Unit,
+    nullIsAll: Boolean = false,
+) {
+    RowButtonEnumMultiSelector(
+        modifier = modifier,
+        contentPadding = contentPadding,
+        selectedOptions = selectedOption?.let { listOf(it) } ?: emptyList(),
+        excludedOptions = excludedOptions,
+        onOptionSelected = onOptionSelected,
+        emptyIsAll = nullIsAll,
+    )
+}
+
+@Composable
+inline fun <reified T : Enum<T>> RowButtonEnumMultiSelector(
+    modifier: Modifier = Modifier,
+    contentPadding: PaddingValues = PaddingValues(0.dp),
+    selectedOptions: List<T>,
+    excludedOptions: List<T> = emptyList(),
+    crossinline onOptionSelected: (T?) -> Unit,
+    emptyIsAll: Boolean = false,
+) {
+    val options = enumValues<T>()
+    val interactionSources = remember { List(options.size + (if (emptyIsAll) 1 else 0)) { MutableInteractionSource() } }
+
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .horizontalScroll(rememberScrollState())
+    ) {
+        ButtonGroup(
+            modifier = Modifier.padding(contentPadding),
+            overflowIndicator = {},
+            expandedRatio = 0.2f,
+        ) {
+            if (emptyIsAll) {
+                customItem(
+                    buttonGroupContent = {
+                        RowToggleButton(
+                            label = "All",
+                            selected = selectedOptions.isEmpty(),
+                            onSelect = { onOptionSelected(null) },
+                            interactionSource = interactionSources[0],
+                        )
+                    },
+                    menuContent = {},
+                )
+            }
+
+            options.filter { it !in excludedOptions }.forEachIndexed { index, option ->
+                customItem(
+                    buttonGroupContent = {
+                        RowToggleButton(
+                            label = (option as? HasDisplayName)?.displayName ?: option.name,
+                            selected = option in selectedOptions,
+                            onSelect = { onOptionSelected(option) },
+                            interactionSource = interactionSources[index + (if (emptyIsAll) 1 else 0)],
+                        )
+                    },
+                    menuContent = {},
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun ButtonGroupScope.RowToggleButton(
+    label: String,
+    selected: Boolean,
+    onSelect: () -> Unit,
+    interactionSource: MutableInteractionSource,
+) {
+    val haptic = LocalHapticFeedback.current
+
+    ToggleButton(
+        checked = selected,
+        onCheckedChange = {
+            haptic.performHapticFeedback(HapticFeedbackType.ToggleOn)
+            onSelect()
+        },
+        shapes = ToggleButtonDefaults.shapes(),
+        contentPadding = ButtonDefaults.SmallContentPadding,
+        interactionSource = interactionSource,
+        colors = ToggleButtonDefaults.toggleButtonColors().copy(
+            containerColor = MaterialTheme.colorScheme.surfaceContainerLowest,
+            contentColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.9f)
+        ),
+        modifier = Modifier.animateWidth(interactionSource = interactionSource),
+    ) {
+        Text(
+            text = label,
+            softWrap = false,
+            maxLines = 1,
+            overflow = TextOverflow.Visible,
+            textAlign = TextAlign.Center,
+            fontWeight = if (selected) FontWeight.ExtraBold else FontWeight.SemiBold,
+        )
+    }
 }

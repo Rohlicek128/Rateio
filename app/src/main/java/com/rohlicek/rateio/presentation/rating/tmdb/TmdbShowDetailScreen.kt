@@ -56,8 +56,8 @@ import com.rohlicek.rateio.model.computeAggregateRating
 import com.rohlicek.rateio.model.computeWeightedRating
 import com.rohlicek.rateio.presentation.components.AdaptiveImageCarousel
 import com.rohlicek.rateio.presentation.components.CollapsibleHeader
+import com.rohlicek.rateio.presentation.components.ConnectedButtonsExpressive
 import com.rohlicek.rateio.presentation.components.DateProgressBar
-import com.rohlicek.rateio.presentation.components.ConnectedItemSelector
 import com.rohlicek.rateio.presentation.components.GenreChips
 import com.rohlicek.rateio.presentation.components.HeroCarousel
 import com.rohlicek.rateio.presentation.components.ImageSize
@@ -67,12 +67,13 @@ import com.rohlicek.rateio.presentation.components.ModalEnumSelector
 import com.rohlicek.rateio.presentation.components.PersonCard
 import com.rohlicek.rateio.presentation.components.RateItemCard
 import com.rohlicek.rateio.presentation.components.ReviewCard
+import com.rohlicek.rateio.presentation.components.RowButtonEnumSelector
 import com.rohlicek.rateio.presentation.components.ScreenError
 import com.rohlicek.rateio.presentation.components.ScreenLoading
 import com.rohlicek.rateio.presentation.components.rating.ChildrenDisplay
+import com.rohlicek.rateio.presentation.components.rating.DisplayMode
 import com.rohlicek.rateio.presentation.components.rating.ItemProgressBar
 import com.rohlicek.rateio.presentation.components.rating.getTopRatedChildren
-import com.rohlicek.rateio.presentation.components.rating.getTopRatedLimit
 import com.rohlicek.rateio.presentation.profile.RatingsColorBarChart
 import com.rohlicek.rateio.presentation.rating.RateItemDetailScreen
 import com.rohlicek.rateio.presentation.rating.display.RatingColorBucketConstants
@@ -85,6 +86,7 @@ import com.rohlicek.rateio.presentation.settings.SettingListItem
 import com.rohlicek.rateio.presentation.settings.SettingsListHeader
 import com.rohlicek.rateio.presentation.settings.SettingsSwitch
 import com.rohlicek.rateio.presentation.settings.SettingsTextField
+import com.rohlicek.rateio.utils.bottomShadow
 import com.rohlicek.rateio.utils.formatDate
 import com.rohlicek.rateio.utils.formatTime
 import com.rohlicek.rateio.utils.parseDate
@@ -158,7 +160,7 @@ fun TmdbShowDetailScreen(
             var selectedRatings by remember { mutableStateOf(if (!isSaved) RatingsSource.IMDB else RatingsSource.USER) }
 
             val userRatings = viewModel.userRatingsState.collectAsStateWithLifecycle()
-            val listOfRatings by remember(userRatings) {
+            val listOfRatings by remember(userRatings.value) {
                 derivedStateOf {
                     userRatings.value.values.flatMap { it.values }.filterNotNull()
                 }
@@ -169,7 +171,7 @@ fun TmdbShowDetailScreen(
                 }
             }
 
-            val ratings: Map<Int, Map<Int, Float?>> = remember(userRatings, selectedRatings, episodesState) {
+            val ratings: Map<Int, Map<Int, Float?>> = remember(userRatings.value, selectedRatings, episodesState) {
                 when (selectedRatings) {
                     RatingsSource.IMDB -> episodesState.imdbRatings
                     RatingsSource.TMDB -> episodesState.seasonEpisodes.mapValues { (_, episodes) ->
@@ -188,7 +190,7 @@ fun TmdbShowDetailScreen(
                                 parentId = seasonNumber.toLong(),
                                 categoryId = state.savedItem?.categoryId ?: 0,
                                 title = episode.name,
-                                subtitle = "Episode ${episode.episodeNumber}",
+                                subtitle = "Season ${episode.seasonNumber}, Episode ${episode.episodeNumber}",
                                 length = if (episode.runtime > 0) episode.runtime.toFloat() else null,
                                 rating = ratings[episode.seasonNumber]?.get(episode.episodeNumber),
                                 coverImageUrl = episode.stillPath?.let { "https://image.tmdb.org/t/p/original$it" } ?: "",
@@ -241,16 +243,7 @@ fun TmdbShowDetailScreen(
             }
 
             val topRatedEpisodes = remember(childrenGroups) {
-                getTopRatedChildren(childrenGroups.flatMap { it.value }).map { episode ->
-                    val metadata = episode.metadataJSON?.let {
-                        runCatching {
-                            Json.decodeFromString<TmdbEpisodeMetadata>(it)
-                        }.getOrNull()
-                    }
-                    episode.copy(
-                        subtitle = "Season ${metadata?.seasonNumber ?: "?"}, Episode ${metadata?.episodeNumber ?: "?"}"
-                    )
-                }
+                getTopRatedChildren(childrenGroups.flatMap { it.value })
             }
 
             if (listOfRatings.size >= show.numberOfEpisodes)
@@ -264,6 +257,15 @@ fun TmdbShowDetailScreen(
             ) }
 
 
+            /*val unwatchedEpisodes = remember(childrenGroups, userRatings) {
+                childrenGroups.mapValues { (season, episodes) ->
+                    episodes.filter { episode ->
+                        val seasonNumber = season?.title?.split(" ")?.getOrNull(1)?.toInt()
+                        val episodeNumber = episode.subtitle?.split(", ")?.getOrNull(1)?.split(" ")?.getOrNull(1)?.toInt()
+                        userRatings.value[seasonNumber]?.get(episodeNumber) == null
+                    }
+                }.flatMap { it.value }
+            }*/
             val unwatchedEpisodes = episodesState.seasonEpisodes.mapValues { (season, episodes) ->
                 episodes.filter { episode ->
                     userRatings.value[season]?.get(episode.episodeNumber) == null
@@ -606,7 +608,7 @@ fun TmdbShowDetailScreen(
                     }
 
                     // Best Episodes
-                    if (topRatedEpisodes.isNotEmpty()) {
+                    if (topRatedEpisodes.isNotEmpty() || episodesState.isLoadingEpisodes || episodesState.isLoadingRatings) {
                         item {
                             val headerName = "Best Episodes"
                             CollapsibleHeader(
@@ -714,181 +716,209 @@ fun TmdbShowDetailScreen(
                         }
                     }
 
-                    //Images
-                    state.images?.posters?.takeIf { it.isNotEmpty() }?.let { images ->
-                        item {
-                            val headerName = "Posters"
-                            CollapsibleHeader(
-                                headerName,
-                                isOpened = headerName !in state.collapsedHeaders,
-                                onClick = {
-                                    if (it) state.collapsedHeaders.remove(headerName)
-                                    else state.collapsedHeaders.add(headerName)
+                    item { Spacer(modifier = Modifier.height(38.dp)) }
+
+                    item {
+                        CollapsibleHeader(
+                            "Details",
+                            isOpened = true,
+                            onClick = null
+                        )
+                    }
+
+                    item {
+                        ConnectedButtonsExpressive(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp),
+                            itemSpacing = 3.dp,
+                            selectedIndex = RatingsSource.entries.indexOf(selectedRatings),
+                            onSelectionChanged = {
+                                selectedRatings = RatingsSource.entries[it]
+                                if (selectedRatings == RatingsSource.IMDB && episodesState.imdbRatings.isEmpty() &&
+                                    isSaved && !episodesState.isLoadingRatings) {
+                                    episodesViewModel.fetchImdbRatings()
                                 }
-                            ) {
-                                AdaptiveImageCarousel(
-                                    urlBuilder = { size, path ->
-                                        "https://image.tmdb.org/t/p/${when(size) {
-                                            ImageSize.MEDIUM -> "w500"
-                                            ImageSize.LARGE -> "original"
-                                        }}${path}"
-                                    },
-                                    images.sortedBy { -it.voteCount }.map { it.toCarouselImage() },
-                                    itemWidth = 110.dp,
-                                    itemHeight = 180.dp,
-                                    shape = MaterialTheme.shapes.large,
-                                    maximizable = true,
-                                    supportingContent = { url, onDismiss ->
-                                        Button(
-                                            onClick = {
-                                                haptic.performHapticFeedback(HapticFeedbackType.Confirm)
-                                                coverOverride = url
-                                                onCoverOverrideSaved?.invoke(url)
-                                                onDismiss()
-                                            },
-                                            shapes = ButtonDefaults.shapes(),
-                                        ) {
-                                            Icon(
-                                                Icons.Default.ReplayCircleFilled,
-                                                contentDescription = "Override",
-                                                modifier = Modifier.size(ToggleButtonDefaults.IconSize)
-                                            )
-                                            Spacer(Modifier.size(ToggleButtonDefaults.IconSpacing))
-                                            Text(
-                                                "Override",
-                                                style = MaterialTheme.typography.labelLarge,
-                                                fontWeight = FontWeight.Bold,
-                                            )
-                                        }
+                            },
+                            options = RatingsSource.entries.map { it.displayName },
+                        )
+                    }
+
+                    item {
+                        RowButtonEnumSelector(
+                            contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 12.dp, top = 4.dp),
+                            selectedOption = state.selectedTab,
+                            onOptionSelected = { viewModel.onTabSelect(it ?: ShowTabs.EPISODES) },
+                            modifier = Modifier
+                                .padding(bottom = 12.dp)
+                                .bottomShadow(16.dp)
+                        )
+                    }
+
+                    when (state.selectedTab) {
+                        ShowTabs.EPISODES -> {
+                            // Episodes
+                            item {
+                                Column {
+                                    ChildrenDisplay(
+                                        childrenGroups = childrenGroups,
+                                        onChildClick = onChildClick,
+                                        columnText = { "S$it" },
+                                        rowText = { "E$it" },
+                                        subtitleBuilder = { item, mode ->
+                                            if (mode == DisplayMode.LIST) {
+                                                item.subtitle?.split(", ")?.getOrNull(1)
+                                            }
+                                            else item.subtitle
+                                        },
+                                        selectedDisplayMode = state.selectedDisplayMode,
+                                        onDisplayModeSelect = viewModel::onDisplayModeSelect,
+                                        selectedSortMode = state.selectedSortMode,
+                                        onSortModeSelect = viewModel::onSortModeSelect,
+                                        selectedOrder = state.selectedSortOrder,
+                                        onOrderChange = viewModel::onSortOrderChange,
+                                        expandedParents = state.expandedSeasons,
+                                        isLoading = episodesState.isLoadingEpisodes,
+                                        isLoadingRatings = episodesState.isLoadingRatings,
+                                        spoilers = spoilers,
+                                        spoilName = metadata.showSpoilersName,
+                                        showChildRatedCompletion = selectedRatings == RatingsSource.USER,
+                                    )
+                                }
+                            }
+                        }
+                        ShowTabs.STATISTICS -> {
+                            // Statistics
+                            item {
+                                val headerName = "Statistics"
+                                CollapsibleHeader(
+                                    headerName,
+                                    isOpened = headerName !in state.collapsedHeaders,
+                                    onClick = {
+                                        if (it) state.collapsedHeaders.remove(headerName)
+                                        else state.collapsedHeaders.add(headerName)
                                     }
-                                )
-                            }
-                        }
-                    }
-                    state.images?.backdrops?.takeIf { it.isNotEmpty() }?.let { images ->
-                        item {
-                            val headerName = "Backdrops"
-                            CollapsibleHeader(
-                                headerName,
-                                isOpened = headerName !in state.collapsedHeaders,
-                                onClick = {
-                                    if (it) state.collapsedHeaders.remove(headerName)
-                                    else state.collapsedHeaders.add(headerName)
-                                }
-                            ) {
-                                AdaptiveImageCarousel(
-                                    urlBuilder = { size, path ->
-                                        "https://image.tmdb.org/t/p/${when(size) {
-                                            ImageSize.MEDIUM -> "w780"
-                                            ImageSize.LARGE -> "original"
-                                        }}${path}"
-                                    },
-                                    images.sortedBy { -it.voteCount }.map { it.toCarouselImage() },
-                                    itemWidth = 240.dp,
-                                    shape = MaterialTheme.shapes.large,
-                                    maximizable = true,
-                                )
-                            }
-                        }
-                    }
-
-                    item { Spacer(modifier = Modifier.height(16.dp)) }
-
-                    // Episodes
-                    item {
-                        val headerName = "Episodes"
-                        CollapsibleHeader(
-                            headerName,
-                            isOpened = headerName !in state.collapsedHeaders,
-                            onClick = {
-                                if (it) state.collapsedHeaders.remove(headerName)
-                                else state.collapsedHeaders.add(headerName)
-                            }
-                        ) {
-                            Column {
-                                ConnectedItemSelector(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(horizontal = 8.dp),
-                                    selectedIndex = RatingsSource.entries.indexOf(selectedRatings),
-                                    onSelectionChanged = {
-                                        selectedRatings = RatingsSource.entries[it]
-                                        if (selectedRatings == RatingsSource.IMDB && episodesState.imdbRatings.isEmpty() &&
-                                            isSaved && !episodesState.isLoadingRatings) {
-                                            episodesViewModel.fetchImdbRatings()
-                                        }
-                                    },
-                                    options = RatingsSource.entries.map { it.displayName },
-                                )
-                                ChildrenDisplay(
-                                    childrenGroups = childrenGroups,
-                                    onChildClick = onChildClick,
-                                    columnText = { "S$it" },
-                                    rowText = { "E$it" },
-                                    selectedDisplayMode = state.selectedDisplayMode,
-                                    onDisplayModeSelect = viewModel::onDisplayModeSelect,
-                                    selectedSortMode = state.selectedSortMode,
-                                    onSortModeSelect = viewModel::onSortModeSelect,
-                                    selectedOrder = state.selectedSortOrder,
-                                    onOrderChange = viewModel::onSortOrderChange,
-                                    expandedParents = state.expandedSeasons,
-                                    isLoading = episodesState.isLoadingEpisodes,
-                                    isLoadingRatings = episodesState.isLoadingRatings,
-                                    spoilers = spoilers,
-                                    spoilName = metadata.showSpoilersName,
-                                    showChildRatedCompletion = selectedRatings == RatingsSource.USER,
-                                )
-                            }
-                        }
-                    }
-
-                    // Stats
-                    item {
-                        val headerName = "Statistics"
-                        CollapsibleHeader(
-                            headerName,
-                            isOpened = headerName !in state.collapsedHeaders,
-                            onClick = {
-                                if (it) state.collapsedHeaders.remove(headerName)
-                                else state.collapsedHeaders.add(headerName)
-                            }
-                        ) {
-                            RatingsColorBarChart(
-                                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-                                title = "${show.name}'s Buckets",
-                                entries = childrenGroups.flatMap { it.value },
-                            )
-                        }
-                    }
-
-
-                    state.reviews?.results?.takeIf { it.isNotEmpty() }?.let { reviews ->
-                        item {
-                            val headerName = "Reviews"
-                            CollapsibleHeader(
-                                headerName,
-                                isOpened = headerName !in state.collapsedHeaders,
-                                onClick = {
-                                    if (it) state.collapsedHeaders.remove(headerName)
-                                    else state.collapsedHeaders.add(headerName)
-                                }
-                            ) {
-                                LazyRow(
-                                    contentPadding = PaddingValues(horizontal = 16.dp),
-                                    horizontalArrangement = Arrangement.spacedBy(12.dp),
                                 ) {
-                                    items(reviews.sortedByDescending { parseDate(it.updatedAt) }, key = { it.id }) { review ->
-                                        ReviewCard(
-                                            modifier = Modifier.size(width = 320.dp, height = 190.dp),
-                                            name = review.author,
-                                            supportingText = formatDate(review.updatedAt),
-                                            avatarPath = "https://image.tmdb.org/t/p/w92${review.authorDetails?.avatarPath}",
-                                            rating = review.authorDetails?.rating?.div(10f),
-                                            content = review.content,
+                                    RatingsColorBarChart(
+                                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                                        title = "${show.name}'s Buckets",
+                                        entries = childrenGroups.flatMap { it.value },
+                                    )
+                                }
+                            }
+                        }
+                        ShowTabs.IMAGES -> {
+                            //Images
+                            state.images?.posters?.takeIf { it.isNotEmpty() }?.let { images ->
+                                item {
+                                    val headerName = "Posters"
+                                    CollapsibleHeader(
+                                        headerName,
+                                        isOpened = headerName !in state.collapsedHeaders,
+                                        onClick = {
+                                            if (it) state.collapsedHeaders.remove(headerName)
+                                            else state.collapsedHeaders.add(headerName)
+                                        }
+                                    ) {
+                                        AdaptiveImageCarousel(
+                                            urlBuilder = { size, path ->
+                                                "https://image.tmdb.org/t/p/${when(size) {
+                                                    ImageSize.MEDIUM -> "w500"
+                                                    ImageSize.LARGE -> "original"
+                                                }}${path}"
+                                            },
+                                            images.sortedBy { -it.voteCount }.map { it.toCarouselImage() },
+                                            itemWidth = 110.dp,
+                                            itemHeight = 180.dp,
+                                            shape = MaterialTheme.shapes.large,
+                                            maximizable = true,
+                                            supportingContent = { url, onDismiss ->
+                                                Button(
+                                                    onClick = {
+                                                        haptic.performHapticFeedback(HapticFeedbackType.Confirm)
+                                                        coverOverride = url
+                                                        onCoverOverrideSaved?.invoke(url)
+                                                        onDismiss()
+                                                    },
+                                                    shapes = ButtonDefaults.shapes(),
+                                                ) {
+                                                    Icon(
+                                                        Icons.Default.ReplayCircleFilled,
+                                                        contentDescription = "Override",
+                                                        modifier = Modifier.size(ToggleButtonDefaults.IconSize)
+                                                    )
+                                                    Spacer(Modifier.size(ToggleButtonDefaults.IconSpacing))
+                                                    Text(
+                                                        "Override",
+                                                        style = MaterialTheme.typography.labelLarge,
+                                                        fontWeight = FontWeight.Bold,
+                                                    )
+                                                }
+                                            }
                                         )
                                     }
                                 }
                             }
+                            state.images?.backdrops?.takeIf { it.isNotEmpty() }?.let { images ->
+                                item {
+                                    val headerName = "Backdrops"
+                                    CollapsibleHeader(
+                                        headerName,
+                                        isOpened = headerName !in state.collapsedHeaders,
+                                        onClick = {
+                                            if (it) state.collapsedHeaders.remove(headerName)
+                                            else state.collapsedHeaders.add(headerName)
+                                        }
+                                    ) {
+                                        AdaptiveImageCarousel(
+                                            urlBuilder = { size, path ->
+                                                "https://image.tmdb.org/t/p/${when(size) {
+                                                    ImageSize.MEDIUM -> "w780"
+                                                    ImageSize.LARGE -> "original"
+                                                }}${path}"
+                                            },
+                                            images.sortedBy { -it.voteCount }.map { it.toCarouselImage() },
+                                            itemWidth = 240.dp,
+                                            shape = MaterialTheme.shapes.large,
+                                            maximizable = true,
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                        ShowTabs.REVIEWS -> {
+                            state.reviews?.results?.takeIf { it.isNotEmpty() }?.let { reviews ->
+                                item {
+                                    val headerName = "Reviews"
+                                    CollapsibleHeader(
+                                        headerName,
+                                        isOpened = headerName !in state.collapsedHeaders,
+                                        onClick = {
+                                            if (it) state.collapsedHeaders.remove(headerName)
+                                            else state.collapsedHeaders.add(headerName)
+                                        }
+                                    ) {
+                                        LazyRow(
+                                            contentPadding = PaddingValues(horizontal = 16.dp),
+                                            horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                        ) {
+                                            items(reviews.sortedByDescending { parseDate(it.updatedAt) }, key = { it.id }) { review ->
+                                                ReviewCard(
+                                                    modifier = Modifier.size(width = 320.dp, height = 190.dp),
+                                                    name = review.author,
+                                                    supportingText = formatDate(review.updatedAt),
+                                                    avatarPath = "https://image.tmdb.org/t/p/w92${review.authorDetails?.avatarPath}",
+                                                    rating = review.authorDetails?.rating?.div(10f),
+                                                    content = review.content,
+                                                )
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        else -> {
+                            item { Spacer(modifier = Modifier.height(620.dp)) }
                         }
                     }
 

@@ -1,9 +1,19 @@
 package com.rohlicek.rateio.presentation.components
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.EaseInOut
+import androidx.compose.animation.core.EaseOut
+import androidx.compose.animation.core.EaseOutElastic
+import androidx.compose.animation.core.EaseOutExpo
 import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -56,6 +66,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.painter.ColorPainter
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.layout.ContentScale
@@ -119,8 +130,8 @@ fun AdaptiveImageCarousel(
             model = urlBuilder(ImageSize.MEDIUM, images[index].filePath),
             contentDescription = null,
             modifier = Modifier
-                .heightIn(max = itemHeight)
-                .aspectRatio(images[index].aspectRatio)
+                .height(itemHeight)
+                //.aspectRatio(images[index].aspectRatio)
                 .maskClip(shape)
                 .clickable {
                     onImageClick(index)
@@ -379,6 +390,7 @@ fun HeroCarousel(
                 spoilName = spoilName,
                 spoilRated = spoilRated,
                 showNullRating = showNullRating,
+                showContent = carouselState.currentItem == index,
                 colorBucketsOverride = colorBucketsOverride,
                 onItemClick = if (item != null) {
                     {
@@ -406,6 +418,7 @@ fun HeroItemCard(
     spoilName: Boolean = true,
     spoilRated: Boolean = true,
     showNullRating: Boolean = true,
+    showContent: Boolean = true,
     colorBucketsOverride: RatingColorBuckets = getCurrentRatingColorBuckets(),
     shape: Shape = MaterialTheme.shapes.extraLarge,
     clipShape: Modifier = Modifier.clip(shape),
@@ -453,62 +466,71 @@ fun HeroItemCard(
                         )
                     )
             )
+        }
 
-            Row(
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .fillMaxWidth()
-                    .padding(16.dp),
-                verticalAlignment = Alignment.Bottom,
-                horizontalArrangement = Arrangement.SpaceBetween,
+        if (!isLoading && title != null) {
+            AnimatedVisibility(
+                visible = showContent,
+                enter = fadeIn() + slideInVertically(initialOffsetY = { it / 16 }),
+                exit = fadeOut() + slideOutVertically(targetOffsetY = { it / 16 }),
+                modifier = Modifier.align(Alignment.BottomCenter)
             ) {
                 Row(
-                    modifier = Modifier.weight(1f),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp),
-                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    verticalAlignment = Alignment.Bottom,
+                    horizontalArrangement = Arrangement.SpaceBetween,
                 ) {
-                    if (rank != null) {
-                        Text(
-                            text = "${rank}.",
-                            style = MaterialTheme.typography.headlineLarge,
-                            fontWeight = FontWeight.Black,
-                            lineHeight = 1.em,
-                            maxLines = 1,
-                        )
-                    }
-
-                    Column {
-                        val hideName = (rating == null || !spoilRated) && !spoilName && !spoilThumbnail
-                        val title = if (hideName) subtitle else title
-                        Text(
-                            text = title ?: "?",
-                            style = MaterialTheme.typography.headlineMedium,
-                            fontWeight = FontWeight.Black,
-                            lineHeight = 1.em,
-                            maxLines = 3,
-                            overflow = TextOverflow.Ellipsis,
-                        )
-                        val subtitle = if (!hideName) subtitle else null
-                        if (subtitle != null) {
+                    Row(
+                        modifier = Modifier.weight(1f),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        if (rank != null) {
                             Text(
-                                text = subtitle,
-                                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f),
-                                style = MaterialTheme.typography.labelLarge,
-                                fontWeight = FontWeight.Bold,
+                                text = "${rank}.",
+                                style = MaterialTheme.typography.headlineLarge,
+                                fontWeight = FontWeight.Black,
+                                lineHeight = 1.em,
                                 maxLines = 1,
-                                overflow = TextOverflow.Ellipsis,
                             )
                         }
+
+                        Column {
+                            val hideName = (rating == null || !spoilRated) && !spoilName && !spoilThumbnail
+                            val title = if (hideName) subtitle else title
+                            Text(
+                                text = title ?: "?",
+                                color = MaterialTheme.colorScheme.onSurface,
+                                style = MaterialTheme.typography.headlineMedium,
+                                fontWeight = FontWeight.Black,
+                                lineHeight = 1.em,
+                                maxLines = 3,
+                                overflow = TextOverflow.Ellipsis,
+                            )
+                            val subtitle = if (!hideName) subtitle else null
+                            if (subtitle != null) {
+                                Text(
+                                    text = subtitle,
+                                    color = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f),
+                                    style = MaterialTheme.typography.labelLarge,
+                                    fontWeight = FontWeight.Bold,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                )
+                            }
+                        }
                     }
-                }
 
-                if (rating != null || showNullRating) {
-                    Spacer(modifier = Modifier.width(10.dp))
+                    if (rating != null || showNullRating) {
+                        Spacer(modifier = Modifier.width(10.dp))
 
-                    RateBox(
-                        rating = rating,
-                        colorBucketsOverride = colorBucketsOverride,
-                    )
+                        RateBox(
+                            rating = rating,
+                            colorBucketsOverride = colorBucketsOverride,
+                        )
+                    }
                 }
             }
         }

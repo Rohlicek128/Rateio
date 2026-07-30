@@ -291,6 +291,8 @@ data class TmdbEpisodeMetadata(
     val showId: Int,
     val seasonNumber: Int,
     val episodeNumber: Int,
+    val seasonEpisodeCount: Int? = null,
+
     val runtime: Int? = null,
     val imdbId: String? = null,
 )
@@ -334,7 +336,7 @@ fun TmdbSeasonDetail.toRateItem(categoryId: Long = 0, parentId: Long) = RateItem
     externalId = id.toString(),
     externalSource = CategoryType.TMDB_SEASONS,
 )
-fun TmdbEpisodeDetail.toRateItem(categoryId: Long = 0, showId: Int, parentId: Long) = RateItem(
+fun TmdbEpisodeDetail.toRateItem(categoryId: Long = 0, showId: Int, parentId: Long, seasonEpisodeCount: Int? = null) = RateItem(
     id = 0,
     categoryId = categoryId,
     parentId = parentId,
@@ -349,6 +351,7 @@ fun TmdbEpisodeDetail.toRateItem(categoryId: Long = 0, showId: Int, parentId: Lo
         showId = showId,
         seasonNumber = seasonNumber,
         episodeNumber = episodeNumber,
+        seasonEpisodeCount = seasonEpisodeCount,
         imdbId = externalIds?.imdbId,
     ))
 )

@@ -11,6 +11,7 @@ import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -208,22 +209,60 @@ fun ChildrenTimeline(
                         awaitPointerEventScope {
                             while (true) {
                                 val event = awaitPointerEvent()
-                                val pos = event.changes.firstOrNull()?.position ?: continue
-                                val padLpx = with(density) { padL.toPx() }
-                                val epWpx = with(density) { childWidth.dp.toPx() }
+                                // Filter down to active pointers that are currently pressed down
+                                val activeChanges = event.changes.filter { it.pressed }
 
-                                val closest = flatPoints.minByOrNull { child ->
-                                    val x = padLpx + (child.globalIndex + 0.5f) * epWpx
-                                    abs(pos.x - x)
-                                }
+                                // 1. TWO-FINGER DIRECTIONAL PINCH
+                                if (activeChanges.size == 2) {
+                                    val first = activeChanges[0]
+                                    val second = activeChanges[1]
 
-                                if (closest?.globalIndex != hoveredIndex) {
-                                    hoveredIndex = closest?.globalIndex
-                                    hoveredIndexChanged = true
-                                    if (hoveredIndex != null) {
-                                        hoverPathIndex = Random.nextInt(0, basePaths.size)
-                                        haptic.performHapticFeedback(HapticFeedbackType.SegmentFrequentTick)
+                                    val prevDx = abs(first.previousPosition.x - second.previousPosition.x)
+                                    val prevDy = abs(first.previousPosition.y - second.previousPosition.y)
+
+                                    val currentDx = abs(first.position.x - second.position.x)
+                                    val currentDy = abs(first.position.y - second.position.y)
+
+                                    // Update Horizontal Width
+                                    if (prevDx > 5f && currentDx > 5f) {
+                                        val scaleX = currentDx / prevDx
+                                        childWidth = (childWidth * scaleX).coerceIn(
+                                            max(1f, 350f / flatPoints.size.toFloat()),
+                                            max(50f, 1000f / flatPoints.size.toFloat())
+                                        )
                                     }
+
+                                    // Update Vertical Scale
+                                    if (prevDy > 5f && currentDy > 5f) {
+                                        val scaleY = currentDy / prevDy
+                                        plotScale = (plotScale * scaleY).coerceIn(1f, 9.99f)
+                                    }
+
+                                    // Consume touch ONLY during a 2-finger pinch so horizontalScroll doesn't fight the pinch
+                                    activeChanges.forEach { it.consume() }
+                                }
+                                // 2. SINGLE TOUCH / HOVER
+                                else if (activeChanges.size == 1) {
+                                    val pos = activeChanges.first().position
+                                    val padLpx = with(density) { padL.toPx() }
+                                    val epWpx = with(density) { childWidth.dp.toPx() }
+
+                                    val closest = flatPoints.minByOrNull { child ->
+                                        val x = padLpx + (child.globalIndex + 0.5f) * epWpx
+                                        abs(pos.x - x)
+                                    }
+
+                                    if (closest?.globalIndex != hoveredIndex) {
+                                        hoveredIndex = closest?.globalIndex
+                                        hoveredIndexChanged = true
+                                        if (hoveredIndex != null) {
+                                            hoverPathIndex = Random.nextInt(0, basePaths.size)
+                                            haptic.performHapticFeedback(HapticFeedbackType.SegmentFrequentTick)
+                                        }
+                                    }
+
+                                    // CRITICAL: DO NOT consume single touch events here!
+                                    // Leaving single-touch unconsumed allows parent `horizontalScroll()` to handle horizontal panning seamlessly.
                                 }
                             }
                         }

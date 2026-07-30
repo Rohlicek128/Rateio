@@ -2,9 +2,18 @@ package com.rohlicek.rateio.navigation
 
 import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
+import androidx.compose.animation.core.CubicBezierEasing
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
+import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -34,8 +43,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.NavGraph.Companion.findStartDestination
@@ -99,8 +110,13 @@ fun AppNavigation(
     val transitionMillis = 400
 
     val colors = NavigationBarItemDefaults.colors().copy(
-        selectedIndicatorColor = NavigationBarItemDefaults.colors().unselectedIconColor,
-        selectedIconColor = MaterialTheme.colorScheme.surfaceContainerLow,
+        //selectedIndicatorColor = NavigationBarItemDefaults.colors().unselectedIconColor,
+        //selectedIconColor = MaterialTheme.colorScheme.surfaceContainerLow,
+        selectedIndicatorColor = MaterialTheme.colorScheme.primary,
+        selectedIconColor = MaterialTheme.colorScheme.onPrimary,
+        selectedTextColor = MaterialTheme.colorScheme.primary,
+        unselectedIconColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f),
+        unselectedTextColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f),
     )
     val style = MaterialTheme.typography.bodySmall
 
@@ -179,26 +195,18 @@ fun AppNavigation(
                 navController = navController,
                 startDestination = Route.TopLevel.Home,
                 modifier = Modifier.fillMaxSize(),
-                enterTransition = { slideIntoContainer(
-                    AnimatedContentTransitionScope.SlideDirection.Start, tween(
-                        transitionMillis
-                    )
-                ) },
-                exitTransition = { slideOutOfContainer(
-                    AnimatedContentTransitionScope.SlideDirection.Start, tween(
-                        transitionMillis
-                    )
-                ) },
-                popEnterTransition = { slideIntoContainer(
-                    AnimatedContentTransitionScope.SlideDirection.End, tween(
-                        transitionMillis
-                    )
-                ) },
-                popExitTransition = { slideOutOfContainer(
-                    AnimatedContentTransitionScope.SlideDirection.End, tween(
-                        transitionMillis
-                    )
-                ) }
+                enterTransition = {
+                    enterTransition()
+                },
+                exitTransition = {
+                    exitTransition()
+                },
+                popEnterTransition = {
+                    popEnterTransition()
+                },
+                popExitTransition = {
+                    popExitTransition()
+                },
             ) {
                 composable<Route.TopLevel.Home> {
                     HomeScreen(
@@ -361,9 +369,10 @@ fun AppNavigation(
                             }
                             if (metadata != null) {
                                 navController.navigate(Route.TmdbEpisodeDetail(
-                                    metadata.showId,
-                                    metadata.seasonNumber,
-                                    metadata.episodeNumber
+                                    showId = metadata.showId,
+                                    season = metadata.seasonNumber,
+                                    episode = metadata.episodeNumber,
+                                    seasonEpisodeCount = metadata.seasonEpisodeCount,
                                 )) {
                                     popUpTo<Route.TmdbShowDetail>()
                                 }
@@ -379,13 +388,24 @@ fun AppNavigation(
                         episode = route.episode,
                         isSaved = false,
                         onBackClick = { navController.popBackStack() },
-                        onNextClick = { nextSeason, nextEpisode ->
-                            navController.navigate(Route.TmdbEpisodeDetail(route.showId, nextSeason, nextEpisode)) {
+                        seasonEpisodeCount = route.seasonEpisodeCount,
+                        onNextClick = { nextSeason, nextEpisode, nextEpisodeCount ->
+                            navController.navigate(Route.TmdbEpisodeDetail(
+                                route.showId,
+                                nextSeason,
+                                nextEpisode,
+                                nextEpisodeCount,
+                            )) {
                                 popUpTo<Route.TmdbShowDetail>()
                             }
                         },
-                        onPreviousClick = { prevSeason, prevEpisode ->
-                            navController.navigate(Route.TmdbEpisodeDetail(route.showId, prevSeason, prevEpisode)) {
+                        onPreviousClick = { prevSeason, prevEpisode, prevEpisodeCount ->
+                            navController.navigate(Route.TmdbEpisodeDetail(
+                                route.showId,
+                                prevSeason,
+                                prevEpisode,
+                                prevEpisodeCount,
+                            )) {
                                 popUpTo<Route.TmdbShowDetail>()
                             }
                         },
@@ -511,3 +531,71 @@ fun NavHostController.navigateSingleTop(route: Any) {
         restoreState = true
     }
 }
+
+
+// Taken from PixelPlayer - com.theveloper.pixelplay.presentation.navigation
+
+
+// Base duration for bottom-nav switches at 1x — at 0.5x system scale = ~190 ms.
+private const val BOTTOM_NAV_TRANSITION_DURATION = 500
+
+// MD3 Expressive easing for bottom-nav switches
+private val BottomNavEasing = CubicBezierEasing(0.2f, 0f, 0f, 1f)
+
+private val MAIN_ROOT_TRANSITION_SPEC =
+    tween<IntOffset>(durationMillis = BOTTOM_NAV_TRANSITION_DURATION, easing = BottomNavEasing)
+
+private val MAIN_ROOT_FADE_SPEC =
+    tween<Float>(durationMillis = BOTTOM_NAV_TRANSITION_DURATION / 2, easing = BottomNavEasing)
+
+
+private val EmphasizedDecelerateEasing = CubicBezierEasing(0.2f, 0.85f, 0.7f, 1f)
+
+// Accelerate for elements leaving the screen
+private val EmphasizedAccelerateEasing = CubicBezierEasing(0.3f, 0f, 0.8f, 0.15f)
+
+// Base duration designed for 1x animation scale — looks good at full speed,
+// still smooth at 0.5x (system halves it to ~225 ms).
+const val TRANSITION_DURATION = 450
+
+fun enterTransition() = slideInHorizontally(
+    animationSpec = tween(TRANSITION_DURATION, easing = EmphasizedDecelerateEasing),
+    initialOffsetX = { (it * 0.5f).toInt() }
+) + scaleIn(
+    animationSpec = tween(TRANSITION_DURATION, easing = EmphasizedDecelerateEasing),
+    initialScale = 0.92f,
+    transformOrigin = TransformOrigin(0.5f, 0.5f)
+) + fadeIn(
+    animationSpec = tween(TRANSITION_DURATION, easing = EmphasizedAccelerateEasing)
+)
+
+// Push: Exit to Left — recedes 25% (parallax, barely moves)
+fun exitTransition() = slideOutHorizontally(
+    animationSpec = tween(TRANSITION_DURATION, easing = EmphasizedAccelerateEasing),
+    targetOffsetX = { -(it * 0.25f).toInt() }
+) + fadeOut(
+    animationSpec = tween(TRANSITION_DURATION / 2, easing = EmphasizedAccelerateEasing)
+)
+
+// Pop: Enter from Left — parallax slide-in 25% + subtle scale up
+fun popEnterTransition() = slideInHorizontally(
+    animationSpec = tween(TRANSITION_DURATION, easing = EmphasizedDecelerateEasing),
+    initialOffsetX = { -(it * 0.25f).toInt() }
+) + scaleIn(
+    animationSpec = tween(TRANSITION_DURATION, easing = EmphasizedDecelerateEasing),
+    initialScale = 0.95f
+) + fadeIn(
+    animationSpec = tween(TRANSITION_DURATION / 2, easing = EmphasizedDecelerateEasing)
+)
+
+// Pop: Exit to Right — slides out 50% + slight scale down
+fun popExitTransition() = slideOutHorizontally(
+    animationSpec = tween(TRANSITION_DURATION, easing = EmphasizedAccelerateEasing),
+    targetOffsetX = { (it * 0.5f).toInt() }
+) + scaleOut(
+    animationSpec = tween(TRANSITION_DURATION, easing = EmphasizedAccelerateEasing),
+    targetScale = 0.92f,
+    transformOrigin = TransformOrigin(0.5f, 0.5f)
+) + fadeOut(
+    animationSpec = tween(TRANSITION_DURATION / 2, easing = EmphasizedAccelerateEasing)
+)

@@ -4,22 +4,27 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.ButtonGroup
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -27,16 +32,20 @@ import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.rohlicek.rateio.model.RateItem
 import com.rohlicek.rateio.model.computeAggregateChildrenRating
 import com.rohlicek.rateio.presentation.components.RateBox
 import com.rohlicek.rateio.presentation.components.RateBoxSizeDefaults
+import com.rohlicek.rateio.presentation.components.calculateMaxWidthConstrained
 import com.rohlicek.rateio.presentation.rating.display.RatingColorBucket
 import com.rohlicek.rateio.presentation.rating.display.RatingColorBuckets
 import com.rohlicek.rateio.presentation.rating.display.getCurrentRatingColorBuckets
 import com.rohlicek.rateio.presentation.rating.display.getRatingColor
 import com.rohlicek.rateio.utils.shimmerLoading
+import com.rohlicek.rateio.utils.transposeItems
 
 
 @Composable
@@ -175,6 +184,236 @@ private fun ChildrenColumn(
 
 
 @Composable
+fun ChildrenGridExpressive(
+    childrenGroups: Map<RateItem?, List<RateItem>>,
+    columnText: (Int) -> String,
+    rowText: (Int) -> String,
+    onChildClick: (RateItem) -> Unit,
+    modifier: Modifier = Modifier,
+    contentPadding: PaddingValues = PaddingValues(0.dp),
+    highlightedBucket: RatingColorBucket? = null,
+    nullIsLoading: Boolean = false,
+    inverted: Boolean = false,
+) {
+    val gridSpacing = 6.dp
+    val rowTextWidth = 38.dp
+
+    val sortedGroups = remember(childrenGroups, inverted) {
+        val sorted = childrenGroups.entries.sortedBy { it.key?.id }.map { it.value }
+        if (inverted) transposeItems(sorted) else sorted
+    }
+
+    val maxChildrenCount = remember(sortedGroups) {
+        sortedGroups.maxOfOrNull { it.size } ?: 0
+    }
+
+    val horizontalScrollState = rememberScrollState()
+
+    Column(
+        modifier = modifier
+            .horizontalScroll(horizontalScrollState)
+            .padding(contentPadding),
+        verticalArrangement = Arrangement.spacedBy(gridSpacing)
+    ) {
+        Row(
+            modifier = Modifier.padding(bottom = 4.dp),
+            horizontalArrangement = Arrangement.spacedBy(18.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Spacer(modifier = Modifier.width(rowTextWidth))
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(gridSpacing + 0.5.dp),
+            ) {
+                sortedGroups.forEachIndexed { parentIndex, _ ->
+                    Text(
+                        text = if (inverted) rowText(parentIndex + 1) else columnText(parentIndex + 1),
+                        style = MaterialTheme.typography.titleSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        fontWeight = FontWeight.Bold,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.width(calculateMaxWidthConstrained(RateBoxSizeDefaults.REGULAR_GRID)),
+                    )
+                }
+            }
+        }
+
+        for (childIndex in 0 until maxChildrenCount) {
+            val interactionSources = remember(sortedGroups.size) {
+                List(sortedGroups.size) { MutableInteractionSource() }
+            }
+
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(18.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    text = if (inverted) columnText(childIndex + 1) else rowText(childIndex + 1),
+                    style = MaterialTheme.typography.titleSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    fontWeight = FontWeight.Bold,
+                    textAlign = TextAlign.End,
+                    modifier = Modifier.width(rowTextWidth),
+                )
+
+                ButtonGroup(
+                    expandedRatio = 0.45f,
+                    overflowIndicator = {},
+                    horizontalArrangement = Arrangement.spacedBy(gridSpacing),
+                ) {
+                    sortedGroups.forEachIndexed { parentIndex, childrenList ->
+                        val interactionSource = interactionSources[parentIndex]
+                        val child = childrenList.getOrNull(childIndex)
+
+                        customItem(
+                            buttonGroupContent = {
+                                if (childIndex == 0 && childrenList.isEmpty()) {
+                                    RateBox(
+                                        rating = null,
+                                        widthConstrained = true,
+                                        size = RateBoxSizeDefaults.REGULAR_GRID,
+                                        interactionSource = interactionSource,
+                                        modifier = Modifier.animateWidth(interactionSource = interactionSource)
+                                    )
+                                }
+
+                                if (child != null) {
+                                    val isHighlighted = highlightedBucket == null ||
+                                            getRatingColor(child.rating) == highlightedBucket
+
+                                    RateBox(
+                                        rating = child.rating,
+                                        widthConstrained = true,
+                                        size = RateBoxSizeDefaults.REGULAR_GRID,
+                                        isLoading = nullIsLoading && child.rating == null,
+                                        onClick = { onChildClick(child) },
+                                        interactionSource = interactionSource,
+                                        modifier = Modifier
+                                            .animateWidth(interactionSource = interactionSource)
+                                            .darken(!isHighlighted),
+                                    )
+                                } else {
+                                    Spacer(
+                                        modifier = Modifier
+                                            .requiredSize(
+                                                width = calculateMaxWidthConstrained(RateBoxSizeDefaults.REGULAR_GRID),
+                                                height = RateBoxSizeDefaults.REGULAR_GRID.height
+                                            )
+                                            .animateWidth(interactionSource = interactionSource)
+                                    )
+                                }
+                            },
+                            menuContent = {}
+                        )
+                    }
+                }
+            }
+        }
+
+        if (!inverted) {
+            Row(
+                modifier = Modifier.padding(top = 24.dp),
+                horizontalArrangement = Arrangement.spacedBy(18.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    text = "Avg",
+                    style = MaterialTheme.typography.titleSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    fontWeight = FontWeight.Bold,
+                    textAlign = TextAlign.End,
+                    modifier = Modifier.width(rowTextWidth),
+                )
+
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(gridSpacing),
+                ) {
+                    childrenGroups
+                        .entries
+                        .sortedBy { it.key?.id }
+                        .forEach { (_, children) ->
+                            val average = computeAggregateChildrenRating(children)
+                            RateBox(
+                                rating = average,
+                                widthConstrained = true,
+                                size = RateBoxSizeDefaults.REGULAR_GRID,
+                                modifier = Modifier.darken(highlightedBucket != null && getRatingColor(average) != highlightedBucket)
+                            )
+                        }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun ChildrenRowExpressive(
+    modifier: Modifier = Modifier,
+    children: List<RateItem?>,
+    rowIndex: Int,
+    itemSpacing: Dp = 6.dp,
+    onChildClick: (RateItem) -> Unit,
+    highlightedBucket: RatingColorBucket? = null,
+    nullIsLoading: Boolean = false,
+) {
+    val interactionSources = remember(children.size) {
+        List(children.size) { MutableInteractionSource() }
+    }
+
+    ButtonGroup(
+        modifier = modifier,
+        expandedRatio = 0.45f,
+        overflowIndicator = {},
+        horizontalArrangement = Arrangement.spacedBy(itemSpacing),
+    ) {
+        children.forEachIndexed { parentIndex, child ->
+            val interactionSource = interactionSources[parentIndex]
+
+            customItem(
+                buttonGroupContent = {
+                    if (rowIndex == 0 && children.isEmpty()) {
+                        RateBox(
+                            rating = null,
+                            widthConstrained = true,
+                            size = RateBoxSizeDefaults.REGULAR_GRID,
+                            interactionSource = interactionSource,
+                            modifier = Modifier.animateWidth(interactionSource = interactionSource)
+                        )
+                    }
+
+                    if (child != null) {
+                        val isHighlighted = highlightedBucket == null || getRatingColor(child.rating) == highlightedBucket
+
+                        RateBox(
+                            rating = child.rating,
+                            widthConstrained = true,
+                            size = RateBoxSizeDefaults.REGULAR_GRID,
+                            isLoading = nullIsLoading && child.rating == null,
+                            onClick = { onChildClick(child) },
+                            interactionSource = interactionSource,
+                            modifier = Modifier
+                                .animateWidth(interactionSource = interactionSource)
+                                .darken(!isHighlighted),
+                        )
+                    } else {
+                        Spacer(
+                            modifier = Modifier
+                                .requiredSize(
+                                    width = calculateMaxWidthConstrained(RateBoxSizeDefaults.REGULAR_GRID),
+                                    height = RateBoxSizeDefaults.REGULAR_GRID.height
+                                )
+                                .animateWidth(interactionSource = interactionSource)
+                        )
+                    }
+                },
+                menuContent = {}
+            )
+        }
+    }
+}
+
+
+
+@Composable
 fun BucketLegendChips(
     modifier: Modifier,
     usedBuckets: List<RatingColorBucket> = emptyList(),
@@ -238,7 +477,7 @@ fun BucketLegendChips(
 
 @Composable
 fun Modifier.darken(darken: Boolean): Modifier {
-    val overlayColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.6f)
+    val overlayColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.7f)
 
     return this.drawWithContent {
         drawContent()

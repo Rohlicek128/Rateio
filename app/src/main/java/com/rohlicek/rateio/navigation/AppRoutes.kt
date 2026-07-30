@@ -5,6 +5,11 @@ import kotlinx.serialization.Serializable
 
 
 sealed interface Route {
+    enum class Direction {
+        FORWARD,
+        BACKWARD
+    }
+
     @Serializable sealed class TopLevel : Route {
         @Serializable data object Home : TopLevel()
         @Serializable data object Leaderboard : TopLevel()
@@ -31,7 +36,13 @@ sealed interface Route {
     @Serializable data class TmdbMovieDetail(val movieId: Int) : Route
 
     @Serializable data class TmdbShowDetail(val showId: Int) : Route
-    @Serializable data class TmdbEpisodeDetail(val showId: Int, val season: Int, val episode: Int) : Route
+    @Serializable data class TmdbEpisodeDetail(
+        val showId: Int,
+        val season: Int,
+        val episode: Int,
+        // Metadata
+        val seasonEpisodeCount: Int? = null,
+    ) : Route
 
     @Serializable data class TmdbPersonDetail(val personId: Int) : Route
 

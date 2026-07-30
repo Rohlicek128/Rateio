@@ -2,6 +2,7 @@ package com.rohlicek.rateio.presentation.rating
 
 import android.graphics.Bitmap
 import android.graphics.BlurMaskFilter
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -15,6 +16,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
@@ -46,6 +48,8 @@ import androidx.compose.ui.graphics.Paint
 import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -54,6 +58,7 @@ import androidx.compose.ui.unit.em
 import androidx.compose.ui.zIndex
 import androidx.palette.graphics.Palette
 import coil3.toBitmap
+import com.rohlicek.rateio.R
 import com.rohlicek.rateio.presentation.components.AdaptiveAsyncImage
 import com.rohlicek.rateio.presentation.components.FloatingIconButton
 import com.rohlicek.rateio.presentation.components.FullScreenImageModal
@@ -308,7 +313,29 @@ fun RateItemDetailScreen(
                     extraContent()
                 }
 
-                item { Spacer(modifier = Modifier.height(200.dp)) }
+                item { Spacer(modifier = Modifier.height(100.dp)) }
+
+                item {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .offset(y = 30.dp)
+                            .height(150.dp)
+                            .background(MaterialTheme.colorScheme.surfaceContainerLowest),
+                        horizontalArrangement = Arrangement.SpaceEvenly,
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Image(
+                            painter = painterResource(id = R.drawable.rateio_banner_monochrome),
+                            contentDescription = "Rateio Logo",
+                            alpha = 0.05f,
+                            contentScale = ContentScale.Fit,
+                            modifier = Modifier
+                                .size(width = 235.dp, height = 100.dp)
+                                .offset(y = (-10).dp)
+                        )
+                    }
+                }
             }
         }
 
@@ -489,7 +516,7 @@ private fun PosterWithRating(
     var glowColor by remember { mutableStateOf(Color.Transparent) }
 
     var isFullscreen by remember { mutableStateOf(false) }
-    if (isFullscreen && imageUrl != null) {
+    if (isFullscreen && !imageUrl.isNullOrBlank()) {
         FullScreenImageModal(
             imageUrl = imageUrl,
             onDismiss = { isFullscreen = false },

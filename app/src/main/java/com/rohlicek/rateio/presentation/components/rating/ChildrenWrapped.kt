@@ -73,28 +73,7 @@ private fun ChildrenSection(
         modifier = modifier,
         verticalArrangement = Arrangement.spacedBy(gridGap)
     ) {
-        Row(
-            verticalAlignment = Alignment.Bottom,
-        ) {
-            Text(
-                text = parent?.title ?: "N/A",
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold,
-            )
-
-            val avg = computeAggregateChildrenRating(children)
-            if (avg != null) {
-                Spacer(modifier = Modifier.width(8.dp))
-
-                val display = getTransformedRating(avg)
-                Text(
-                    text = "(avg. ${display})",
-                    style = MaterialTheme.typography.titleMedium,
-                    //fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-        }
+        ParentSectionHeader(parent, children)
 
         val rows = (children.size + columns - 1) / columns
 
@@ -123,6 +102,102 @@ private fun ChildrenSection(
                     }
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun ParentSectionHeader(
+    parent: RateItem?,
+    children: List<RateItem>,
+) {
+    Row(
+        verticalAlignment = Alignment.Bottom,
+    ) {
+        Text(
+            text = parent?.title ?: "N/A",
+            style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.Bold,
+        )
+
+        val avg = computeAggregateChildrenRating(children)
+        if (avg != null) {
+            Spacer(modifier = Modifier.width(8.dp))
+
+            val display = getTransformedRating(avg)
+            Text(
+                text = "(avg. ${display})",
+                style = MaterialTheme.typography.titleMedium,
+                //fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+    }
+}
+
+
+@Composable
+fun ChildrenWrappedExpressive(
+    childrenGroups: Map<RateItem?, List<RateItem>>,
+    onChildClick: (RateItem) -> Unit,
+    columns: Int,
+    modifier: Modifier = Modifier,
+    contentPadding: PaddingValues = PaddingValues(0.dp),
+    highlightedBucket: RatingColorBucket? = null,
+    nullIsLoading: Boolean = false,
+) {
+    val scrollState = rememberScrollState()
+    Column(
+        modifier = modifier.horizontalScroll(scrollState),
+        verticalArrangement = Arrangement.spacedBy(24.dp)
+    ) {
+        childrenGroups
+            .entries
+            .sortedBy { it.key?.id }
+            .forEach { (parent, children) ->
+                ChildrenSectionExpressive(
+                    modifier = Modifier.padding(contentPadding),
+                    parent = parent,
+                    children = children,
+                    columns = columns.coerceAtLeast(1),
+                    onChildClick = onChildClick,
+                    highlightedBucket = highlightedBucket,
+                    nullIsLoading = nullIsLoading,
+                )
+            }
+    }
+}
+
+@Composable
+private fun ChildrenSectionExpressive(
+    modifier: Modifier = Modifier,
+    parent: RateItem?,
+    children: List<RateItem>,
+    columns: Int,
+    onChildClick: (RateItem) -> Unit,
+    highlightedBucket: RatingColorBucket? = null,
+    nullIsLoading: Boolean = false,
+) {
+    val gridGap = 6.dp
+    Column(
+        modifier = modifier,
+        verticalArrangement = Arrangement.spacedBy(gridGap)
+    ) {
+        ParentSectionHeader(parent, children)
+
+        val rows = (children.size + columns - 1) / columns
+
+        for (row in 0 until rows) {
+            val from = row * columns
+            val to = row * columns + columns
+            ChildrenRowExpressive(
+                children = children.subList(from, kotlin.math.min(children.size, to)),
+                rowIndex = row,
+                itemSpacing = gridGap,
+                highlightedBucket = highlightedBucket,
+                nullIsLoading = nullIsLoading,
+                onChildClick = onChildClick,
+            )
         }
     }
 }

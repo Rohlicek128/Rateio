@@ -15,11 +15,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawWithCache
+import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import kotlin.math.cbrt
-import kotlin.math.max
 import kotlin.math.pow
 
 fun <T> List<T>.getWrapped(index: Int): T {
@@ -78,6 +81,23 @@ fun Modifier.shimmerLoading(
             drawRect(brush = brush)
         }
     }
+}
+
+fun Modifier.bottomShadow(
+    shadowHeight: Dp = 6.dp,
+    shadowColor: Color = Color.Black.copy(alpha = 0.3f)
+): Modifier = this.drawWithContent {
+    drawContent()
+    val shadowHeightPx = shadowHeight.toPx()
+    drawRect(
+        brush = Brush.verticalGradient(
+            colors = listOf(shadowColor, Color.Transparent),
+            startY = size.height,
+            endY = size.height + shadowHeightPx
+        ),
+        topLeft = Offset(0f, size.height),
+        size = Size(size.width, shadowHeightPx)
+    )
 }
 
 
@@ -146,4 +166,18 @@ private fun linearToSRgb(c: Float): Float {
     val srgb = if (clamped <= 0.0031308f) clamped * 12.92f else 1.055f * clamped.toDouble()
         .pow(1 / 2.4).toFloat() - 0.055f
     return srgb.coerceIn(0f, 1f)
+}
+
+
+fun <T> transposeItems(tableItems: List<List<T>>): List<List<T?>> {
+    if (tableItems.isEmpty()) return emptyList()
+
+    val rowCount = tableItems.size
+    val columnCount = tableItems.maxOfOrNull { it.size } ?: 0
+
+    return List(columnCount) { columnIndex ->
+        List(rowCount) { rowIndex ->
+            tableItems.getOrNull(rowIndex)?.getOrNull(columnIndex)
+        }
+    }
 }

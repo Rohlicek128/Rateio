@@ -31,9 +31,9 @@ import androidx.compose.ui.unit.dp
 fun CollapsibleHeader(
     title: String,
     isOpened: Boolean,
-    onClick: (Boolean) -> Unit,
+    onClick: ((Boolean) -> Unit)?,
     modifier: Modifier = Modifier,
-    content: @Composable (() -> Unit)?,
+    content: @Composable (() -> Unit)? = null,
 ) {
     val haptic = LocalHapticFeedback.current
     var opened by remember { mutableStateOf(isOpened) }
@@ -46,21 +46,25 @@ fun CollapsibleHeader(
                 fontWeight = FontWeight.Bold,
             )
         },
-        trailingContent = {
-            Icon(
-                imageVector = if (opened) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
-            )
-        },
+        trailingContent = if (onClick != null) {
+            {
+                Icon(
+                    imageVector = if (opened) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
+                )
+            }
+        } else null,
         modifier = modifier
             .padding(start = 12.dp, end = 12.dp, top = 8.dp, bottom = 0.dp)
             .clip(MaterialTheme.shapes.largeIncreased)
-            .clickable(onClick = {
-                haptic.performHapticFeedback(HapticFeedbackType.ToggleOn)
-                opened = !opened
-                onClick(opened)
-            }),
+            then(
+                if (onClick != null) Modifier.clickable(onClick = {
+                    haptic.performHapticFeedback(HapticFeedbackType.ToggleOn)
+                    opened = !opened
+                    onClick(opened)
+                }) else Modifier
+            ),
         tonalElevation = if (opened) 0.dp else 2.dp,
     )
 

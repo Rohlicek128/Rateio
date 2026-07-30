@@ -33,12 +33,12 @@ data class RateItem(
 )
 
 enum class ItemStatus(override val displayName: String): HasDisplayName {
-    NONE("None"),
-    WATCHLIST("Watchlist"),
-    IN_PROGRESS("In Progress"),
     COMPLETED("Completed"),
-    DROPPED("Dropped"),
+    IN_PROGRESS("In Progress"),
+    WATCHLIST("Watchlist"),
     ON_HOLD("On Hold"),
+    DROPPED("Dropped"),
+    NONE("None"),
 }
 
 

@@ -98,6 +98,7 @@ class SavedRateItemViewModel(
         showId: Int,
         seasonNumber: Int,
         episodeNumber: Int,
+        seasonEpisodeCount: Int?,
         onNavigate: (childId: Long, parentId: Long) -> Unit,
     ) {
         viewModelScope.launch {
@@ -143,7 +144,7 @@ class SavedRateItemViewModel(
                 categoryId = showItem.categoryId,
                 parentId = seasonId,
             ) {
-                episodeDetail.toRateItem(showItem.categoryId, showId = showId, parentId = seasonId)
+                episodeDetail.toRateItem(showItem.categoryId, showId = showId, parentId = seasonId, seasonEpisodeCount = seasonEpisodeCount)
             }
 
             val savedShowId = itemRepository.getById(seasonId)?.parentId ?: 0

@@ -47,6 +47,7 @@ import androidx.compose.ui.unit.dp
 import com.rohlicek.rateio.data.remote.tmdb.TmdbEpisodeMetadata
 import com.rohlicek.rateio.model.RateItem
 import com.rohlicek.rateio.presentation.components.ConnectedItemSelector
+import com.rohlicek.rateio.presentation.components.OutlinedConnectedButtonsExpressive
 import com.rohlicek.rateio.presentation.components.ModalSortableEnumSelector
 import com.rohlicek.rateio.presentation.components.SortByButton
 import com.rohlicek.rateio.presentation.components.SortOrder
@@ -71,10 +72,12 @@ enum class DisplayMode {
 
 @Composable
 fun ChildrenDisplay(
+    modifier: Modifier = Modifier,
     childrenGroups: Map<RateItem?, List<RateItem>>,
     onChildClick: (RateItem) -> Unit,
     columnText: (Int) -> String,
     rowText: (Int) -> String,
+    subtitleBuilder: (RateItem, DisplayMode) -> String? = { item, _ -> item.subtitle },
     selectedDisplayMode: DisplayMode,
     onDisplayModeSelect: (DisplayMode) -> Unit,
     selectedSortMode: SortModeShow,
@@ -82,7 +85,6 @@ fun ChildrenDisplay(
     selectedOrder: SortOrder,
     onOrderChange: (SortOrder) -> Unit,
     expandedParents: MutableSet<String?>,
-    modifier: Modifier = Modifier,
     isLoading: Boolean = false,
     isLoadingRatings: Boolean = false,
     spoilers: Boolean = true,
@@ -163,7 +165,7 @@ fun ChildrenDisplay(
     Column (
         modifier = modifier,
     ) {
-        ConnectedItemSelector(
+        OutlinedConnectedButtonsExpressive(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 8.dp),
@@ -263,6 +265,7 @@ fun ChildrenDisplay(
                                     modifier = Modifier.padding(horizontal = 16.dp),
                                     sortedChildren = sortedChildrenTop,
                                     sortedTopLimit = sortedTopLimit,
+                                    subtitleBuilder = { subtitleBuilder(it, DisplayMode.LIST) },
                                     spoilers = spoilers,
                                     spoilName = spoilName,
                                     showChildRatedCompletion = showChildRatedCompletion,
@@ -276,6 +279,7 @@ fun ChildrenDisplay(
                                     modifier = Modifier.padding(horizontal = 16.dp),
                                     sortedChildren = sortedChildren,
                                     sortedTopLimit = if (selectedSortMode == SortModeShow.RATING) sortedTopLimit else 0,
+                                    //subtitleBuilder = { subtitleBuilder(it, DisplayMode.LIST) },
                                     reverseSorting = selectedSortMode == SortModeShow.RATING || selectedSortMode == SortModeShow.RUNTIME,
                                     showRanking = true,
                                     spoilers = spoilers,
@@ -316,16 +320,30 @@ fun ChildrenDisplay(
                             )
                         }
                         if (childrenGroups.values.isNotEmpty()) {
-                            ChildrenGrid(
-                                contentPadding = PaddingValues(horizontal = 12.dp),
-                                childrenGroups = childrenGroups,
-                                rowText = rowText,
-                                columnText = columnText,
-                                onChildClick = onChildClick,
-                                highlightedBucket = selectedBucket,
-                                nullIsLoading = isLoadingRatings,
-                                inverted = invertedGrid,
-                            )
+                            if (childrenGroups.keys.size > 1 || invertedGrid) {
+                                ChildrenGridExpressive(
+                                    contentPadding = PaddingValues(start = 4.dp, end = 12.dp),
+                                    childrenGroups = childrenGroups,
+                                    rowText = rowText,
+                                    columnText = columnText,
+                                    onChildClick = onChildClick,
+                                    highlightedBucket = selectedBucket,
+                                    nullIsLoading = isLoadingRatings,
+                                    inverted = invertedGrid,
+                                )
+                            }
+                            else {
+                                ChildrenGrid(
+                                    contentPadding = PaddingValues(horizontal = 12.dp),
+                                    childrenGroups = childrenGroups,
+                                    rowText = rowText,
+                                    columnText = columnText,
+                                    onChildClick = onChildClick,
+                                    highlightedBucket = selectedBucket,
+                                    nullIsLoading = isLoadingRatings,
+                                    inverted = invertedGrid,
+                                )
+                            }
                         }
                     }
                     DisplayMode.WRAPPED -> {
@@ -361,7 +379,7 @@ fun ChildrenDisplay(
                             )
                         }
                         if (childrenGroups.values.isNotEmpty()) {
-                            ChildrenWrapped(
+                            ChildrenWrappedExpressive(
                                 contentPadding = PaddingValues(horizontal = 20.dp),
                                 childrenGroups = childrenGroups,
                                 columns = columnsWrapped.toInt() + 1,
@@ -387,7 +405,7 @@ fun ChildrenDisplay(
                                     options = timelineCategories.map { it.displayName },
                                 )
                             }
-                            else Spacer(modifier = Modifier.width(4.dp))
+                            //else Spacer(modifier = Modifier.width(4.dp))
 
                             OutlinedToggleButton(
                                 modifier = Modifier.padding(end = 3.dp),
