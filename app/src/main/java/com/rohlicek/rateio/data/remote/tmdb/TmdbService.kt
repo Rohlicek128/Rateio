@@ -1,9 +1,7 @@
 package com.rohlicek.rateio.data.remote.tmdb
 
-import com.rohlicek.rateio.BuildConfig
 import com.rohlicek.rateio.model.HasDisplayName
 import retrofit2.http.GET
-import retrofit2.http.Header
 import retrofit2.http.Path
 import retrofit2.http.Query
 
@@ -21,8 +19,6 @@ interface TmdbService {
         @Query("language") language: String = "en-US",
         @Query("page") page: Int = 1,
         //@Query("append_to_response") append: String = "external_ids",
-        @Header("accept") accept: String = "application/json",
-        @Header("Authorization") bearer: String = "Bearer " + BuildConfig.TMDB_API_KEY,
     ): TmdbShowSearchResponse
 
     @GET("discover/tv")
@@ -40,9 +36,6 @@ interface TmdbService {
 
         @Query("without_genres") withoutGenres: String = "99,10763,10764,10767,10766",
         //@Query("with_status") withStatus: String? = "0,2,3",
-
-        @Header("accept") accept: String = "application/json",
-        @Header("Authorization") bearer: String = "Bearer " + BuildConfig.TMDB_API_KEY,
     ): TmdbShowSearchResponse
 
     @GET("discover/tv")
@@ -54,16 +47,12 @@ interface TmdbService {
         @Query("sort_by") sortBy: String = "vote_average.desc",
         @Query("vote_count.gte") voteCountGte: Float = 200f,
         @Query("without_genres") withoutGenres: String = "99,10755",
-        @Header("accept") accept: String = "application/json",
-        @Header("Authorization") bearer: String = "Bearer " + BuildConfig.TMDB_API_KEY,
     ): TmdbShowSearchResponse
 
     @GET("trending/tv/{time_window}")
     suspend fun trendingShows(
         @Path("time_window") timeWindow: String,
         @Query("language") language: String = "en-US",
-        @Header("accept") accept: String = "application/json",
-        @Header("Authorization") bearer: String = "Bearer " + BuildConfig.TMDB_API_KEY,
     ): TmdbShowSearchResponse
 
     @GET("tv/{id}")
@@ -71,8 +60,6 @@ interface TmdbService {
         @Path("id") id: Int,
         @Query("language") language: String = "en-US",
         @Query("append_to_response") append: String = "credits,external_ids",
-        @Header("accept") accept: String = "application/json",
-        @Header("Authorization") bearer: String = "Bearer " + BuildConfig.TMDB_API_KEY,
     ): TmdbShowDetail
 
 
@@ -81,8 +68,6 @@ interface TmdbService {
         @Path("showId")       showId: Int,
         @Path("seasonNumber") seasonNumber: Int,
         @Query("language") language: String = "en-US",
-        @Header("accept") accept: String = "application/json",
-        @Header("Authorization") bearer: String = "Bearer " + BuildConfig.TMDB_API_KEY,
     ): TmdbSeasonDetail
 
 
@@ -93,8 +78,6 @@ interface TmdbService {
         @Path("episodeNumber") episodeNumber: Int,
         @Query("language") language: String = "en-US",
         @Query("append_to_response") append: String = "credits,external_ids",
-        @Header("accept") accept: String = "application/json",
-        @Header("Authorization") bearer: String = "Bearer " + BuildConfig.TMDB_API_KEY,
     ): TmdbEpisodeDetail
 
 
@@ -102,8 +85,6 @@ interface TmdbService {
     suspend fun getShowImages(
         @Path("showId") showId: Int,
         @Query("include_image_language") language: String = "en-US,null",
-        @Header("accept") accept: String = "application/json",
-        @Header("Authorization") bearer: String = "Bearer " + BuildConfig.TMDB_API_KEY,
     ): TmdbImageResponse
 
     @GET("tv/{showId}/season/{seasonNumber}/episode/{episodeNumber}/images")
@@ -111,8 +92,6 @@ interface TmdbService {
         @Path("showId")       showId: Int,
         @Path("seasonNumber") seasonNumber: Int,
         @Path("episodeNumber") episodeNumber: Int,
-        @Header("accept") accept: String = "application/json",
-        @Header("Authorization") bearer: String = "Bearer " + BuildConfig.TMDB_API_KEY,
     ): TmdbEpisodeImageResponse
 
     @GET("tv/{id}/reviews")
@@ -120,15 +99,11 @@ interface TmdbService {
         @Path("id") id: Int,
         @Query("language") language: String = "en-US",
         @Query("page") page: Int = 1,
-        @Header("accept") accept: String = "application/json",
-        @Header("Authorization") bearer: String = "Bearer " + BuildConfig.TMDB_API_KEY,
     ): TmdbReviews
 
     @GET("tv/{id}/external_ids")
     suspend fun getShowExternalIds(
         @Path("id") id: Int,
-        @Header("accept") accept: String = "application/json",
-        @Header("Authorization") bearer: String = "Bearer " + BuildConfig.TMDB_API_KEY,
     ): TmdbExternalIds
 
     @GET("tv/{showId}/season/{seasonNumber}/episode/{episodeNumber}/external_ids")
@@ -136,8 +111,6 @@ interface TmdbService {
         @Path("showId")       showId: Int,
         @Path("seasonNumber") seasonNumber: Int,
         @Path("episodeNumber") episodeNumber: Int,
-        @Header("accept") accept: String = "application/json",
-        @Header("Authorization") bearer: String = "Bearer " + BuildConfig.TMDB_API_KEY,
     ): TmdbExternalIds
 
 
@@ -149,8 +122,6 @@ interface TmdbService {
         @Query("language") language: String = "en-US",
         @Query("page") page: Int = 1,
         //@Query("append_to_response") append: String = "external_ids",
-        @Header("accept") accept: String = "application/json",
-        @Header("Authorization") bearer: String = "Bearer " + BuildConfig.TMDB_API_KEY,
     ): TmdbMovieSearchResponse
 
     @GET("discover/movie")
@@ -169,9 +140,6 @@ interface TmdbService {
 
         @Query("with_release_type") withReleaseType: String = "2|3|4",
         @Query("without_genres") withoutGenres: String = "10770",
-
-        @Header("accept") accept: String = "application/json",
-        @Header("Authorization") bearer: String = "Bearer " + BuildConfig.TMDB_API_KEY,
     ): TmdbMovieSearchResponse
 
     @GET("discover/movie")
@@ -183,16 +151,12 @@ interface TmdbService {
         @Query("sort_by") sortBy: String = "vote_average.desc",
         @Query("vote_count.gte") voteCountGte: Float = 200f,
         @Query("without_genres") withoutGenres: String = "99,10755",
-        @Header("accept") accept: String = "application/json",
-        @Header("Authorization") bearer: String = "Bearer " + BuildConfig.TMDB_API_KEY,
     ): TmdbMovieSearchResponse
 
     @GET("trending/movie/{time_window}")
     suspend fun trendingMovies(
         @Path("time_window") timeWindow: String,
         @Query("language") language: String = "en-US",
-        @Header("accept") accept: String = "application/json",
-        @Header("Authorization") bearer: String = "Bearer " + BuildConfig.TMDB_API_KEY,
     ): TmdbMovieSearchResponse
 
     @GET("movie/{id}")
@@ -200,16 +164,12 @@ interface TmdbService {
         @Path("id") id: Int,
         @Query("language") language: String = "en-US",
         @Query("append_to_response") append: String = "credits",
-        @Header("accept") accept: String = "application/json",
-        @Header("Authorization") bearer: String = "Bearer " + BuildConfig.TMDB_API_KEY,
     ): TmdbMovieDetail
 
     @GET("movie/{id}/images")
     suspend fun getMovieImages(
         @Path("id") id: Int,
         @Query("include_image_language") language: String = "en-US,null",
-        @Header("accept") accept: String = "application/json",
-        @Header("Authorization") bearer: String = "Bearer " + BuildConfig.TMDB_API_KEY,
     ): TmdbImageResponse
 
     @GET("movie/{id}/reviews")
@@ -217,8 +177,6 @@ interface TmdbService {
         @Path("id") id: Int,
         @Query("language") language: String = "en-US",
         @Query("page") page: Int = 1,
-        @Header("accept") accept: String = "application/json",
-        @Header("Authorization") bearer: String = "Bearer " + BuildConfig.TMDB_API_KEY,
     ): TmdbReviews
 
     @GET("movie/{id}/recommendations")
@@ -226,15 +184,11 @@ interface TmdbService {
         @Path("id") id: Int,
         @Query("language") language: String = "en-US",
         @Query("page") page: Int = 1,
-        @Header("accept") accept: String = "application/json",
-        @Header("Authorization") bearer: String = "Bearer " + BuildConfig.TMDB_API_KEY,
     ): TmdbMovieSearchResponse
 
     @GET("movie/{id}/external_ids")
     suspend fun getMovieExternalIds(
         @Path("id") id: Int,
-        @Header("accept") accept: String = "application/json",
-        @Header("Authorization") bearer: String = "Bearer " + BuildConfig.TMDB_API_KEY,
     ): TmdbExternalIds
 
 
@@ -245,19 +199,11 @@ interface TmdbService {
         @Path("id") id: Int,
         @Query("language") language: String = "en-US",
         @Query("append_to_response") append: String = "images,combined_credits",
-        @Header("accept") accept: String = "application/json",
-        @Header("Authorization") bearer: String = "Bearer " + BuildConfig.TMDB_API_KEY,
     ): TmdbPersonDetail
 
 
     @GET("tv/{id}/external_ids")
     suspend fun getTvExternalIds(
         @Path("id") id: Int,
-        @Header("Authorization") bearer: String = "Bearer " + BuildConfig.TMDB_API_KEY,
-    ): TmdbExternalIds
-    @GET("movie/{id}/external_ids")
-    suspend fun getMovieExternalIds(
-        @Path("id") id: Int,
-        @Header("Authorization") bearer: String = "Bearer " + BuildConfig.TMDB_API_KEY,
     ): TmdbExternalIds
 }

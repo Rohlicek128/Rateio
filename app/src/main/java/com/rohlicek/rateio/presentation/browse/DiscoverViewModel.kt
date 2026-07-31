@@ -4,12 +4,11 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
+import com.rohlicek.rateio.RateioApplication
 import com.rohlicek.rateio.data.remote.imdb.ImdbRatingRepository
-import com.rohlicek.rateio.data.remote.tmdb.TmdbClient
 import com.rohlicek.rateio.data.remote.steam.SteamClient
 import com.rohlicek.rateio.data.remote.steam.toRateItem
 import com.rohlicek.rateio.data.remote.tmdb.toRateItem
-import com.rohlicek.rateio.model.Category
 import com.rohlicek.rateio.model.CategoryType
 import com.rohlicek.rateio.model.RateItem
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -41,12 +40,12 @@ class DiscoverViewModel(
                 val today = LocalDate.now()
 
                 val results = when (category) {
-                    CategoryType.TMDB_SHOWS -> TmdbClient.tmdb.discoverShows(
+                    CategoryType.TMDB_SHOWS -> RateioApplication.instance.tmdbClient.tmdb.discoverShows(
                         sortBy = sortBy,
                         airDateGte = today.minusMonths(6).toString(),
                         airDateLte = today.toString(),
                     ).results.map { it.toRateItem() }
-                    CategoryType.TMDB_MOVIES -> TmdbClient.tmdb.discoverMovies(
+                    CategoryType.TMDB_MOVIES -> RateioApplication.instance.tmdbClient.tmdb.discoverMovies(
                         sortBy = sortBy,
                         releaseDateGte = today.minusMonths(6).toString(),
                         releaseDateLte = today.toString(),
@@ -66,8 +65,8 @@ class DiscoverViewModel(
                                     val rating = if (cachedRating != null) cachedRating
                                     else {
                                         val imdbId = if (category == CategoryType.TMDB_MOVIES)
-                                            TmdbClient.tmdb.getMovieExternalIds(item.externalId.toInt()).imdbId
-                                        else TmdbClient.tmdb.getShowExternalIds(item.externalId.toInt()).imdbId
+                                            RateioApplication.instance.tmdbClient.tmdb.getMovieExternalIds(item.externalId.toInt()).imdbId
+                                        else RateioApplication.instance.tmdbClient.tmdb.getShowExternalIds(item.externalId.toInt()).imdbId
                                         imdbRepository.linkImdbToTmdb(imdbId, item.externalId.toInt())
                                         imdbRepository.getRatingByImdbId(imdbId)?.averageRating
                                     }

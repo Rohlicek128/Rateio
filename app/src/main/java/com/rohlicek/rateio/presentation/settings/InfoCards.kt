@@ -1,12 +1,15 @@
 package com.rohlicek.rateio.presentation.settings
 
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Error
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 
 
 @Composable
@@ -49,14 +52,18 @@ fun WarningCard(
 
 @Composable
 fun InfoCard(
-    //title: String,
+    title: String,
     description: String,
     modifier: Modifier = Modifier,
 ) {
     SettingListItem(
-        modifier = modifier,
-        title = "Info",
+        modifier = modifier.padding(bottom = 4.dp),
+        title = title,
         description = description,
-        icon = Icons.Default.Info,
+        titleStyle = MaterialTheme.typography.titleSmall,
+        descriptionStyle = MaterialTheme.typography.bodySmall,
+        icon = Icons.Outlined.Info,
+        containerColor = MaterialTheme.colorScheme.primaryFixed,
+        contentColor = MaterialTheme.colorScheme.primary,
     )
 }

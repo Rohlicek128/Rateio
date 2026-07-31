@@ -1,5 +1,10 @@
 package com.rohlicek.rateio.presentation.settings
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
@@ -14,12 +19,14 @@ import androidx.compose.material.icons.automirrored.filled.NavigateNext
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Numbers
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material.icons.filled.TextFields
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -63,6 +70,7 @@ fun SettingListItem(
     contentColor: Color = MaterialTheme.colorScheme.onSurface,
     subtitleColor: Color = MaterialTheme.colorScheme.onSurfaceVariant,
     titleStyle: TextStyle = MaterialTheme.typography.titleMediumEmphasized,
+    descriptionStyle: TextStyle = MaterialTheme.typography.bodyMedium,
     supportingContent: @Composable (() -> Unit)? = null,
     trailingContent: @Composable (() -> Unit)? = null,
     onClick: (() -> Unit)? = null,
@@ -111,7 +119,7 @@ fun SettingListItem(
             {
                 Text(
                     description,
-                    style = MaterialTheme.typography.bodyMedium,
+                    style = descriptionStyle,
                     color = subtitleColor,
                 )
             }
@@ -168,6 +176,7 @@ fun SettingsTextField(
     onValueChange: (String) -> Unit,
     modifier: Modifier = Modifier,
     singleLine: Boolean = true,
+    resetButton: Boolean = true,
     placeholder: @Composable (() -> Unit)? = null,
 ) {
     OutlinedTextField(
@@ -189,6 +198,23 @@ fun SettingsTextField(
                 null,
             )
         },
+        trailingIcon = if (resetButton) {
+            {
+                AnimatedVisibility(
+                    !value.isBlank(),
+                    enter = fadeIn() + slideInHorizontally(initialOffsetX = { it / 2 }),
+                    exit = fadeOut() + slideOutHorizontally(targetOffsetX = { it / 2 }),
+                ) {
+                    IconButton(
+                        onClick = {
+                            onValueChange("")
+                        }
+                    ) {
+                        Icon(Icons.Default.Refresh, null)
+                    }
+                }
+            }
+        } else null,
     )
 }
 

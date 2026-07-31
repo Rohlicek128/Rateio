@@ -1,9 +1,13 @@
 package com.rohlicek.rateio.presentation.components
 
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.OpenInNew
 import androidx.compose.material.icons.automirrored.filled.Sort
+import androidx.compose.material.icons.filled.Save
+import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.FilledTonalIconButton
@@ -16,9 +20,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.zIndex
+import com.rohlicek.rateio.utils.openExternalLink
 
 
 @Composable
@@ -46,6 +53,84 @@ fun SortByButton(
             "Sort by",
             style = MaterialTheme.typography.labelMedium,
             fontWeight = FontWeight.ExtraBold,
+        )
+    }
+}
+
+
+@Composable
+fun SaveButton(
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+    interactionSource: MutableInteractionSource? = null,
+    onClick: () -> Unit,
+) {
+    val haptic = LocalHapticFeedback.current
+
+    Button(
+        modifier = modifier,
+        onClick = {
+            haptic.performHapticFeedback(HapticFeedbackType.Confirm)
+            onClick()
+        },
+        shapes = ButtonDefaults.shapes(),
+        interactionSource = interactionSource,
+        enabled = enabled,
+    ) {
+        Icon(
+            Icons.Default.Save,
+            contentDescription = "Save",
+            modifier = Modifier.size(ToggleButtonDefaults.IconSize)
+        )
+        Spacer(Modifier.size(ToggleButtonDefaults.IconSpacing))
+        Text(
+            "Save",
+            style = MaterialTheme.typography.labelMedium,
+            fontWeight = FontWeight.Bold,
+            softWrap = false,
+            maxLines = 1,
+            overflow = TextOverflow.Visible,
+        )
+    }
+}
+
+@Composable
+fun OpenButton(
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+    interactionSource: MutableInteractionSource? = null,
+    label: String,
+    onClickUrl: String,
+) {
+    val context = LocalContext.current
+    val haptic = LocalHapticFeedback.current
+
+    FilledTonalButton(
+        modifier = modifier,
+        onClick = {
+            haptic.performHapticFeedback(HapticFeedbackType.ContextClick)
+            openExternalLink(
+                context,
+                url = onClickUrl
+            )
+        },
+        shapes = ButtonDefaults.shapes(),
+        interactionSource = interactionSource,
+        enabled = enabled,
+    ) {
+        Icon(
+            Icons.AutoMirrored.Filled.OpenInNew,
+            contentDescription = "Go to $label",
+            modifier = Modifier.size(ToggleButtonDefaults.IconSize)
+        )
+        Spacer(Modifier.size(ToggleButtonDefaults.IconSpacing))
+        Text(
+            label,
+            style = MaterialTheme.typography.labelMedium,
+            fontWeight = FontWeight.Bold,
+            softWrap = false,
+            maxLines = 1,
+            overflow = TextOverflow.Visible,
         )
     }
 }

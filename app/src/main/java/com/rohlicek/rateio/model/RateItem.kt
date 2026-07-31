@@ -42,12 +42,12 @@ enum class ItemStatus(override val displayName: String): HasDisplayName {
 }
 
 
-fun computeWeightedRating(aggregateRating: Float?, length: Int?): Float? {
+fun computeWeightedRating(aggregateRating: Float?, length: Int?, maxLengthOverride: Int? = null): Float? {
     if (aggregateRating == null || length == null || length <= 0) return null
 
     val ratingWeight = 0.9f
     val lengthWeight = 1f - ratingWeight
-    val maxLength = 155
+    val maxLength = maxLengthOverride ?:155
 
     val ratingWeighted = aggregateRating * ratingWeight
     val lengthWeighted = (log10(length.toFloat()) / log10(maxLength.toFloat()))

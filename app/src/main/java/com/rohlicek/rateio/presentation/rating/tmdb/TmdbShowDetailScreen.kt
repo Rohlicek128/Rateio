@@ -3,9 +3,11 @@ package com.rohlicek.rateio.presentation.rating.tmdb
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -61,7 +63,7 @@ import com.rohlicek.rateio.presentation.components.DateProgressBar
 import com.rohlicek.rateio.presentation.components.GenreChips
 import com.rohlicek.rateio.presentation.components.HeroCarousel
 import com.rohlicek.rateio.presentation.components.ImageSize
-import com.rohlicek.rateio.presentation.components.statistics.ItemRatingStatCard
+import com.rohlicek.rateio.presentation.components.statistics.ExternalRatingStatCard
 import com.rohlicek.rateio.presentation.components.statistics.ItemStatCard
 import com.rohlicek.rateio.presentation.components.ModalEnumSelector
 import com.rohlicek.rateio.presentation.components.PersonCard
@@ -74,7 +76,9 @@ import com.rohlicek.rateio.presentation.components.rating.ChildrenDisplay
 import com.rohlicek.rateio.presentation.components.rating.DisplayMode
 import com.rohlicek.rateio.presentation.components.rating.ItemProgressBar
 import com.rohlicek.rateio.presentation.components.rating.getTopRatedChildren
+import com.rohlicek.rateio.presentation.components.statistics.AggregateRatingStatCard
 import com.rohlicek.rateio.presentation.components.statistics.RatingsColorBarChart
+import com.rohlicek.rateio.presentation.components.statistics.StatCard
 import com.rohlicek.rateio.presentation.rating.RateItemDetailScreen
 import com.rohlicek.rateio.presentation.rating.display.RatingColorBucketConstants
 import com.rohlicek.rateio.presentation.rating.display.RatingTransformationsConstants
@@ -231,10 +235,20 @@ fun TmdbShowDetailScreen(
 
             val ratingByAverage = true
             val showAverage = remember(childrenGroups) {
-                computeAggregateRating(listOfRatings)
+                computeAggregateRating(
+                    if (isSaved) listOfRatings
+                    else ratings.values.flatMap { it.values }.filterNotNull()
+                )
             }
-            val showWeighted = remember(showAverage, listOfRatings.size) {
-                computeWeightedRating(showAverage, listOfRatings.size)
+            val ratedEpisodesCount = remember(ratings, listOfRatings) {
+                if (isSaved) listOfRatings.size
+                else ratings.values.flatMap { it.values }.filterNotNull().size
+            }
+            val showWeighted = remember(showAverage, ratedEpisodesCount) {
+                computeWeightedRating(
+                    showAverage, ratedEpisodesCount,
+                    maxLengthOverride = if (!isSaved) 350 else null
+                )
             }
             if (isSaved && ratingByAverage && onRatingSaved != null) {
                 LaunchedEffect(showAverage) {
@@ -441,7 +455,7 @@ fun TmdbShowDetailScreen(
                             horizontalArrangement = Arrangement.SpaceEvenly,
                         ) {
                             if (isSaved) {
-                                ItemRatingStatCard(
+                                ExternalRatingStatCard(
                                     rating = state.imdbRating?.averageRating,
                                     votes = state.imdbRating?.numVotes,
                                     source = "IMDb",
@@ -450,7 +464,7 @@ fun TmdbShowDetailScreen(
                                     onClickUrl = show.externalIds?.imdbId?.let { "https://www.imdb.com/title/$it" },
                                 )
                             }
-                            ItemRatingStatCard(
+                            ExternalRatingStatCard(
                                 rating = show.voteAverage?.div(10f),
                                 votes = show.voteCount,
                                 source = "TMDB",
@@ -459,7 +473,7 @@ fun TmdbShowDetailScreen(
                                 onClickUrl = "https://www.themoviedb.org/tv/${show.id}",
                             )
                             if (!isSaved) {
-                                ItemRatingStatCard(
+                                ExternalRatingStatCard(
                                     rating = state.savedItem?.rating,
                                     votes = null,
                                     source = "Yours",
@@ -789,6 +803,63 @@ fun TmdbShowDetailScreen(
                         }
                         ShowTabs.STATISTICS -> {
                             // Statistics
+                            item {
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(IntrinsicSize.Min)
+                                        .padding(horizontal = 16.dp, vertical = 8.dp),
+                                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                                ) {
+                                    StatCard(
+                                        title = "Seasons Finished",
+                                        value = when {
+                                            nextToWatchEpisode == null -> show.numberOfSeasons.toString()
+                                            nextToWatchEpisode.seasonNumber > 1 -> (nextToWatchEpisode.seasonNumber - 1).toString()
+                                            else -> "0"
+                                        } + "/${show.numberOfSeasons}",
+                                        containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                                        contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                                        modifier = Modifier
+                                            .weight(1f)
+                                            .fillMaxHeight(),
+                                    )
+
+                                    StatCard(
+                                        title = "Rated Episodes",
+                                        value = "${ratedEpisodesCount}/${show.numberOfEpisodes}",
+                                        containerColor = MaterialTheme.colorScheme.tertiaryContainer,
+                                        contentColor = MaterialTheme.colorScheme.onTertiaryContainer,
+
+                                        modifier = Modifier
+                                            .weight(1f)
+                                            .fillMaxHeight(),
+                                    )
+                                }
+                            }
+
+                            item {
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(horizontal = 16.dp, vertical = 8.dp),
+                                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                ) {
+                                    AggregateRatingStatCard(
+                                        modifier = Modifier.weight(1f),
+                                        title = "Average",
+                                        rating = showAverage,
+                                        colorBucketsOverride = if (!isSaved || ratingByAverage) RatingColorBucketConstants.RC_IMDB_SHOWS else getCurrentRatingColorBuckets()
+                                    )
+                                    AggregateRatingStatCard(
+                                        modifier = Modifier.weight(1f),
+                                        title = "Weighted",
+                                        rating = showWeighted,
+                                        colorBucketsOverride = if (!isSaved || ratingByAverage) RatingColorBucketConstants.RC_IMDB_SHOWS else getCurrentRatingColorBuckets()
+                                    )
+                                }
+                            }
+
                             item {
                                 RatingsColorBarChart(
                                     modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),

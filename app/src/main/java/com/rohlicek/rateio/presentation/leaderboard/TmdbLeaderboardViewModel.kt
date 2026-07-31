@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
+import com.rohlicek.rateio.RateioApplication
 import com.rohlicek.rateio.data.remote.imdb.ImdbRatingRepository
 import com.rohlicek.rateio.data.remote.tmdb.TmdbClient
 import com.rohlicek.rateio.data.remote.tmdb.toRateItem
@@ -60,13 +61,13 @@ class TmdbLeaderboardViewModel(
                     (1..pageNumbers).map { page ->
                         async(Dispatchers.IO) {
                             if (category == CategoryType.TMDB_MOVIES) {
-                                TmdbClient.tmdb.topRatedMovies(
+                                RateioApplication.instance.tmdbClient.tmdb.topRatedMovies(
                                     page = page,
                                     voteCountGte = 2500f,
                                 ).results.map { it.toRateItem(weight = it.voteCount?.toFloat() ?: -1f)}
                             }
                             else {
-                                TmdbClient.tmdb.topRatedShows(
+                                RateioApplication.instance.tmdbClient.tmdb.topRatedShows(
                                     page = page,
                                     voteCountGte = 1000f,
                                 ).results.map { it.toRateItem(weight = it.voteCount?.toFloat() ?: -1f)}
@@ -113,10 +114,10 @@ class TmdbLeaderboardViewModel(
                             networkSemaphore.withPermit {
                                 try {
                                     val imdbId = if (category == CategoryType.TMDB_MOVIES) {
-                                        TmdbClient.tmdb.getMovieExternalIds(tmdbId).imdbId
+                                        RateioApplication.instance.tmdbClient.tmdb.getMovieExternalIds(tmdbId).imdbId
                                     }
                                     else {
-                                        TmdbClient.tmdb.getShowExternalIds(tmdbId).imdbId
+                                        RateioApplication.instance.tmdbClient.tmdb.getShowExternalIds(tmdbId).imdbId
                                     }
                                     val rating = if (!imdbId.isNullOrBlank()) {
                                         imdbRepository.getRatingByImdbId(imdbId)

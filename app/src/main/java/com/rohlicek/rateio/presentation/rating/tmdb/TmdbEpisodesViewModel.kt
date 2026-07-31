@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
+import com.rohlicek.rateio.RateioApplication
 import com.rohlicek.rateio.data.remote.imdb.ImdbRatingRepository
 import com.rohlicek.rateio.data.remote.tmdb.TmdbClient
 import com.rohlicek.rateio.data.remote.tmdb.TmdbEpisodeSummary
@@ -80,7 +81,7 @@ class TmdbEpisodesViewModel(
                                         epNum to cachedRating.averageRating
                                     }
                                     else {
-                                        val imdbId = TmdbClient.tmdb.getEpisodeExternalIds(
+                                        val imdbId = RateioApplication.instance.tmdbClient.tmdb.getEpisodeExternalIds(
                                             showId = showId,
                                             seasonNumber = seasonNum,
                                             episodeNumber = epNum

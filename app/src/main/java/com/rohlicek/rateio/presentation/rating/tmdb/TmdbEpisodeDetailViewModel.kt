@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
+import com.rohlicek.rateio.RateioApplication
 import com.rohlicek.rateio.data.db.ImdbRatingEntity
 import com.rohlicek.rateio.data.remote.imdb.ImdbRatingRepository
 import com.rohlicek.rateio.data.remote.tmdb.TmdbClient
@@ -54,8 +55,8 @@ class TmdbEpisodeDetailViewModel(
         viewModelScope.launch {
             _state.update { it.copy(isLoading = true) }
             try {
-                val episode = TmdbClient.tmdb.getEpisode(showId, seasonNumber, episodeNumber)
-                val episodeCount = seasonEpisodeCount ?: TmdbClient.tmdb.getSeason(showId, seasonNumber).episodes.size
+                val episode = RateioApplication.instance.tmdbClient.tmdb.getEpisode(showId, seasonNumber, episodeNumber)
+                val episodeCount = seasonEpisodeCount ?: RateioApplication.instance.tmdbClient.tmdb.getSeason(showId, seasonNumber).episodes.size
 
                 _state.update { it ->
                     it.copy(
@@ -64,7 +65,7 @@ class TmdbEpisodeDetailViewModel(
                         previousEpisode = when {
                             episodeNumber > 1 -> EpisodeMoveData(seasonNumber, episodeNumber - 1, episodeCount)
                             seasonNumber > 1 -> {
-                                val prevSeason = TmdbClient.tmdb.getSeason(showId, seasonNumber - 1)
+                                val prevSeason = RateioApplication.instance.tmdbClient.tmdb.getSeason(showId, seasonNumber - 1)
                                 val lastEp = prevSeason.episodes.maxByOrNull { it.episodeNumber }
                                 EpisodeMoveData(
                                     prevSeason.seasonNumber,
@@ -78,7 +79,7 @@ class TmdbEpisodeDetailViewModel(
                             episodeNumber < episodeCount -> EpisodeMoveData(seasonNumber, episodeNumber + 1, episodeCount)
                             else -> {
                                 val nextSeasonDetail = runCatching {
-                                    TmdbClient.tmdb.getSeason(showId, seasonNumber + 1)
+                                    RateioApplication.instance.tmdbClient.tmdb.getSeason(showId, seasonNumber + 1)
                                 }.getOrNull()
                                 nextSeasonDetail?.let { season ->
                                     if (season.episodes.isNotEmpty()) {
@@ -99,7 +100,7 @@ class TmdbEpisodeDetailViewModel(
                 }
 
                 launch {
-                    val images = TmdbClient.tmdb.getEpisodeImages(showId, seasonNumber, episodeNumber)
+                    val images = RateioApplication.instance.tmdbClient.tmdb.getEpisodeImages(showId, seasonNumber, episodeNumber)
                     _state.update { it.copy(images = images) }
                 }
             } catch (e: Exception) {

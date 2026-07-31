@@ -31,6 +31,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.rohlicek.rateio.presentation.ScreenScaffold
 import com.rohlicek.rateio.presentation.components.HsvColorPickerDialog
+import com.rohlicek.rateio.presentation.components.SaveButton
 import com.rohlicek.rateio.presentation.settings.ListItemPosition
 import com.rohlicek.rateio.presentation.settings.SettingListItem
 import com.rohlicek.rateio.presentation.settings.SettingsListHeader
@@ -40,8 +41,6 @@ import com.rohlicek.rateio.presentation.settings.SettingsListHeader
 fun RatingColorSettingsScreen(
     onBackClick: () -> Unit,
 ) {
-    val haptic = LocalHapticFeedback.current
-
     var showColorPicker by remember { mutableStateOf(false) }
     var color by remember { mutableStateOf(Color(255, 0 , 0)) }
 
@@ -49,32 +48,12 @@ fun RatingColorSettingsScreen(
         title = "Color Buckets",
         onBackClick = onBackClick,
         actions = {
-            FilledTonalButton(
+            SaveButton(
                 modifier = Modifier.padding(horizontal = 8.dp),
                 onClick = {
-                    haptic.performHapticFeedback(HapticFeedbackType.Confirm)
                     onBackClick()
-                },
-                shapes = ButtonDefaults.shapes(),
-                colors = ButtonColors(
-                    contentColor = MaterialTheme.colorScheme.onPrimary,
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    disabledContentColor = MaterialTheme.colorScheme.surfaceVariant,
-                    disabledContainerColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                ),
-            ) {
-                Icon(
-                    Icons.Default.Save,
-                    contentDescription = "Save",
-                    modifier = Modifier.size(ToggleButtonDefaults.IconSize)
-                )
-                Spacer(Modifier.size(ToggleButtonDefaults.IconSpacing))
-                Text(
-                    "Save",
-                    style = MaterialTheme.typography.labelMedium,
-                    fontWeight = FontWeight.Bold,
-                )
-            }
+                }
+            )
         }
     ) { padding ->
         LazyColumn(

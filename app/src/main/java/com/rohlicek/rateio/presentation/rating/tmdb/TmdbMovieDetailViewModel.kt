@@ -6,6 +6,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
+import com.rohlicek.rateio.RateioApplication
 import com.rohlicek.rateio.data.CategoryRegistry
 import com.rohlicek.rateio.data.db.ImdbRatingEntity
 import com.rohlicek.rateio.data.remote.imdb.ImdbRatingRepository
@@ -52,7 +53,7 @@ class TmdbMovieDetailViewModel(
         viewModelScope.launch {
             _state.update { it.copy(isLoading = true) }
             try {
-                val movie = TmdbClient.tmdb.getMovie(id)
+                val movie = RateioApplication.instance.tmdbClient.tmdb.getMovie(id)
                 _state.update { it.copy(movie = movie, isLoading = false) }
 
                 launch {
@@ -61,17 +62,17 @@ class TmdbMovieDetailViewModel(
                 }
 
                 launch {
-                    val images = TmdbClient.tmdb.getMovieImages(id)
+                    val images = RateioApplication.instance.tmdbClient.tmdb.getMovieImages(id)
                     _state.update { it.copy(images = images) }
                 }
 
                 launch {
-                    val reviews = TmdbClient.tmdb.getMovieReviews(id)
+                    val reviews = RateioApplication.instance.tmdbClient.tmdb.getMovieReviews(id)
                     _state.update { it.copy(reviews = reviews) }
                 }
 
                 launch {
-                    val recommendations = TmdbClient.tmdb.getMovieRecommendations(id).results
+                    val recommendations = RateioApplication.instance.tmdbClient.tmdb.getMovieRecommendations(id).results
                         .map { it.toRateItem() }
                     _state.update { it.copy(recommendations = recommendations) }
                 }

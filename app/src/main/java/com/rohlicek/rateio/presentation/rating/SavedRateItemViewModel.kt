@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
+import com.rohlicek.rateio.RateioApplication
 import com.rohlicek.rateio.data.remote.tmdb.TmdbClient
 import com.rohlicek.rateio.data.remote.tmdb.TmdbRepository
 import com.rohlicek.rateio.data.remote.tmdb.toRateItem
@@ -137,7 +138,7 @@ class SavedRateItemViewModel(
             val episodeItem = episodeFromSeason?.toRateItem(
                 showItem.categoryId, showId = showId, parentId = seasonId, seasonEpisodeCount = seasonEpisodeCount
             ) ?: runCatching {
-                TmdbClient.tmdb.getEpisode(showId, seasonNumber, episodeNumber)
+                RateioApplication.instance.tmdbClient.tmdb.getEpisode(showId, seasonNumber, episodeNumber)
             }.getOrNull()?.toRateItem(
                 showItem.categoryId, showId = showId, parentId = seasonId, seasonEpisodeCount = seasonEpisodeCount
             )

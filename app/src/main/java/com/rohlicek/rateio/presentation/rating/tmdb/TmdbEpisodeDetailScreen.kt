@@ -50,7 +50,7 @@ import com.rohlicek.rateio.model.CategoryType
 import com.rohlicek.rateio.presentation.components.AdaptiveImageCarousel
 import com.rohlicek.rateio.presentation.components.CollapsibleHeader
 import com.rohlicek.rateio.presentation.components.ImageSize
-import com.rohlicek.rateio.presentation.components.statistics.ItemRatingStatCard
+import com.rohlicek.rateio.presentation.components.statistics.ExternalRatingStatCard
 import com.rohlicek.rateio.presentation.components.statistics.ItemStatCard
 import com.rohlicek.rateio.presentation.components.PersonCard
 import com.rohlicek.rateio.presentation.components.ScreenError
@@ -157,7 +157,7 @@ fun TmdbEpisodeDetailScreen(
                                 horizontalArrangement = Arrangement.SpaceEvenly,
                             ) {
                                 if (isSaved) {
-                                    ItemRatingStatCard(
+                                    ExternalRatingStatCard(
                                         rating = state.imdbRating?.averageRating,
                                         votes = state.imdbRating?.numVotes,
                                         source = "IMDb",
@@ -166,7 +166,7 @@ fun TmdbEpisodeDetailScreen(
                                         onClickUrl = state.episode?.externalIds?.imdbId?.let { "https://www.imdb.com/title/$it" },
                                     )
                                 }
-                                ItemRatingStatCard(
+                                ExternalRatingStatCard(
                                     rating = episode.voteAverage?.div(10f),
                                     votes = episode.voteCount,
                                     source = "TMDB",
@@ -175,7 +175,7 @@ fun TmdbEpisodeDetailScreen(
                                     onClickUrl = "https://www.themoviedb.org/tv/${showId}/season/${season}/episode/${episode.episodeNumber}",
                                 )
                                 if (!isSaved) {
-                                    ItemRatingStatCard(
+                                    ExternalRatingStatCard(
                                         rating = state.savedItem?.rating,
                                         votes = null,
                                         source = "Yours",

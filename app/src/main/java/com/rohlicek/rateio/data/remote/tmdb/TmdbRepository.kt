@@ -1,6 +1,7 @@
 package com.rohlicek.rateio.data.remote.tmdb
 
 import android.util.Log
+import com.rohlicek.rateio.RateioApplication
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
@@ -13,7 +14,7 @@ class TmdbRepository {
         seasonCache[cacheKey]?.let { return it }
 
         val seasonDetail = runCatching {
-            TmdbClient.tmdb.getSeason(showId, seasonNumber)
+            RateioApplication.instance.tmdbClient.tmdb.getSeason(showId, seasonNumber)
         }.getOrNull()
 
         if (seasonDetail != null) {
@@ -36,7 +37,7 @@ class TmdbRepository {
             .map { seasonNumber ->
                 async {
                     runCatching {
-                        seasonNumber to TmdbClient.tmdb.getSeason(showId, seasonNumber).episodes
+                        seasonNumber to RateioApplication.instance.tmdbClient.tmdb.getSeason(showId, seasonNumber).episodes
                     }.getOrElse { e ->
                         Log.e("TmdbRepository", "Failed season $seasonNumber: ${e.message}")
                         null

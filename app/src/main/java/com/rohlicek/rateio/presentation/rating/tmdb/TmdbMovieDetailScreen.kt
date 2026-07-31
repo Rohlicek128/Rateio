@@ -48,7 +48,7 @@ import com.rohlicek.rateio.presentation.components.AdaptiveImageCarousel
 import com.rohlicek.rateio.presentation.components.CollapsibleHeader
 import com.rohlicek.rateio.presentation.components.GenreChips
 import com.rohlicek.rateio.presentation.components.ImageSize
-import com.rohlicek.rateio.presentation.components.statistics.ItemRatingStatCard
+import com.rohlicek.rateio.presentation.components.statistics.ExternalRatingStatCard
 import com.rohlicek.rateio.presentation.components.statistics.ItemStatCard
 import com.rohlicek.rateio.presentation.components.ModalEnumSelector
 import com.rohlicek.rateio.presentation.components.PersonCard
@@ -230,7 +230,7 @@ fun TmdbMovieDetailScreen(
                             horizontalArrangement = Arrangement.SpaceEvenly,
                         ) {
                             if (isSaved) {
-                                ItemRatingStatCard(
+                                ExternalRatingStatCard(
                                     rating = state.imdbRating?.averageRating,
                                     votes = state.imdbRating?.numVotes,
                                     source = "IMDb",
@@ -239,7 +239,7 @@ fun TmdbMovieDetailScreen(
                                     onClickUrl = movie.imdbId?.let { "https://www.imdb.com/title/$it" },
                                 )
                             }
-                            ItemRatingStatCard(
+                            ExternalRatingStatCard(
                                 rating = movie.voteAverage?.div(10f),
                                 votes = movie.voteCount,
                                 source = "TMDB",
@@ -248,7 +248,7 @@ fun TmdbMovieDetailScreen(
                                 onClickUrl = "https://www.themoviedb.org/movie/${movie.id}",
                             )
                             if (!isSaved) {
-                                ItemRatingStatCard(
+                                ExternalRatingStatCard(
                                     rating = state.savedItem?.rating,
                                     votes = null,
                                     source = "Yours",

@@ -38,6 +38,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.rohlicek.rateio.presentation.ScreenScaffold
 import com.rohlicek.rateio.presentation.components.RateBox
 import com.rohlicek.rateio.presentation.components.RatingBottomSheet
+import com.rohlicek.rateio.presentation.components.SaveButton
 import com.rohlicek.rateio.presentation.rating.display.RatingTransformation
 import com.rohlicek.rateio.presentation.rating.display.getCurrentRatingTransformations
 import com.rohlicek.rateio.presentation.rating.display.getMaxCharWidth
@@ -74,34 +75,14 @@ fun RatingTransformationSettingsScreen(
         title = "Transformation",
         onBackClick = onBackClick,
         actions = {
-            FilledTonalButton(
+            SaveButton(
                 modifier = Modifier.padding(horizontal = 8.dp),
+                enabled = canSave(),
                 onClick = {
-                    haptic.performHapticFeedback(HapticFeedbackType.Confirm)
                     onSave(state)
                     onBackClick()
-                },
-                shapes = ButtonDefaults.shapes(),
-                colors = ButtonColors(
-                    contentColor = MaterialTheme.colorScheme.onPrimary,
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    disabledContentColor = MaterialTheme.colorScheme.surfaceVariant,
-                    disabledContainerColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                ),
-                enabled = canSave(),
-            ) {
-                Icon(
-                    Icons.Default.Save,
-                    contentDescription = "Save",
-                    modifier = Modifier.size(ToggleButtonDefaults.IconSize)
-                )
-                Spacer(Modifier.size(ToggleButtonDefaults.IconSpacing))
-                Text(
-                    "Save",
-                    style = MaterialTheme.typography.labelMedium,
-                    fontWeight = FontWeight.Bold,
-                )
-            }
+                }
+            )
         }
     ) { padding ->
         LazyColumn(

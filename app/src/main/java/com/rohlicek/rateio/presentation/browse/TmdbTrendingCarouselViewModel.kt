@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
+import com.rohlicek.rateio.RateioApplication
 import com.rohlicek.rateio.data.remote.imdb.ImdbRatingRepository
 import com.rohlicek.rateio.data.remote.tmdb.TmdbClient
 import com.rohlicek.rateio.data.remote.tmdb.TmdbTimeWindow
@@ -36,7 +37,7 @@ class TmdbTrendingCarouselViewModel(
                 if (category != CategoryType.TMDB_SHOWS && category != CategoryType.TMDB_MOVIES) return@launch
 
                 val results = when (category) {
-                    CategoryType.TMDB_SHOWS -> TmdbClient.tmdb.trendingShows(
+                    CategoryType.TMDB_SHOWS -> RateioApplication.instance.tmdbClient.tmdb.trendingShows(
                         TmdbTimeWindow.WEEK.displayName.lowercase()
                     ).results.map { show ->
                         RateItem(
@@ -52,7 +53,7 @@ class TmdbTrendingCarouselViewModel(
                         )
                     }
 
-                    CategoryType.TMDB_MOVIES -> TmdbClient.tmdb.trendingMovies(
+                    CategoryType.TMDB_MOVIES -> RateioApplication.instance.tmdbClient.tmdb.trendingMovies(
                         TmdbTimeWindow.WEEK.displayName.lowercase()
                     ).results.map { movie ->
                         RateItem(
@@ -80,8 +81,8 @@ class TmdbTrendingCarouselViewModel(
                                 cachedRating
                             else {
                                 val imdbId = if (category == CategoryType.TMDB_MOVIES)
-                                    TmdbClient.tmdb.getMovieExternalIds(item.externalId.toInt()).imdbId
-                                else TmdbClient.tmdb.getShowExternalIds(item.externalId.toInt()).imdbId
+                                    RateioApplication.instance.tmdbClient.tmdb.getMovieExternalIds(item.externalId.toInt()).imdbId
+                                else RateioApplication.instance.tmdbClient.tmdb.getShowExternalIds(item.externalId.toInt()).imdbId
                                 imdbRepository.linkImdbToTmdb(imdbId, item.externalId.toInt())
                                 imdbRepository.getRatingByImdbId(imdbId)
                             }

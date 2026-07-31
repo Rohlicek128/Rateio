@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
+import com.rohlicek.rateio.RateioApplication
 import com.rohlicek.rateio.data.CategoryRegistry
 import com.rohlicek.rateio.data.remote.tmdb.TmdbClient
 import com.rohlicek.rateio.data.remote.tmdb.TmdbPersonDetail
@@ -37,7 +38,7 @@ class TmdbPersonDetailViewModel(
         viewModelScope.launch {
             _state.update { it.copy(isLoading = true) }
             try {
-                val person = TmdbClient.tmdb.getPerson(id)
+                val person = RateioApplication.instance.tmdbClient.tmdb.getPerson(id)
                 _state.update { it.copy(person = person, isLoading = false) }
 
                 launch {

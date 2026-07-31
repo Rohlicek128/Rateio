@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
+import com.rohlicek.rateio.RateioApplication
 import com.rohlicek.rateio.data.CategoryRegistry
 import com.rohlicek.rateio.data.db.ImdbRatingEntity
 import com.rohlicek.rateio.data.remote.imdb.ImdbRatingRepository
@@ -87,7 +88,7 @@ class TmdbShowDetailViewModel(
         viewModelScope.launch {
             _state.update { it.copy(isLoading = true) }
             try {
-                val show = TmdbClient.tmdb.getShow(showId)
+                val show = RateioApplication.instance.tmdbClient.tmdb.getShow(showId)
                 _state.update { it.copy(show = show, isLoading = false) }
 
                 launch {
@@ -96,12 +97,12 @@ class TmdbShowDetailViewModel(
                 }
 
                 launch {
-                    val images = TmdbClient.tmdb.getShowImages(showId)
+                    val images = RateioApplication.instance.tmdbClient.tmdb.getShowImages(showId)
                     _state.update { it.copy(images = images) }
                 }
 
                 launch {
-                    val reviews = TmdbClient.tmdb.getShowReviews(showId)
+                    val reviews = RateioApplication.instance.tmdbClient.tmdb.getShowReviews(showId)
                     _state.update { it.copy(reviews = reviews) }
                 }
 
