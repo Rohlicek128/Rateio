@@ -1,8 +1,11 @@
 import java.util.Properties
+import java.io.FileInputStream
 
 val localProperties = Properties().apply {
-    val file = rootProject.file("local.properties")
-    if (file.exists()) file.inputStream().use { load(it) }
+    val localPropertiesFile = rootProject.file("local.properties")
+    if (localPropertiesFile.exists()) {
+        load(FileInputStream(localPropertiesFile))
+    }
 }
 
 
@@ -32,6 +35,15 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    signingConfigs {
+        create("release") {
+            storeFile = file(localProperties.getProperty("RELEASE_KEYSTORE_PATH") ?: "")
+            storePassword = localProperties.getProperty("RELEASE_KEYSTORE_PASSWORD")
+            keyAlias = localProperties.getProperty("RELEASE_KEY_ALIAS")
+            keyPassword = localProperties.getProperty("RELEASE_KEY_PASSWORD")
+        }
+    }
+
     buildTypes {
         debug {
             buildConfigField(
@@ -46,12 +58,13 @@ android {
                 "TMDB_API_KEY",
                 "\"${localProperties["TMDB_API_KEY"]}\""
             )
-
-            isMinifyEnabled = false
+            isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            signingConfig = signingConfigs.getByName("release")
         }
     }
     compileOptions {
@@ -61,6 +74,15 @@ android {
     buildFeatures {
         compose = true
         buildConfig = true
+    }
+}
+
+androidComponents {
+    onVariants { variant ->
+        variant.outputs.forEach { output ->
+            val versionName = android.defaultConfig.versionName ?: "1.0.0"
+            (output as? com.android.build.api.variant.impl.VariantOutputImpl)?.outputFileName?.set("Rateio-v${versionName}.apk")
+        }
     }
 }
 

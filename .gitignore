@@ -14,3 +14,15 @@
 .externalNativeBuild
 .cxx
 local.properties
+*.jks
+*.keystore
+*.p12
+*.apk
+*.aab
+output.json
+build/
+**/build/
+.gradle/
+**/captures/
+**/proguard/
+**/app/proguard-rules.pro.mapping

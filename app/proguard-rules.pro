@@ -19,3 +19,7 @@
 # If you keep the line number information, uncomment this to
 # hide the original source file name.
 #-renamesourcefileattribute SourceFile
+
+# Keep Gson / Retrofit models from being obfuscated in release build
+-keepclassmembers class com.rohlicek.rateio.** { *; }
+-keepattributes *Annotation*, Signature, InnerClasses
