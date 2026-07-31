@@ -32,7 +32,7 @@ class ImdbRatingRepository(private val dao: ImdbRatingDao) {
 
     suspend fun linkImdbToTmdb(imdbId: String?, tmdbId: Int?) {
         if (imdbId != null && tmdbId != null) {
-            dao.updateTmdbId(imdbId, tmdbId)
+            dao.linkImdbToTmdbTransaction(imdbId, tmdbId)
         }
     }
 

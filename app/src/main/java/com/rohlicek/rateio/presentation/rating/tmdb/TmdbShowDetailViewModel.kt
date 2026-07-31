@@ -93,7 +93,7 @@ class TmdbShowDetailViewModel(
 
                 launch {
                     imdbRepository.linkImdbToTmdb(show.externalIds?.imdbId, showId)
-                    _state.update { it.copy(imdbRating = imdbRepository.getRatingByImdbId(show.externalIds?.imdbId)) }
+                    _state.update { it.copy(imdbRating = imdbRepository.getRatingByTmdbId(showId)) }
                 }
 
                 launch {

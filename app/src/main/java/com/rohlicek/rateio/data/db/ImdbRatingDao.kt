@@ -46,6 +46,15 @@ interface ImdbRatingDao {
     @Query("UPDATE imdb_ratings SET tmdbId = :tmdbId WHERE tconst = :tconst")
     suspend fun updateTmdbId(tconst: String, tmdbId: Int)
 
+    @Query("UPDATE imdb_ratings SET tmdbId = NULL WHERE tmdbId = :tmdbId")
+    suspend fun clearTmdbId(tmdbId: Int)
+
+    @Transaction
+    suspend fun linkImdbToTmdbTransaction(imdbId: String, tmdbId: Int) {
+        clearTmdbId(tmdbId)
+        updateTmdbId(imdbId, tmdbId)
+    }
+
 
     @Query("DELETE FROM imdb_ratings")
     suspend fun clearAllRatings()
