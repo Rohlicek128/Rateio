@@ -18,10 +18,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.material3.ListItemColors
+import androidx.compose.material3.ListItemDefaults
+import androidx.compose.material3.LocalContentColor
+import androidx.compose.runtime.CompositionLocalProvider
 
 
 @Composable
@@ -37,7 +40,7 @@ fun ItemCard(
     supportingContent: @Composable (() -> Unit)? = null,
     leadingContent: @Composable (RowScope.() -> Unit)? = null,
     trailingContent: @Composable (RowScope.() -> Unit)? = null,
-    containerColor: Color = MaterialTheme.colorScheme.surface,
+    colors: ListItemColors = ListItemDefaults.colors(),
     onClick: (() -> Unit)? = null,
 ) {
     Surface(
@@ -47,14 +50,12 @@ fun ItemCard(
             .then(
                 if (onClick != null) {
                     Modifier.clickable(onClick = onClick)
-                }
-                else Modifier
+                } else Modifier
             ),
         shape = shape,
-        color = containerColor,
+        color = colors.containerColor,
         tonalElevation = tonalElevation,
     ) {
-
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -63,7 +64,9 @@ fun ItemCard(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             if (leadingContent != null) {
-                leadingContent()
+                CompositionLocalProvider(LocalContentColor provides colors.leadingIconColor) {
+                    leadingContent()
+                }
             }
 
             Column(
@@ -78,28 +81,37 @@ fun ItemCard(
                         modifier = Modifier.weight(1f)
                     ) {
                         if (overlineContent != null) {
-                            overlineContent()
+                            CompositionLocalProvider(LocalContentColor provides colors.overlineColor) {
+                                overlineContent()
+                            }
                         }
                         if (headlineContent != null) {
-                            headlineContent()
+                            CompositionLocalProvider(LocalContentColor provides colors.headlineColor) {
+                                headlineContent()
+                            }
                         }
                         if (subtitleContent != null) {
-                            subtitleContent()
+                            CompositionLocalProvider(LocalContentColor provides colors.supportingTextColor) {
+                                subtitleContent()
+                            }
                         }
                     }
 
                     if (trailingContent != null) {
                         Spacer(modifier = Modifier.width(6.dp))
 
-                        trailingContent()
+                        CompositionLocalProvider(LocalContentColor provides colors.trailingIconColor) {
+                            trailingContent()
+                        }
                     }
                 }
 
                 if (supportingContent != null) {
-                    supportingContent()
+                    CompositionLocalProvider(LocalContentColor provides colors.supportingTextColor) {
+                        supportingContent()
+                    }
                 }
             }
         }
-
     }
 }

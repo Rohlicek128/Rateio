@@ -1,9 +1,14 @@
 package com.rohlicek.rateio.model
 
+import androidx.annotation.Keep
+import kotlinx.serialization.Serializable
+
 interface HasDisplayName {
     val displayName: String
 }
 
+@Keep
+@Serializable
 enum class CategoryType(override val displayName: String): HasDisplayName {
     TMDB_SHOWS("Shows"),
     TMDB_SEASONS("Seasons"),

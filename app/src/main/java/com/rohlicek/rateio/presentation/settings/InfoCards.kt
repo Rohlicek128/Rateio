@@ -6,6 +6,7 @@ import androidx.compose.material.icons.filled.Error
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material.icons.outlined.Info
+import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -25,10 +26,11 @@ fun ErrorCard(
         boldTitle = true,
         description = description,
         icon = Icons.Default.Error,
-        containerColor = if (darker) MaterialTheme.colorScheme.onError
-            else MaterialTheme.colorScheme.errorContainer,
-        contentColor = MaterialTheme.colorScheme.onErrorContainer,
-        subtitleColor = MaterialTheme.colorScheme.onErrorContainer,
+        colors = ListItemDefaults.colors().copy(
+            containerColor = if (darker) MaterialTheme.colorScheme.onError else MaterialTheme.colorScheme.errorContainer,
+            contentColor = MaterialTheme.colorScheme.onErrorContainer,
+            supportingContentColor = MaterialTheme.colorScheme.onErrorContainer,
+        ),
     )
 }
 
@@ -44,9 +46,11 @@ fun WarningCard(
         boldTitle = true,
         description = description,
         icon = Icons.Default.Warning,
-        containerColor = MaterialTheme.colorScheme.errorContainer,
-        contentColor = MaterialTheme.colorScheme.onErrorContainer,
-        subtitleColor = MaterialTheme.colorScheme.onErrorContainer,
+        colors = ListItemDefaults.colors().copy(
+            containerColor = MaterialTheme.colorScheme.errorContainer,
+            contentColor = MaterialTheme.colorScheme.onErrorContainer,
+            supportingContentColor = MaterialTheme.colorScheme.onErrorContainer,
+        ),
     )
 }
 
@@ -63,7 +67,9 @@ fun InfoCard(
         titleStyle = MaterialTheme.typography.titleSmall,
         descriptionStyle = MaterialTheme.typography.bodySmall,
         icon = Icons.Outlined.Info,
-        containerColor = MaterialTheme.colorScheme.primaryFixed,
-        contentColor = MaterialTheme.colorScheme.primary,
+        colors = ListItemDefaults.colors().copy(
+            containerColor = MaterialTheme.colorScheme.primaryFixed,
+            contentColor = MaterialTheme.colorScheme.primary,
+        ),
     )
 }

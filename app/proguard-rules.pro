@@ -23,3 +23,18 @@
 # Keep Gson / Retrofit models from being obfuscated in release build
 -keepclassmembers class com.rohlicek.rateio.** { *; }
 -keepattributes *Annotation*, Signature, InnerClasses
+
+# Keep all Kotlinx Serialization classes & Enums used in Navigation routes
+-keepattributes *Annotation*, Signature, InnerClasses, EnclosingMethod
+-keep class com.rohlicek.rateio.model.** { *; }
+-keep class com.rohlicek.rateio.navigation.** { *; }
+-keepclassmembers enum * {
+    public static **[] values();
+    public static ** valueOf(java.lang.String);
+}
+-keepclassmembers class * {
+    *** Companion;
+}
+-keepclasseswithmembers class * {
+    kotlinx.serialization.KSerializer serializer();
+}

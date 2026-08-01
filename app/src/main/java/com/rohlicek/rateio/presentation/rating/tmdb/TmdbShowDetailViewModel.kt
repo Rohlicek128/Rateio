@@ -10,6 +10,7 @@ import com.rohlicek.rateio.data.CategoryRegistry
 import com.rohlicek.rateio.data.db.ImdbRatingEntity
 import com.rohlicek.rateio.data.remote.imdb.ImdbRatingRepository
 import com.rohlicek.rateio.data.remote.tmdb.TmdbClient
+import com.rohlicek.rateio.data.remote.tmdb.TmdbEpisodeGroup
 import com.rohlicek.rateio.data.remote.tmdb.TmdbImageResponse
 import com.rohlicek.rateio.data.remote.tmdb.TmdbReviews
 import com.rohlicek.rateio.data.remote.tmdb.TmdbShowDetail
@@ -63,8 +64,11 @@ data class TmdbShowDetailState(
     val reviews: TmdbReviews? = null,
     val savedItem: RateItem? = null,
 
-    val selectedTab: ShowTabs = ShowTabs.EPISODES,
+    val selectedGroupId: String? = null,
+    val episodeGroups: List<TmdbEpisodeGroup> = emptyList(),
 
+    val selectedTab: ShowTabs = ShowTabs.EPISODES,
+    val selectedRatingSource: RatingsSource = RatingsSource.IMDB,
     val selectedDisplayMode: DisplayMode = DisplayMode.LIST,
     val selectedSortMode: SortModeShow = SortModeShow.SEASON,
     val selectedSortOrder: SortOrder = SortOrder.DESCENDING,
@@ -80,6 +84,7 @@ class TmdbShowDetailViewModel(
     private val categoryRepository: CategoryRepository,
     private val itemRepository: RateItemRepository,
     private val imdbRepository: ImdbRatingRepository,
+    isSaved: Boolean,
 ) : ViewModel() {
     private val _state = MutableStateFlow(TmdbShowDetailState())
     val state: StateFlow<TmdbShowDetailState> = _state.asStateFlow()
@@ -89,7 +94,11 @@ class TmdbShowDetailViewModel(
             _state.update { it.copy(isLoading = true) }
             try {
                 val show = RateioApplication.instance.tmdbClient.tmdb.getShow(showId)
-                _state.update { it.copy(show = show, isLoading = false) }
+                _state.update { it.copy(
+                    show = show,
+                    isLoading = false,
+                    selectedRatingSource = if (!isSaved) RatingsSource.IMDB else RatingsSource.USER
+                ) }
 
                 launch {
                     imdbRepository.linkImdbToTmdb(show.externalIds?.imdbId, showId)
@@ -104,6 +113,12 @@ class TmdbShowDetailViewModel(
                 launch {
                     val reviews = RateioApplication.instance.tmdbClient.tmdb.getShowReviews(showId)
                     _state.update { it.copy(reviews = reviews) }
+                }
+
+                launch {
+                    val groups = RateioApplication.instance.tmdbClient.tmdb.getEpisodeGroups(showId)
+                        .results.sortedBy { it.type }
+                    _state.update { it.copy(episodeGroups = groups) }
                 }
 
                 launch {
@@ -140,6 +155,28 @@ class TmdbShowDetailViewModel(
             initialValue = emptyMap()
         )
 
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val userRatingsByIdState: StateFlow<Map<Int, Float?>> = state
+        .map { it.savedItem?.id }
+        .distinctUntilChanged()
+        .flatMapLatest { id ->
+            if (id == null) {
+                flowOf(emptyMap())
+            } else {
+                itemRepository.observeChildrenExternalIdToRatings(id)
+                    .map { ratingMap ->
+                        ratingMap.mapNotNull { (key, value) ->
+                            key.toIntOrNull()?.let { intKey -> intKey to value }
+                        }.toMap()
+                    }
+            }
+        }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = emptyMap()
+        )
+
 
     fun onToggleSaved(show: TmdbShowDetail) {
         viewModelScope.launch {
@@ -164,17 +201,16 @@ class TmdbShowDetailViewModel(
         }
     }
 
-    fun updateSavedItem() {
-        if (_state.value.savedItem != null) {
-            viewModelScope.launch {
-                val item = itemRepository.getById(_state.value.savedItem!!.id)
-                _state.update { it.copy(savedItem = item) }
-            }
-        }
+    fun onGroupSelect(groupId: String?) {
+        _state.update { it.copy(selectedGroupId = groupId) }
     }
 
     fun onTabSelect(tab: ShowTabs) {
         _state.update { it.copy(selectedTab = tab) }
+    }
+
+    fun onRatingSourceSelect(source: RatingsSource) {
+        _state.update { it.copy(selectedRatingSource = source) }
     }
 
     fun onDisplayModeSelect(selectedMode: DisplayMode) {
@@ -190,8 +226,8 @@ class TmdbShowDetailViewModel(
     }
 
     companion object {
-        fun factory(showId: Int, categoryRepository: CategoryRepository, itemRepository: RateItemRepository, imdbRepository: ImdbRatingRepository) = viewModelFactory {
-            initializer { TmdbShowDetailViewModel(showId, categoryRepository, itemRepository, imdbRepository) }
+        fun factory(showId: Int, categoryRepository: CategoryRepository, itemRepository: RateItemRepository, imdbRepository: ImdbRatingRepository, isSaved: Boolean) = viewModelFactory {
+            initializer { TmdbShowDetailViewModel(showId, categoryRepository, itemRepository, imdbRepository, isSaved) }
         }
     }
 }

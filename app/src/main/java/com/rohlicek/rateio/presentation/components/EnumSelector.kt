@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -63,22 +64,15 @@ enum class SortOrder(override val displayName: String) : HasDisplayName {
 
 
 @Composable
-inline fun <reified T : Enum<T>> ModalEnumMultiSelector(
+fun ModalSelector(
     modifier: Modifier = Modifier,
     title: String,
-    selectedOptions: List<T>,
-    crossinline onOptionSelected: (T) -> Unit,
-    noinline onDismiss: () -> Unit,
-    separatedOptions: List<T> = emptyList(),
-    onClickDismiss: Boolean = false,
+    onDismiss: () -> Unit,
     maxHeightFraction: Float = 0.55f,
     skipPartiallyExpanded: Boolean = false,
-    noinline headerContent: (@Composable (ColumnScope.() -> Unit))? = null,
+    headerContent: (@Composable (ColumnScope.() -> Unit))? = null,
+    content: LazyListScope.() -> Unit,
 ) {
-    val haptic = LocalHapticFeedback.current
-
-    val options = enumValues<T>()
-
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = skipPartiallyExpanded),
@@ -106,35 +100,64 @@ inline fun <reified T : Enum<T>> ModalEnumMultiSelector(
                     )),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                items(options.filter { it !in separatedOptions }, key = { it }) { option ->
-                    EnumListItem(
-                        option = option,
-                        selected = option in selectedOptions,
-                        onClick = {
-                            haptic.performHapticFeedback(HapticFeedbackType.Confirm)
-                            onOptionSelected(option)
-                            if (onClickDismiss) onDismiss()
-                        },
-                    )
-                }
-
-                item { Spacer(modifier = Modifier.height(6.dp)) }
-
-                items(options.filter { it in separatedOptions }, key = { it }) { option ->
-                    EnumListItem(
-                        option = option,
-                        selected = option in selectedOptions,
-                        onClick = {
-                            haptic.performHapticFeedback(HapticFeedbackType.Confirm)
-                            onOptionSelected(option)
-                            if (onClickDismiss) onDismiss()
-                        },
-                        paddingValues = PaddingValues(horizontal = 16.dp, vertical = 12.dp)
-                    )
-                }
+                content()
 
                 item { Spacer(modifier = Modifier.height(50.dp)) }
             }
+        }
+    }
+}
+
+@Composable
+inline fun <reified T : Enum<T>> ModalEnumMultiSelector(
+    modifier: Modifier = Modifier,
+    title: String,
+    selectedOptions: List<T>,
+    crossinline onOptionSelected: (T) -> Unit,
+    noinline onDismiss: () -> Unit,
+    separatedOptions: List<T> = emptyList(),
+    onClickDismiss: Boolean = false,
+    maxHeightFraction: Float = 0.55f,
+    skipPartiallyExpanded: Boolean = false,
+    noinline headerContent: (@Composable (ColumnScope.() -> Unit))? = null,
+) {
+    val haptic = LocalHapticFeedback.current
+
+    val options = enumValues<T>()
+
+    ModalSelector(
+        modifier = modifier,
+        title = title,
+        onDismiss = onDismiss,
+        maxHeightFraction = maxHeightFraction,
+        skipPartiallyExpanded = skipPartiallyExpanded,
+        headerContent = headerContent,
+    ) {
+        items(options.filter { it !in separatedOptions }, key = { it }) { option ->
+            EnumListItem(
+                option = option,
+                selected = option in selectedOptions,
+                onClick = {
+                    haptic.performHapticFeedback(HapticFeedbackType.Confirm)
+                    onOptionSelected(option)
+                    if (onClickDismiss) onDismiss()
+                },
+            )
+        }
+
+        item { Spacer(modifier = Modifier.height(6.dp)) }
+
+        items(options.filter { it in separatedOptions }, key = { it }) { option ->
+            EnumListItem(
+                option = option,
+                selected = option in selectedOptions,
+                onClick = {
+                    haptic.performHapticFeedback(HapticFeedbackType.Confirm)
+                    onOptionSelected(option)
+                    if (onClickDismiss) onDismiss()
+                },
+                paddingValues = PaddingValues(horizontal = 16.dp, vertical = 12.dp)
+            )
         }
     }
 }

@@ -29,8 +29,8 @@ android {
         applicationId = "com.rohlicek.rateio"
         minSdk = 35
         targetSdk = 36
-        versionCode = 1
-        versionName = "0.1.0"
+        versionCode = 2
+        versionName = "0.1.1"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -81,7 +81,7 @@ androidComponents {
     onVariants { variant ->
         variant.outputs.forEach { output ->
             val versionName = android.defaultConfig.versionName ?: "1.0.0"
-            (output as? com.android.build.api.variant.impl.VariantOutputImpl)?.outputFileName?.set("Rateio-v${versionName}.apk")
+            (output as? com.android.build.api.variant.impl.VariantOutputImpl)?.outputFileName?.set("Rateio-v${versionName}-alpha.apk")
         }
     }
 }

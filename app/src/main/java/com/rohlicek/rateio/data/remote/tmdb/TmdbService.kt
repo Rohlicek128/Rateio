@@ -114,6 +114,17 @@ interface TmdbService {
     ): TmdbExternalIds
 
 
+    @GET("tv/{showId}/episode_groups")
+    suspend fun getEpisodeGroups(
+        @Path("showId") showId: Int,
+    ): TmdbEpisodeGroupsResponse
+
+    @GET("tv/episode_group/{groupId}")
+    suspend fun getEpisodeGroup(
+        @Path("groupId") groupId: String,
+    ): TmdbEpisodeGroupResponse
+
+
 
     // Movies
     @GET("search/movie")

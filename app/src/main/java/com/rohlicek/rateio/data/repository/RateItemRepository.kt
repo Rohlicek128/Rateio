@@ -47,6 +47,15 @@ class RateItemRepository(private val dao: RateItemDao) {
         }
     }
 
+    fun observeChildrenExternalIdToRatings(parentId: Long?): Flow<Map<String, Float?>> {
+        if (parentId == null) return emptyFlow()
+        return dao.observeGrandchildren(parentId).map { entities ->
+            entities.mapNotNull { entity ->
+                if (entity.externalId != null) entity.externalId to entity.rating else null
+            }.toMap()
+        }
+    }
+
     fun observeGrandchildrenByChildren(id: Long?): Flow<Map<String?, Map<String?, RateItem>>> {
         if (id == null) return emptyFlow()
         return dao.observeGrandchildren(id).map { entities ->

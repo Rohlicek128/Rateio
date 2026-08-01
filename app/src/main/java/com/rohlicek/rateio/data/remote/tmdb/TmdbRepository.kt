@@ -37,7 +37,9 @@ class TmdbRepository {
             .map { seasonNumber ->
                 async {
                     runCatching {
-                        seasonNumber to RateioApplication.instance.tmdbClient.tmdb.getSeason(showId, seasonNumber).episodes
+                        seasonNumber to RateioApplication.instance.tmdbClient.tmdb.getSeason(showId, seasonNumber)
+                            .episodes
+                            .sortedBy { it.episodeNumber }
                     }.getOrElse { e ->
                         Log.e("TmdbRepository", "Failed season $seasonNumber: ${e.message}")
                         null
@@ -47,5 +49,19 @@ class TmdbRepository {
             .awaitAll()
             .filterNotNull()
             .toMap()
+    }
+
+    suspend fun getEpisodeGroup(groupId: String): Map<Int, List<TmdbEpisodeSummary>> = coroutineScope {
+        runCatching {
+            RateioApplication.instance.tmdbClient.tmdb.getEpisodeGroup(groupId).groups
+        }.getOrElse { e ->
+            Log.e("TmdbRepository", "Failed $groupId: ${e.message}")
+            null
+        }
+            ?.filter { it.order != null && it.order > 0 }
+            ?.sortedBy { it.order }
+            ?.associate { it.order!! to it.episodes }
+            ?.mapValues { it.value?.sortedBy { episode -> episode.order }?.map { episode -> episode.toEpisodeSummary() } ?: emptyList() }
+            ?: emptyMap()
     }
 }

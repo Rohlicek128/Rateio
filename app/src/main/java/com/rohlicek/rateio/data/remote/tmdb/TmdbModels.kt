@@ -164,6 +164,67 @@ data class TmdbImage(
     @SerializedName("vote_count") val voteCount: Int,
 )
 
+data class TmdbNetwork(
+    @SerializedName("id") val id: Int,
+    @SerializedName("name") val name: String?,
+    @SerializedName("logo_path") val logoPath: String?,
+    @SerializedName("origin_country") val originCountry: String?,
+)
+
+data class TmdbEpisodeGroupsResponse(
+    @SerializedName("id") val showId: Int,
+    @SerializedName("results") val results: List<TmdbEpisodeGroup>,
+)
+
+data class TmdbEpisodeGroup(
+    @SerializedName("id") val id: String,
+    @SerializedName("name") val name: String?,
+    @SerializedName("description") val description: String?,
+    @SerializedName("type") val type: Int?,
+
+    @SerializedName("episode_count") val episodeCount: Int?,
+    @SerializedName("group_count") val seasonCount: Int?,
+    @SerializedName("network") val network: TmdbNetwork?,
+)
+
+data class TmdbEpisodeGroupResponse(
+    @SerializedName("id") val id: String,
+    @SerializedName("name") val name: String?,
+    @SerializedName("description") val description: String?,
+    @SerializedName("type") val type: Int?,
+
+    @SerializedName("episode_count") val episodeCount: Int?,
+    @SerializedName("group_count") val seasonCount: Int?,
+    @SerializedName("network") val network: TmdbNetwork?,
+
+    @SerializedName("groups") val groups: List<TmdbEpisodeGroupDetails>?,
+)
+data class TmdbEpisodeGroupDetails(
+    @SerializedName("id") val id: String,
+    @SerializedName("name") val name: String?,
+    @SerializedName("order") val order: Int?,
+    @SerializedName("episodes") val episodes: List<TmdbEpisodeGroupEpisode>?,
+)
+data class TmdbEpisodeGroupEpisode(
+    @SerializedName("id") val id: Int,
+    @SerializedName("name") val name: String,
+    @SerializedName("overview") val overview: String?,
+    @SerializedName("still_path") val stillPath: String?,
+    @SerializedName("air_date") val airDate: String?,
+    @SerializedName("runtime") val runtime: Int,
+
+    @SerializedName("episode_number") val episodeNumber: Int,
+    @SerializedName("season_number") val seasonNumber: Int,
+    @SerializedName("production_code") val productionCode: String?,
+
+    @SerializedName("vote_average") val voteAverage: Float?,
+    @SerializedName("vote_count") val voteCount: Int?,
+    @SerializedName("order") val order: Int?,
+) {
+    override fun equals(other: Any?) = other is TmdbEpisodeGroupEpisode && other.id == id
+    override fun hashCode() = id.hashCode()
+}
+
 
 
 data class TmdbMovieSearchResponse(
@@ -296,6 +357,20 @@ data class TmdbEpisodeMetadata(
     val runtime: Int? = null,
     val imdbId: String? = null, // Deprecated
 )
+
+fun TmdbEpisodeGroupEpisode.toEpisodeSummary() = TmdbEpisodeSummary(
+    id = id,
+    name = name,
+    overview = overview,
+    seasonNumber = seasonNumber,
+    episodeNumber = episodeNumber,
+    runtime = runtime,
+    stillPath = stillPath,
+    airDate = airDate,
+    voteAverage = voteAverage,
+    voteCount = voteCount,
+)
+
 
 fun TmdbShow.toRateItem(categoryId: Long = 0, weight: Float = 1f) = RateItem(
     id = 0,

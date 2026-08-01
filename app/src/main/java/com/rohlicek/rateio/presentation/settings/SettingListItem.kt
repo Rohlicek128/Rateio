@@ -28,6 +28,9 @@ import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
+import androidx.compose.material3.ListItemColors
+import androidx.compose.material3.ListItemDefaults
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
@@ -66,9 +69,10 @@ fun SettingListItem(
     icon: ImageVector? = null,
     iconContentColor: Color? = null,
     iconContainerColor: Color? = null,
-    containerColor: Color = MaterialTheme.colorScheme.surfaceContainer,
-    contentColor: Color = MaterialTheme.colorScheme.onSurface,
-    subtitleColor: Color = MaterialTheme.colorScheme.onSurfaceVariant,
+    colors: ListItemColors = ListItemDefaults.colors(),
+    //containerColor: Color = MaterialTheme.colorScheme.surfaceContainer,
+    //contentColor: Color = MaterialTheme.colorScheme.onSurface,
+    //subtitleColor: Color = MaterialTheme.colorScheme.onSurfaceVariant,
     titleStyle: TextStyle = MaterialTheme.typography.titleMediumEmphasized,
     descriptionStyle: TextStyle = MaterialTheme.typography.bodyMedium,
     supportingContent: @Composable (() -> Unit)? = null,
@@ -99,7 +103,7 @@ fun SettingListItem(
     ItemCard(
         modifier = modifier,
         shape = shape,
-        containerColor = containerColor,
+        colors = colors,
         leadingPadding = if (icon != null) 4.dp else 0.dp,
         onClick = if (onClick != null) {
             {
@@ -112,7 +116,6 @@ fun SettingListItem(
                 title,
                 style = titleStyle,
                 fontWeight = if (boldTitle) FontWeight.Bold else FontWeight.SemiBold,
-                color = contentColor,
             )
         },
         subtitleContent = if (description != null) {
@@ -120,14 +123,13 @@ fun SettingListItem(
                 Text(
                     description,
                     style = descriptionStyle,
-                    color = subtitleColor,
                 )
             }
         } else null,
         supportingContent = supportingContent,
         leadingContent = if (icon != null) {
             {
-                val iconTint = iconContentColor ?: contentColor
+                val iconTint = iconContentColor ?: LocalContentColor.current
                 if (iconContainerColor == null) {
                     Icon(icon, null, tint = iconTint)
                 }
@@ -160,7 +162,6 @@ fun SettingListItem(
                     modifier = Modifier.padding(end = 4.dp),
                     imageVector = Icons.AutoMirrored.Filled.NavigateNext,
                     contentDescription = null,
-                    tint = contentColor,
                 )
             }
             else trailingContent?.invoke()
@@ -384,21 +385,10 @@ fun SettingsSelectedEnums(
         //horizontalArrangement = Arrangement.spacedBy(4.dp),
     ) {
         names.forEach {
-            Card(
+            SettingsSelectedEnum(
                 modifier = Modifier.padding(horizontal = 2.dp, vertical = 2.dp),
-                shape = MaterialTheme.shapes.extraLarge,
-                colors = CardDefaults.cardColors().copy(
-                    containerColor = MaterialTheme.colorScheme.surfaceContainerLowest,
-                    contentColor = MaterialTheme.colorScheme.onSurface,
-                )
-            ) {
-                Text(
-                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 2.dp),
-                    text = it,
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.Bold
-                )
-            }
+                name = it
+            )
         }
     }
 }

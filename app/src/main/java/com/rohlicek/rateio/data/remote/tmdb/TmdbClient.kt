@@ -18,7 +18,7 @@ class TmdbClient(private val preferences: SyncPreferences) {
 
         val savedToken = runBlocking {
             preferences.tmdbApiToken.first()
-        }.ifBlank { BuildConfig.TMDB_API_KEY }
+        } //.ifBlank { BuildConfig.TMDB_API_KEY }
 
         val requestBuilder = originalRequest.newBuilder()
             .header("accept", "application/json")

@@ -24,7 +24,7 @@ import kotlinx.coroutines.sync.withPermit
 
 data class TmdbEpisodesState(
     val seasonEpisodes: Map<Int, List<TmdbEpisodeSummary>> = emptyMap(),
-    val imdbRatings: Map<Int, Map<Int, Float?>> = emptyMap(),
+    val imdbRatings: Map<Int, Float?> = emptyMap(),
     val isLoadingEpisodes: Boolean = false,
     val isLoadingRatings: Boolean = true,
     val error: String? = null,
@@ -33,6 +33,7 @@ data class TmdbEpisodesState(
 class TmdbEpisodesViewModel(
     private val showId: Int,
     private val seasonNumbers: List<Int>,
+    private val groupId: String?,
     fetchRatings: Boolean,
     private val imdbRepository: ImdbRatingRepository,
 ) : ViewModel() {
@@ -46,7 +47,8 @@ class TmdbEpisodesViewModel(
         viewModelScope.launch {
             _state.update { it.copy(isLoadingEpisodes = true) }
             try {
-                val episodes = repository.getAllEpisodes(showId, seasonNumbers)
+                val episodes = if (groupId != null) repository.getEpisodeGroup(groupId)
+                else repository.getAllEpisodes(showId, seasonNumbers)
                 _state.update { it.copy(seasonEpisodes = episodes, isLoadingEpisodes = false) }
             } catch (e: Exception) {
                 _state.update { it.copy(error = e.message, isLoadingEpisodes = false) }
@@ -65,22 +67,20 @@ class TmdbEpisodesViewModel(
             val episodeIdsBySeason = _state.value.seasonEpisodes.mapValues { episodes -> episodes.value.map { it.id } }
 
             _state.update { currentState ->
-                val initialRatings = episodeIdsBySeason.mapValues { emptyMap<Int, Float?>() }
-                currentState.copy(imdbRatings = initialRatings, isLoadingRatings = true)
+                currentState.copy(imdbRatings = emptyMap(), isLoadingRatings = true)
             }
 
             episodeIdsBySeason.forEach { (seasonNum, episodeIds) ->
-                val seasonRatings: Map<Int, Float?> = coroutineScope {
+                val seasonRatingsMap: Map<Int, Float?> = coroutineScope {
                     episodeIds.mapIndexed { index, tmdbId ->
                         val epNum = index + 1
                         async {
                             networkSemaphore.withPermit {
-                                try {
+                                val ratingValue = try {
                                     val cachedRating = imdbRepository.getRatingByTmdbId(tmdbId)
                                     if (cachedRating != null) {
-                                        epNum to cachedRating.averageRating
-                                    }
-                                    else {
+                                        cachedRating.averageRating
+                                    } else {
                                         val imdbId = RateioApplication.instance.tmdbClient.tmdb.getEpisodeExternalIds(
                                             showId = showId,
                                             seasonNumber = seasonNum,
@@ -93,11 +93,13 @@ class TmdbEpisodesViewModel(
 
                                         imdbRepository.linkImdbToTmdb(imdbId, tmdbId)
 
-                                        epNum to rating?.averageRating
+                                        rating?.averageRating
                                     }
                                 } catch (_: Exception) {
-                                    epNum to null
+                                    null
                                 }
+
+                                tmdbId to ratingValue
                             }
                         }
                     }
@@ -105,24 +107,21 @@ class TmdbEpisodesViewModel(
                         .toMap()
                 }
 
-                updateSeasonRatings(seasonNum, seasonRatings)
+                // Progressive merge
+                _state.update { currentState ->
+                    currentState.copy(
+                        imdbRatings = currentState.imdbRatings + seasonRatingsMap
+                    )
+                }
             }
 
             _state.update { it.copy(isLoadingRatings = false) }
         }
     }
 
-    private fun updateSeasonRatings(season: Int, ratings: Map<Int, Float?>) {
-        _state.update { currentState ->
-            val updatedRatings = currentState.imdbRatings.toMutableMap()
-            updatedRatings[season] = ratings
-            currentState.copy(imdbRatings = updatedRatings)
-        }
-    }
-
     companion object {
-        fun factory(showId: Int, seasonNumbers: List<Int>, fetchRatings: Boolean, imdbRepository: ImdbRatingRepository) = viewModelFactory {
-            initializer { TmdbEpisodesViewModel(showId, seasonNumbers, fetchRatings, imdbRepository) }
+        fun factory(showId: Int, seasonNumbers: List<Int>, groupId: String?, fetchRatings: Boolean, imdbRepository: ImdbRatingRepository) = viewModelFactory {
+            initializer { TmdbEpisodesViewModel(showId, seasonNumbers, groupId, fetchRatings, imdbRepository) }
         }
     }
 }

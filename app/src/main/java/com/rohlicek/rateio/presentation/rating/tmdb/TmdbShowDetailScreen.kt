@@ -34,6 +34,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalContext
@@ -46,6 +47,7 @@ import com.rohlicek.rateio.data.CategoryRegistry
 import com.rohlicek.rateio.data.db.RateioDatabase
 import com.rohlicek.rateio.data.remote.imdb.ImdbRatingRepository
 import com.rohlicek.rateio.data.remote.tmdb.TmdbEpisodeMetadata
+import com.rohlicek.rateio.data.remote.tmdb.TmdbSeason
 import com.rohlicek.rateio.data.remote.tmdb.TmdbShowMetadata
 import com.rohlicek.rateio.data.remote.tmdb.toCarouselImage
 import com.rohlicek.rateio.data.repository.CategoryRepository
@@ -66,6 +68,8 @@ import com.rohlicek.rateio.presentation.components.ImageSize
 import com.rohlicek.rateio.presentation.components.statistics.ExternalRatingStatCard
 import com.rohlicek.rateio.presentation.components.statistics.ItemStatCard
 import com.rohlicek.rateio.presentation.components.ModalEnumSelector
+import com.rohlicek.rateio.presentation.components.ModalEpisodeGroupsSelector
+import com.rohlicek.rateio.presentation.components.OrderButton
 import com.rohlicek.rateio.presentation.components.PersonCard
 import com.rohlicek.rateio.presentation.components.RateItemCard
 import com.rohlicek.rateio.presentation.components.ReviewCard
@@ -127,7 +131,7 @@ fun TmdbShowDetailScreen(
     }
 
     val viewModel: TmdbShowDetailViewModel = viewModel(
-        factory = TmdbShowDetailViewModel.factory(showId, categoryRepository, itemRepository, imdbRepository)
+        factory = TmdbShowDetailViewModel.factory(showId, categoryRepository, itemRepository, imdbRepository, isSaved)
     )
     val state by viewModel.state.collectAsState()
 
@@ -152,21 +156,21 @@ fun TmdbShowDetailScreen(
 
             val seasons = show.seasons.filter { it.seasonNumber > 0 }.sortedBy { it.seasonNumber }
             val episodesViewModel: TmdbEpisodesViewModel = viewModel(
+                key = state.selectedGroupId,
                 factory = TmdbEpisodesViewModel.factory(
                     showId = showId,
                     seasonNumbers = seasons.map { it.seasonNumber },
+                    groupId = state.selectedGroupId,
                     fetchRatings = !isSaved,
                     imdbRepository = imdbRepository,
                 )
             )
             val episodesState by episodesViewModel.state.collectAsState()
 
-            var selectedRatings by remember { mutableStateOf(if (!isSaved) RatingsSource.IMDB else RatingsSource.USER) }
-
-            val userRatings = viewModel.userRatingsState.collectAsStateWithLifecycle()
-            val listOfRatings by remember(userRatings.value) {
+            val userRatings = viewModel.userRatingsByIdState.collectAsStateWithLifecycle()
+            val listOfRatings: List<Float> by remember(userRatings.value) {
                 derivedStateOf {
-                    userRatings.value.values.flatMap { it.values }.filterNotNull()
+                    userRatings.value.map { it.value }.filterNotNull()
                 }
             }
             if (onWeightSaved != null) {
@@ -175,12 +179,14 @@ fun TmdbShowDetailScreen(
                 }
             }
 
-            val ratings: Map<Int, Map<Int, Float?>> = remember(userRatings.value, selectedRatings, episodesState) {
-                when (selectedRatings) {
+            val ratings: Map<Int, Float?> = remember(userRatings.value, state.selectedRatingSource, episodesState) {
+                when (state.selectedRatingSource) {
                     RatingsSource.IMDB -> episodesState.imdbRatings
-                    RatingsSource.TMDB -> episodesState.seasonEpisodes.mapValues { (_, episodes) ->
-                        episodes.associate { it -> it.episodeNumber to it.voteAverage?.div(10f).takeIf { it != 0f } }
-                    }
+                    RatingsSource.TMDB -> episodesState.seasonEpisodes
+                        .flatMap { it.value }
+                        .associate {
+                            it.id to it.voteAverage?.div(10f).takeIf { rating -> rating != 0f }
+                        }
                     RatingsSource.USER -> userRatings.value
                 }
             }
@@ -188,7 +194,7 @@ fun TmdbShowDetailScreen(
             val childrenGroups: Map<RateItem?, List<RateItem>> = remember(ratings, episodesState.seasonEpisodes, state.savedItem) {
                 episodesState.seasonEpisodes.entries
                     .associate { (seasonNumber, episodes) ->
-                        val items = episodes.sortedBy { it.episodeNumber }.map { episode ->
+                        val items = episodes.map { episode ->
                             RateItem(
                                 id = -1,
                                 parentId = seasonNumber.toLong(),
@@ -196,7 +202,7 @@ fun TmdbShowDetailScreen(
                                 title = episode.name,
                                 subtitle = "Season ${episode.seasonNumber}, Episode ${episode.episodeNumber}",
                                 length = if (episode.runtime > 0) episode.runtime.toFloat() else null,
-                                rating = ratings[episode.seasonNumber]?.get(episode.episodeNumber),
+                                rating = ratings[episode.id],
                                 coverImageUrl = episode.stillPath?.let { "https://image.tmdb.org/t/p/original$it" } ?: "",
                                 coverImageLowUrl = episode.stillPath?.let { "https://image.tmdb.org/t/p/w300$it" } ?: "",
                                 externalId = episode.id.toString(),
@@ -209,17 +215,29 @@ fun TmdbShowDetailScreen(
                                 ))
                             )
                         }
-                        val season = seasons[seasonNumber - 1]
+                        val season = if (state.selectedGroupId == null) {
+                            seasons[seasonNumber - 1]
+                        }
+                        else {
+                            TmdbSeason(
+                                id = -1,
+                                seasonNumber = seasonNumber,
+                                episodeCount = episodes.size,
+                                airDate = null,
+                                posterPath = null,
+                                voteAverage = null,
+                            )
+                        }
                         val seasonItem = RateItem(
                             id = seasonNumber.toLong(),
                             parentId = state.savedItem?.id,
                             categoryId = state.savedItem?.categoryId ?: 0,
                             title = "Season $seasonNumber",
-                            subtitle = "${(season.airDate ?: "N/A").take(4)} | ${season.episodeCount} episodes",
+                            subtitle = "${if (season.airDate != null) "${(season.airDate).take(4)} | " else ""}${season.episodeCount} episodes",
                             length = season.episodeCount.toFloat(),
                             rating = computeAggregateChildrenRating(items),
-                            coverImageUrl = season.posterPath.let { "https://image.tmdb.org/t/p/original$it" },
-                            coverImageLowUrl = season.posterPath.let { "https://image.tmdb.org/t/p/w342$it" },
+                            coverImageUrl = season.posterPath?.let { "https://image.tmdb.org/t/p/original$it" },
+                            coverImageLowUrl = season.posterPath?.let { "https://image.tmdb.org/t/p/w342$it" },
                             externalId = season.id.toString(),
                             externalSource = CategoryType.TMDB_SEASONS,
                         )
@@ -237,12 +255,12 @@ fun TmdbShowDetailScreen(
             val showAverage = remember(childrenGroups) {
                 computeAggregateRating(
                     if (isSaved) listOfRatings
-                    else ratings.values.flatMap { it.values }.filterNotNull()
+                    else ratings.map { it.value }.filterNotNull()
                 )
             }
             val ratedEpisodesCount = remember(ratings, listOfRatings) {
                 if (isSaved) listOfRatings.size
-                else ratings.values.flatMap { it.values }.filterNotNull().size
+                else ratings.map { it.value }.filterNotNull().size
             }
             val showWeighted = remember(showAverage, ratedEpisodesCount) {
                 computeWeightedRating(
@@ -282,7 +300,7 @@ fun TmdbShowDetailScreen(
             }*/
             val unwatchedEpisodes = episodesState.seasonEpisodes.mapValues { (season, episodes) ->
                 episodes.filter { episode ->
-                    userRatings.value[season]?.get(episode.episodeNumber) == null
+                    userRatings.value[episode.id] == null
                 }
             }.flatMap { it.value }
             val nextToWatchEpisode = if (unwatchedEpisodes.isNotEmpty() && status != ItemStatus.COMPLETED)
@@ -296,12 +314,13 @@ fun TmdbShowDetailScreen(
 
 
             val spoilers = metadata.showSpoilers || !isSaved
-            val spoilEpisode = { seasonNumber: Int, episodeNumber: Int ->
-                spoilers || selectedRatings != RatingsSource.USER ||
-                        (selectedRatings == RatingsSource.USER && userRatings.value[seasonNumber]?.get(episodeNumber) != null)
+            val spoilEpisode = { tmdbId: Int ->
+                spoilers || state.selectedRatingSource != RatingsSource.USER ||
+                        (state.selectedRatingSource == RatingsSource.USER && userRatings.value[tmdbId] != null)
             }
 
             var showStatusSelector by remember { mutableStateOf(false) }
+            var showOrderSheet by remember { mutableStateOf(false) }
 
             // Settings
             var coverOverride by remember(state.savedItem) { mutableStateOf(state.savedItem?.coverImageOverride) }
@@ -554,7 +573,7 @@ fun TmdbShowDetailScreen(
                                         subtitle = "Season ${nextToWatchEpisode.seasonNumber}, Episode ${nextToWatchEpisode.episodeNumber}",
                                         coverImagePath = if (!nextToWatchEpisode.stillPath.isNullOrBlank())
                                             "https://image.tmdb.org/t/p/w300${nextToWatchEpisode.stillPath}" else null,
-                                        rating = ratings[nextToWatchEpisode.seasonNumber]?.get(nextToWatchEpisode.episodeNumber),
+                                        rating = ratings[nextToWatchEpisode.id],
                                         isLoading = false,
                                         placeholderRatio = 16f / 9f,
                                         padding = PaddingValues(horizontal = 16.dp, vertical = 6.dp),
@@ -601,7 +620,7 @@ fun TmdbShowDetailScreen(
                                         subtitle = "S${episode.seasonNumber}E${episode.episodeNumber}  |  ${formatDate(episode.airDate, pattern = "MMM. d")}",
                                         coverImagePath = if (!episode.stillPath.isNullOrBlank())
                                             "https://image.tmdb.org/t/p/w300${episode.stillPath}" else null,
-                                        rating = ratings[episode.seasonNumber]?.get(episode.episodeNumber),
+                                        rating = ratings[episode.id],
                                         isLoading = false,
                                         placeholderRatio = 16f / 9f,
                                         padding = PaddingValues(horizontal = 16.dp, vertical = 6.dp),
@@ -612,7 +631,7 @@ fun TmdbShowDetailScreen(
                                             //    episode.episodeNumber
                                             //)
                                         },
-                                        spoilers = spoilEpisode(episode.seasonNumber, episode.episodeNumber),
+                                        spoilers = spoilEpisode(episode.id),
                                         spoilName = metadata.showSpoilersName,
                                     )
                                 }
@@ -741,21 +760,36 @@ fun TmdbShowDetailScreen(
                     }
 
                     item {
-                        ConnectedButtonsExpressive(
-                            modifier = Modifier
+                        Row(
+                            Modifier
                                 .fillMaxWidth()
                                 .padding(horizontal = 16.dp),
-                            itemSpacing = 3.dp,
-                            selectedIndex = RatingsSource.entries.indexOf(selectedRatings),
-                            onSelectionChanged = {
-                                selectedRatings = RatingsSource.entries[it]
-                                if (selectedRatings == RatingsSource.IMDB && episodesState.imdbRatings.isEmpty() &&
-                                    isSaved && !episodesState.isLoadingRatings) {
-                                    episodesViewModel.fetchImdbRatings()
-                                }
-                            },
-                            options = RatingsSource.entries.map { it.displayName },
-                        )
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            ConnectedButtonsExpressive(
+                                itemSpacing = 3.dp,
+                                selectedIndex = RatingsSource.entries.indexOf(state.selectedRatingSource),
+                                onSelectionChanged = {
+                                    viewModel.onRatingSourceSelect(RatingsSource.entries[it])
+                                    if (state.selectedRatingSource == RatingsSource.IMDB && episodesState.imdbRatings.isEmpty() &&
+                                        isSaved && !episodesState.isLoadingRatings) {
+                                        episodesViewModel.fetchImdbRatings()
+                                    }
+                                },
+                                options = RatingsSource.entries.map { it.displayName },
+                            )
+
+                            OrderButton(onClick = { showOrderSheet = true })
+                            if (showOrderSheet) {
+                                ModalEpisodeGroupsSelector(
+                                    episodeGroups = state.episodeGroups,
+                                    selectedGroupId = state.selectedGroupId,
+                                    onSelectGroupId = viewModel::onGroupSelect,
+                                    onDismiss = { showOrderSheet = false }
+                                )
+                            }
+                        }
                     }
 
                     item {
@@ -796,7 +830,7 @@ fun TmdbShowDetailScreen(
                                         isLoadingRatings = episodesState.isLoadingRatings,
                                         spoilers = spoilers,
                                         spoilName = metadata.showSpoilersName,
-                                        showChildRatedCompletion = selectedRatings == RatingsSource.USER,
+                                        showChildRatedCompletion = state.selectedRatingSource == RatingsSource.USER,
                                     )
                                 }
                             }
