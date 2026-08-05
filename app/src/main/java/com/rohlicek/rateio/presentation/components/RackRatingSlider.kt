@@ -26,6 +26,8 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.rohlicek.rateio.presentation.rating.display.RatingColorBuckets
+import com.rohlicek.rateio.presentation.rating.display.getCurrentRatingColorBuckets
 import com.rohlicek.rateio.presentation.rating.display.getRatingColor
 import kotlin.math.PI
 import kotlin.math.roundToInt
@@ -41,6 +43,7 @@ fun RackRatingSlider(
     stepCount: Int = 100,
     activeColor: Color = MaterialTheme.colorScheme.primary,
     inactiveColor: Color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.35f),
+    colorBucketsOverride: RatingColorBuckets = getCurrentRatingColorBuckets(),
     tickSpacing: Dp = 10.dp,
     majorTickFrequency: Int = 5,
     minorTickHeightFraction: Float = 0.38f,
@@ -183,7 +186,7 @@ fun RackRatingSlider(
                 val isPassed = i <= animatedStep.toInt()
                 //var baseColor = if (isPassed) activeColor else inactiveColor
                 //if (isMajor) baseColor = getColorSchemeImdbEpisodesNC(i / 100f).first
-                val baseColor = getRatingColor(i / stepCount.toFloat()).backgroundColor
+                val baseColor = getRatingColor(i / stepCount.toFloat(), buckets = colorBucketsOverride).backgroundColor
 
                 // Fade alpha near edges
                 val distFromEdge = minOf(screenX, canvasWidth - screenX)

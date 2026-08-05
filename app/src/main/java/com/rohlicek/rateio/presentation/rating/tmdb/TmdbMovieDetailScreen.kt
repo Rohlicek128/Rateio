@@ -2,6 +2,7 @@ package com.rohlicek.rateio.presentation.rating.tmdb
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -17,6 +18,7 @@ import androidx.compose.material.icons.filled.ReplayCircleFilled
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -46,6 +48,7 @@ import com.rohlicek.rateio.model.ItemStatus
 import com.rohlicek.rateio.presentation.category.ItemListRow
 import com.rohlicek.rateio.presentation.components.AdaptiveImageCarousel
 import com.rohlicek.rateio.presentation.components.CollapsibleHeader
+import com.rohlicek.rateio.presentation.components.CrewPersonRow
 import com.rohlicek.rateio.presentation.components.GenreChips
 import com.rohlicek.rateio.presentation.components.ImageSize
 import com.rohlicek.rateio.presentation.components.statistics.ExternalRatingStatCard
@@ -123,6 +126,10 @@ fun TmdbMovieDetailScreen(
 
             // Settings
             var coverOverride by remember(state.savedItem) { mutableStateOf(state.savedItem?.coverImageOverride) }
+
+            val crewByDepartment = remember(movie) {
+                movie.credits?.crew?.takeIf { it.isNotEmpty() }?.sortedByDescending { it.popularity }?.groupBy { it.department }
+            }
 
             var showSettings by remember { mutableStateOf(false) }
             if (showSettings) {
@@ -313,7 +320,7 @@ fun TmdbMovieDetailScreen(
                     }
 
                     // Crew
-                    movie.credits?.crew?.takeIf { it.isNotEmpty() }?.let { crew ->
+                    crewByDepartment?.takeIf { it.isNotEmpty() }?.let { crew ->
                         item {
                             val headerName = "Crew"
                             CollapsibleHeader(
@@ -324,23 +331,21 @@ fun TmdbMovieDetailScreen(
                                     else state.collapsedHeaders.add(headerName)
                                 }
                             ) {
-                                LazyRow(
-                                    modifier = Modifier.height(150.dp),
-                                    contentPadding = PaddingValues(horizontal = 16.dp),
-                                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                Column(
+                                    modifier = Modifier.padding(start = 16.dp),
+                                    verticalArrangement = Arrangement.spacedBy(6.dp)
                                 ) {
-                                    items(crew.sortedByDescending { it.popularity }.take(25), key = { it.creditId }) { member ->
-                                        PersonCard(
-                                            name = member.name,
-                                            position = member.job,
-                                            profilePath = member.profilePath?.let { "https://image.tmdb.org/t/p/w185$it" },
-                                            width = 80.dp,
-                                            height = 100.dp,
-                                            onClick = {
-                                                onPersonClick?.invoke(member.id)
-                                            },
-                                        )
-                                    }
+                                    CrewPersonRow(
+                                        departmentFilter = "Directors",
+                                        people = crew["Directing"],
+                                        onPersonClick = onPersonClick,
+                                    )
+                                    HorizontalDivider(modifier = Modifier.padding(end = 16.dp))
+                                    CrewPersonRow(
+                                        departmentFilter = "Writers",
+                                        people = crew["Writing"],
+                                        onPersonClick = onPersonClick,
+                                    )
                                 }
                             }
                         }

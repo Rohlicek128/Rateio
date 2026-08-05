@@ -1,5 +1,10 @@
 package com.rohlicek.rateio.presentation.components
 
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.spring
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -42,6 +47,17 @@ fun RatingBottomSheet(
     val haptic = LocalHapticFeedback.current
     var rackPosition by remember(rating) { mutableStateOf(rating) }
 
+    val buttonInteractionSource = remember { MutableInteractionSource() }
+    val isPressed by buttonInteractionSource.collectIsPressedAsState()
+    val animatedWidth by animateDpAsState(
+        targetValue = if (isPressed) 40.dp else 0.dp,
+        animationSpec = spring(
+            dampingRatio = Spring.DampingRatioMediumBouncy,
+            stiffness = Spring.StiffnessMedium
+        ),
+        label = "rate_button_width_anim"
+    )
+
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
@@ -65,6 +81,7 @@ fun RatingBottomSheet(
 
             RackRatingSlider(
                 rating = rackPosition ?: 0.7f,
+                colorBucketsOverride = colorBucketsOverride,
                 onValueChange = {
                     rackPosition = it
                 },
@@ -84,6 +101,7 @@ fun RatingBottomSheet(
 
             RackRatingSlider(
                 rating = rackPosition ?: 0.7f,
+                colorBucketsOverride = colorBucketsOverride,
                 onValueChange = {
                     rackPosition = it
                 },
@@ -120,10 +138,11 @@ fun RatingBottomSheet(
                     onValueChange(rackPosition)
                     onDismiss()
                 },
-                modifier = Modifier.width(250.dp),
+                interactionSource = buttonInteractionSource,
+                modifier = Modifier.width(225.dp + animatedWidth),
                 shapes = ButtonDefaults.shapes(),
             ) {
-                Text("RATE", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
+                Text("RATE", style = MaterialTheme.typography.displaySmall, fontWeight = FontWeight.Black)
             }
         }
     }

@@ -41,10 +41,10 @@ import com.rohlicek.rateio.model.computeWeightedRating
 import com.rohlicek.rateio.presentation.ScreenScaffold
 import com.rohlicek.rateio.presentation.components.ExpressiveScrollBar
 import com.rohlicek.rateio.presentation.components.HeroCarousel
-import com.rohlicek.rateio.presentation.components.RowButtonEnumSelector
 import com.rohlicek.rateio.presentation.components.ModalSortableEnumSelector
 import com.rohlicek.rateio.presentation.components.RateItemCard
 import com.rohlicek.rateio.presentation.components.RateItemGridCard
+import com.rohlicek.rateio.presentation.components.RowButtonEnumSelector
 import com.rohlicek.rateio.presentation.components.SortByButton
 import com.rohlicek.rateio.presentation.components.SortOrder
 import com.rohlicek.rateio.presentation.components.rating.ParentCompletionText
@@ -123,6 +123,16 @@ fun EnhancedCategoryScreen(
 
         if (currentOrder == SortOrder.ASCENDING) sorted else sorted.asReversed()
     }
+
+    /*LaunchedEffect(filteredAndSortedItems) {
+        filteredAndSortedItems.filter { it.rating != null }.forEachIndexed { index, show ->
+            println("${index + 1}. ${show.title} - ${ show.rating?.times(10f)
+                //computeWeightedRating(show.rating, show.ratingWeight.toInt())?.let { 
+                //    "%.3f".format(Locale.US, it * 10f)
+                //}
+            }") //(${show.ratingWeight.toInt()}/${show.length?.toInt()} rated)")
+        }
+    }*/
 
     val listState = rememberLazyListState()
 

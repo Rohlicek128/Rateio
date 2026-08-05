@@ -96,6 +96,7 @@ fun ChildrenTimeline(
     spoilers: Boolean = true,
     spoilName: Boolean = true,
     trendline: Boolean = true,
+    roundRatings: Boolean = false,
 ) {
     val haptic = LocalHapticFeedback.current
 
@@ -279,7 +280,7 @@ fun ChildrenTimeline(
 
                 // X center of each episode slot
                 fun xOf(i: Int) = padLpx + (i + 0.5f) * epWpx
-                fun yOf(r: Float) = padTpx + plotH * (1f - r) * plotScale
+                fun yOf(r: Float) = padTpx + plotH * (1f - (if (roundRatings) getRoundedRating(r) ?: 0f else r)) * plotScale
 
 
                 // Season divider lines

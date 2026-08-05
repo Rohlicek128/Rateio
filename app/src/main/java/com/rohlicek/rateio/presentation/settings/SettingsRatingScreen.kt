@@ -11,6 +11,7 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.Transform
+import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -26,7 +27,9 @@ import com.rohlicek.rateio.presentation.ScreenScaffold
 import com.rohlicek.rateio.presentation.components.RateBox
 import com.rohlicek.rateio.presentation.components.RateBoxSizeDefaults
 import com.rohlicek.rateio.presentation.components.RatingBottomSheet
+import com.rohlicek.rateio.presentation.rating.display.RatingColorBucketConstants
 import com.rohlicek.rateio.presentation.rating.display.RatingTransformationsConstants
+import com.rohlicek.rateio.presentation.rating.display.getCurrentRatingColorBuckets
 import com.rohlicek.rateio.presentation.rating.display.getCurrentRatingTransformations
 import com.rohlicek.rateio.presentation.rating.display.getMaxValue
 import com.rohlicek.rateio.presentation.rating.display.getMinValue
@@ -38,8 +41,9 @@ fun SettingsRatingScreen(
     onRatingColorClick: () -> Unit,
     onBackClick: () -> Unit,
 ) {
-    val items = listOf(
+    val transformations = listOf(
         RatingTransformationsConstants.TF_IMDB,
+        RatingTransformationsConstants.TF_IMDB_PRECISE,
         RatingTransformationsConstants.TF_PERCENTAGE,
         RatingTransformationsConstants.TF_TEN_STARS,
         RatingTransformationsConstants.TF_FIVE_STARS_ZERO,
@@ -53,11 +57,25 @@ fun SettingsRatingScreen(
         mutableStateOf(getCurrentRatingTransformations())
     }
 
+    val buckets = listOf(
+        RatingColorBucketConstants.RC_IMDB_MOVIES,
+        RatingColorBucketConstants.RC_IMDB_SHOWS,
+        RatingColorBucketConstants.RC_IMDB_EPISODES,
+        RatingColorBucketConstants.RC_DECADIC,
+        RatingColorBucketConstants.RC_STEAM,
+        RatingColorBucketConstants.RC_CSFD,
+    )
+    var currentBucket by remember {
+        mutableStateOf(getCurrentRatingColorBuckets())
+    }
+
     var showRatingSheet by remember { mutableStateOf(false) }
 
-    val initialRating: Float? = 0.9f
-    var ratingPer by remember(RatingTransformationsConstants.currentTransformation) {
-        mutableStateOf(initialRating)
+    var ratingPer by remember(
+        RatingTransformationsConstants.currentTransformation,
+        RatingColorBucketConstants.currentBuckets
+    ) {
+        mutableStateOf<Float?>(0.9f)
     }
     val rtf = getCurrentRatingTransformations()
 
@@ -109,14 +127,14 @@ fun SettingsRatingScreen(
             }
 
             item { SettingsListHeader("Transformations") }
-            itemsIndexed(items) { index, tf ->
+            itemsIndexed(transformations) { index, tf ->
                 SettingListItem(
                     title = tf.name,
                     description = "(rating * ${tf.stepCount} + ${tf.offset}) / ${tf.divider}",
                     position = when {
-                        items.size == 1 -> ListItemPosition.SINGLE
+                        transformations.size == 1 -> ListItemPosition.SINGLE
                         index == 0 -> ListItemPosition.START
-                        index == items.size - 1 -> ListItemPosition.END
+                        index == transformations.size - 1 -> ListItemPosition.END
                         else -> ListItemPosition.MIDDLE
                     },
                     onClick = {
@@ -129,8 +147,14 @@ fun SettingsRatingScreen(
                         RateBox(
                             rating = ratingPer,
                             transformationOverride = tf,
+                            colorBucketsOverride = currentBucket,
                         )
-                    }
+                    },
+                    colors = if (currentTransformation == tf) {
+                        ListItemDefaults.colors().copy(
+                            containerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+                        )
+                    } else ListItemDefaults.colors(),
                 )
             }
 
@@ -148,6 +172,39 @@ fun SettingsRatingScreen(
 
 
             item { SettingsListHeader("Colors") }
+            itemsIndexed(buckets) { index, bucket ->
+                SettingListItem(
+                    title = bucket.name,
+                    description = "${bucket.buckets.size} buckets",
+                    position = when {
+                        buckets.size == 1 -> ListItemPosition.SINGLE
+                        index == 0 -> ListItemPosition.START
+                        index == buckets.size - 1 -> ListItemPosition.END
+                        else -> ListItemPosition.MIDDLE
+                    },
+                    onClick = {
+                        currentBucket = bucket
+                        RatingColorBucketConstants.currentBuckets = currentBucket
+                        ratingPer = ratingPer?.plus(0.0000001f)
+                    },
+                    showNavigateIconOnClick = false,
+                    trailingContent = {
+                        RateBox(
+                            rating = ratingPer,
+                            transformationOverride = currentTransformation,
+                            colorBucketsOverride = bucket,
+                        )
+                    },
+                    colors = if (currentBucket == bucket) {
+                        ListItemDefaults.colors().copy(
+                            containerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+                        )
+                    } else ListItemDefaults.colors(),
+                )
+            }
+
+            item { Spacer(modifier = Modifier.height(8.dp)) }
+
             item {
                 SettingListItem(
                     title = "Custom Color Buckets",

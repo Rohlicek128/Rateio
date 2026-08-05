@@ -478,7 +478,7 @@ private fun DetailHeader(
                 title,
                 style = MaterialTheme.typography.displaySmall,
                 lineHeight = 1.1.em,
-                fontWeight = FontWeight.ExtraBold,
+                fontWeight = FontWeight.Black,
                 textAlign = TextAlign.Center
             )
             if (!subtitle.isNullOrBlank()) {

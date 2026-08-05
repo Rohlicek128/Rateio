@@ -1,6 +1,7 @@
 package com.rohlicek.rateio.presentation.components.rating
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -23,6 +24,7 @@ import androidx.compose.material.icons.filled.UnfoldMore
 import androidx.compose.material.icons.outlined.GridOn
 import androidx.compose.material.icons.outlined.Timeline
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.ButtonGroup
 import androidx.compose.material3.CircularWavyProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -43,11 +45,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.rohlicek.rateio.data.remote.tmdb.TmdbEpisodeMetadata
 import com.rohlicek.rateio.model.RateItem
-import com.rohlicek.rateio.presentation.components.ConnectedButtonsExpressive
-import com.rohlicek.rateio.presentation.components.ConnectedItemSelector
 import com.rohlicek.rateio.presentation.components.OutlinedConnectedButtonsExpressive
 import com.rohlicek.rateio.presentation.components.ModalSortableEnumSelector
 import com.rohlicek.rateio.presentation.components.SortByButton
@@ -147,6 +148,11 @@ fun ChildrenDisplay(
     var invertedGrid by remember { mutableStateOf(false) }
     var columnsWrapped by remember { mutableFloatStateOf(4f) }
     var trendline by remember { mutableStateOf(true) }
+    var roundRatings by remember { mutableStateOf(false) }
+
+    val timelineInteractionSources = remember(2) {
+        List(2) { MutableInteractionSource() }
+    }
 
     val timelineCategories = if (childrenGroups.values.isNotEmpty() && childrenGroups.keys.isNotEmpty()) {
         listOfNotNull(
@@ -408,19 +414,56 @@ fun ChildrenDisplay(
                             }
                             //else Spacer(modifier = Modifier.width(4.dp))
 
-                            OutlinedToggleButton(
-                                modifier = Modifier.padding(end = 3.dp),
-                                checked = trendline,
-                                onCheckedChange = {
-                                    haptic.performHapticFeedback(HapticFeedbackType.ToggleOn)
-                                    trendline = it
-                                },
-                                shapes = ToggleButtonDefaults.shapes(),
+                            ButtonGroup(
+                                expandedRatio = 0.15f,
+                                overflowIndicator = {},
+                                horizontalArrangement = Arrangement.spacedBy(6.dp),
                             ) {
-                                Text(
-                                    "Trendline",
-                                    style = MaterialTheme.typography.labelMedium,
-                                    fontWeight = FontWeight.Bold,
+                                customItem(
+                                    buttonGroupContent = {
+                                        OutlinedToggleButton(
+                                            modifier = Modifier.animateWidth(interactionSource = timelineInteractionSources[0]),
+                                            checked = roundRatings,
+                                            onCheckedChange = {
+                                                haptic.performHapticFeedback(HapticFeedbackType.ToggleOn)
+                                                roundRatings = it
+                                            },
+                                            shapes = ToggleButtonDefaults.shapes(),
+                                            interactionSource = timelineInteractionSources[0]
+                                        ) {
+                                            Text(
+                                                "Round",
+                                                style = MaterialTheme.typography.labelMedium,
+                                                fontWeight = FontWeight.Bold,
+                                                softWrap = false,
+                                                overflow = TextOverflow.Visible,
+                                            )
+                                        }
+                                    },
+                                    menuContent = {}
+                                )
+                                customItem(
+                                    buttonGroupContent = {
+                                        OutlinedToggleButton(
+                                            modifier = Modifier.animateWidth(interactionSource = timelineInteractionSources[1]),
+                                            checked = trendline,
+                                            onCheckedChange = {
+                                                haptic.performHapticFeedback(HapticFeedbackType.ToggleOn)
+                                                trendline = it
+                                            },
+                                            shapes = ToggleButtonDefaults.shapes(),
+                                            interactionSource = timelineInteractionSources[1]
+                                        ) {
+                                            Text(
+                                                "Trendline",
+                                                style = MaterialTheme.typography.labelMedium,
+                                                fontWeight = FontWeight.Bold,
+                                                softWrap = false,
+                                                overflow = TextOverflow.Visible,
+                                            )
+                                        }
+                                    },
+                                    menuContent = {}
                                 )
                             }
                         }
@@ -441,6 +484,7 @@ fun ChildrenDisplay(
                             spoilers = spoilers,
                             spoilName = spoilName,
                             trendline = trendline,
+                            roundRatings = roundRatings,
                         )
                     }
                     else -> {

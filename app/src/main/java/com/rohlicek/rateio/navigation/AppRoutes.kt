@@ -25,6 +25,7 @@ sealed interface Route {
         @Serializable data object RatingTransformation : SettingsLevel()
         @Serializable data object RatingColor : SettingsLevel()
         @Serializable data object Categories : SettingsLevel()
+        @Serializable data object About : SettingsLevel()
     }
 
     @Serializable data class TmdbLeaderboard(val category: CategoryType) : Route

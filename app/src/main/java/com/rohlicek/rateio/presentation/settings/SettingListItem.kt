@@ -177,6 +177,7 @@ fun SettingsTextField(
     onValueChange: (String) -> Unit,
     modifier: Modifier = Modifier,
     singleLine: Boolean = true,
+    showIcon: Boolean = true,
     resetButton: Boolean = true,
     placeholder: @Composable (() -> Unit)? = null,
 ) {
@@ -193,12 +194,14 @@ fun SettingsTextField(
         ),
         onValueChange = onValueChange,
         placeholder = placeholder,
-        leadingIcon = {
-            Icon(
-                Icons.Default.TextFields,
-                null,
-            )
-        },
+        leadingIcon = if (showIcon) {
+            {
+                Icon(
+                    Icons.Default.TextFields,
+                    null,
+                )
+            }
+        } else null,
         trailingIcon = if (resetButton) {
             {
                 AnimatedVisibility(

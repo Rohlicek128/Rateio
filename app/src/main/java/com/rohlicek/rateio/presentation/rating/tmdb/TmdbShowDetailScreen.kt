@@ -251,6 +251,15 @@ fun TmdbShowDetailScreen(
                 }
             }
 
+            /*LaunchedEffect(childrenGroups) {
+                childrenGroups.forEach { (season, episodes) ->
+                    println("${season?.title} (avg. ${season?.rating})")
+                    episodes.forEach { episode ->
+                        println("${episode.subtitle?.split(", ")?.getOrNull(1)}: ${episode.title} - ${episode.rating?.times(10f)}")
+                    }
+                }
+            }*/
+
             val ratingByAverage = true
             val showAverage = remember(childrenGroups) {
                 computeAggregateRating(
@@ -771,8 +780,9 @@ fun TmdbShowDetailScreen(
                                 itemSpacing = 3.dp,
                                 selectedIndex = RatingsSource.entries.indexOf(state.selectedRatingSource),
                                 onSelectionChanged = {
-                                    viewModel.onRatingSourceSelect(RatingsSource.entries[it])
-                                    if (state.selectedRatingSource == RatingsSource.IMDB && episodesState.imdbRatings.isEmpty() &&
+                                    val source = RatingsSource.entries[it]
+                                    viewModel.onRatingSourceSelect(source)
+                                    if (source == RatingsSource.IMDB && episodesState.imdbRatings.isEmpty() &&
                                         isSaved && !episodesState.isLoadingRatings) {
                                         episodesViewModel.fetchImdbRatings()
                                     }

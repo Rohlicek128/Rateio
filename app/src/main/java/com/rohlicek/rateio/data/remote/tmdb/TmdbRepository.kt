@@ -60,7 +60,7 @@ class TmdbRepository {
         }
             ?.filter { it.order != null && it.order > 0 }
             ?.sortedBy { it.order }
-            ?.associate { it.order!! to it.episodes }
+            ?.associate { it.order!! to it.episodes?.filter { episodes -> episodes.seasonNumber > 0 } }
             ?.mapValues { it.value?.sortedBy { episode -> episode.order }?.map { episode -> episode.toEpisodeSummary() } ?: emptyList() }
             ?: emptyMap()
     }

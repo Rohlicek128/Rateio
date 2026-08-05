@@ -77,6 +77,7 @@ object RatingTransformationsConstants {
         divider = 100f,
         decimalPlaces = 2u,
         majorTickFrequency = 10,
+        legendaryPart = 0.96f
     )
     val TF_IMDB = RatingTransformation(
         name = "IMDb",

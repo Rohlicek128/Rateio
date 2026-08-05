@@ -6,8 +6,10 @@ import androidx.compose.animation.core.EaseInOut
 import androidx.compose.animation.core.EaseOut
 import androidx.compose.animation.core.EaseOutElastic
 import androidx.compose.animation.core.EaseOutExpo
+import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -565,6 +567,10 @@ fun CarouselDotsIndicator(
 
             val width by animateDpAsState(
                 targetValue = if (isSelected) 24.dp else 8.dp,
+                animationSpec = spring(
+                    dampingRatio = 0.4f,
+                    stiffness = Spring.StiffnessMediumLow
+                ),
                 label = "dotWidth"
             )
             val color = animateColorAsState(

@@ -14,8 +14,7 @@ class RatingTransformationSettingsViewModel(
 ) : ViewModel() {
     var uiState by mutableStateOf(defaultTransformations)
         private set
-    private val initialRating: Float? = 0.9f
-    var testRating by mutableStateOf(initialRating)
+    var testRating by mutableStateOf<Float?>(0.9f)
 
     fun updateTransformations(update: (RatingTransformation) -> RatingTransformation) {
         uiState = update(uiState)

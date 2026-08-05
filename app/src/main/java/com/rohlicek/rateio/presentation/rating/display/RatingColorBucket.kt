@@ -1,9 +1,7 @@
 package com.rohlicek.rateio.presentation.rating.display
 
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.lerp
 import com.rohlicek.rateio.utils.lerpPerceptual
-import kotlin.collections.forEach
 
 
 data class RatingColorBucket(
@@ -11,7 +9,7 @@ data class RatingColorBucket(
     val backgroundColor: Color,
     val foregroundColor: Color,
     val label: String? = null,
-) {
+) /*{
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (other !is RatingColorBucket) return false
@@ -24,7 +22,7 @@ data class RatingColorBucket(
         result = 31 * result + (equalOrGreaterThen?.hashCode() ?: 0)
         return result
     }
-}
+}*/
 
 data class RatingColorBuckets(
     val name: String,
@@ -77,7 +75,7 @@ fun getRatingColor(
 }
 
 fun getCurrentRatingColorBuckets(): RatingColorBuckets {
-    return RatingColorBucketConstants.RC_IMDB_EPISODES
+    return RatingColorBucketConstants.currentBuckets
 }
 
 object RatingColorBucketConstants {
@@ -161,4 +159,6 @@ object RatingColorBucketConstants {
         ),
         nullBucket = nullBucket
     )
+
+    var currentBuckets = RC_IMDB_EPISODES
 }

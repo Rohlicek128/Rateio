@@ -73,6 +73,7 @@ import com.rohlicek.rateio.presentation.leaderboard.LeaderboardScreen
 import com.rohlicek.rateio.presentation.leaderboard.TmdbLeaderboardScreen
 import com.rohlicek.rateio.presentation.profile.ProfileScreen
 import com.rohlicek.rateio.presentation.rating.SavedRateItemScreen
+import com.rohlicek.rateio.presentation.rating.display.RatingColorBucketConstants
 import com.rohlicek.rateio.presentation.rating.display.RatingTransformationsConstants
 import com.rohlicek.rateio.presentation.rating.openlibrary.OLWorkDetailScreen
 import com.rohlicek.rateio.presentation.rating.steam.SteamGameDetailScreen
@@ -80,6 +81,7 @@ import com.rohlicek.rateio.presentation.rating.tmdb.TmdbEpisodeDetailScreen
 import com.rohlicek.rateio.presentation.rating.tmdb.TmdbMovieDetailScreen
 import com.rohlicek.rateio.presentation.rating.tmdb.TmdbPersonDetailScreen
 import com.rohlicek.rateio.presentation.rating.tmdb.TmdbShowDetailScreen
+import com.rohlicek.rateio.presentation.settings.SettingsAboutScreen
 import com.rohlicek.rateio.presentation.settings.SettingsAppearanceScreen
 import com.rohlicek.rateio.presentation.settings.SettingsCategoriesScreen
 import com.rohlicek.rateio.presentation.settings.SettingsDatabaseScreen
@@ -299,6 +301,11 @@ fun AppNavigation(
                                 popUpTo<Route.SettingsLevel.SettingsTop>()
                             }
                         },
+                        onAboutClick = {
+                            navController.navigate(Route.SettingsLevel.About) {
+                                popUpTo<Route.SettingsLevel.SettingsTop>()
+                            }
+                        },
                         onBackClick = { navController.popBackStack() },
                     )
                 }
@@ -330,6 +337,9 @@ fun AppNavigation(
                 }
                 composable<Route.SettingsLevel.RatingColor> {
                     RatingColorSettingsScreen(
+                        onSave = {
+                            RatingColorBucketConstants.currentBuckets = it
+                        },
                         onBackClick = { navController.popBackStack() },
                     )
                 }
@@ -353,6 +363,11 @@ fun AppNavigation(
                 }
                 composable<Route.SettingsLevel.Categories> {
                     SettingsCategoriesScreen(
+                        onBackClick = { navController.popBackStack() },
+                    )
+                }
+                composable<Route.SettingsLevel.About> {
+                    SettingsAboutScreen(
                         onBackClick = { navController.popBackStack() },
                     )
                 }

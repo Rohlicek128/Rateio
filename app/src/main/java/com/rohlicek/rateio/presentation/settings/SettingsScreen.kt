@@ -22,6 +22,7 @@ fun SettingsScreen(
     onRatingClick: () -> Unit,
     onDatabaseClick: () -> Unit,
     onCategoriesClick: () -> Unit,
+    onAboutClick: () -> Unit,
     onBackClick: () -> Unit,
 ) {
     val alpha = 0.5f
@@ -99,6 +100,7 @@ fun SettingsScreen(
                     //iconContentColor = colors.foregroundColor,
                     iconContainerColor = colors.backgroundColor.copy(alpha = alpha),
                     icon = Icons.Default.Info,
+                    onClick = onAboutClick,
                     position = ListItemPosition.END,
                 )
             }
