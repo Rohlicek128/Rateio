@@ -83,7 +83,6 @@ fun TmdbPersonDetailScreen(
                 showNullRating = isSaved,
                 onRatingSaved = onRatingSaved,
                 onBackClick = onBackClick,
-                canAddToLibrary = false,
                 extraContent = {
                     // Library
                     item {

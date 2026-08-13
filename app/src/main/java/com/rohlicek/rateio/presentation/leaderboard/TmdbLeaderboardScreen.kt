@@ -27,6 +27,8 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.rohlicek.rateio.data.db.RateioDatabase
 import com.rohlicek.rateio.data.remote.imdb.ImdbRatingRepository
+import com.rohlicek.rateio.data.repository.CategoryRepository
+import com.rohlicek.rateio.data.repository.RateItemRepository
 import com.rohlicek.rateio.model.CategoryType
 import com.rohlicek.rateio.model.RateItem
 import com.rohlicek.rateio.presentation.ScreenScaffold
@@ -50,6 +52,14 @@ fun TmdbLeaderboardScreen(
     onBackClick: () -> Unit,
 ) {
     val context = LocalContext.current
+    val itemRepository = remember {
+        val db = RateioDatabase.getDatabase(context)
+        RateItemRepository(db.rateItemDao())
+    }
+    val categoryRepository = remember {
+        val db = RateioDatabase.getDatabase(context)
+        CategoryRepository(db.categoryDao())
+    }
     val imdbRepository = remember {
         val db = RateioDatabase.getDatabase(context)
         ImdbRatingRepository(db.imdbRatingDao())
@@ -57,7 +67,7 @@ fun TmdbLeaderboardScreen(
 
     val viewModel: TmdbLeaderboardViewModel = viewModel(
         key = category.name,
-        factory = TmdbLeaderboardViewModel.factory(category, imdbRepository),
+        factory = TmdbLeaderboardViewModel.factory(category, categoryRepository, itemRepository, imdbRepository),
     )
     val state by viewModel.state.collectAsState()
 
@@ -69,12 +79,10 @@ fun TmdbLeaderboardScreen(
         else -> emptyMap()
     }
 
-    val listState = rememberLazyListState()
-
     ScreenScaffold(
         title = "Top Rated ${category.displayName}",
         onBackClick = onBackClick,
-    ) { padding ->
+    ) { padding, listState ->
         Box(modifier = Modifier.fillMaxSize()) {
             LazyColumn(
                 modifier = Modifier.padding(start = 18.dp, end = 28.dp),
@@ -133,6 +141,7 @@ fun TmdbLeaderboardScreen(
                                 placeholderRatio = 2f / 3f,
                                 padding = PaddingValues(vertical = 4.dp),
                                 rank = index + 1,
+                                rankHighlighted = item.externalId?.let { state.completedItems.contains(it) } ?: false,
                                 colorBucketsOverride = when (category) {
                                     CategoryType.TMDB_MOVIES -> RatingColorBucketConstants.RC_IMDB_MOVIES
                                     CategoryType.TMDB_SHOWS -> RatingColorBucketConstants.RC_IMDB_SHOWS

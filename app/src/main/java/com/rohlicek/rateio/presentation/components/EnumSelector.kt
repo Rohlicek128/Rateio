@@ -71,6 +71,7 @@ fun ModalSelector(
     maxHeightFraction: Float = 0.55f,
     skipPartiallyExpanded: Boolean = false,
     headerContent: (@Composable (ColumnScope.() -> Unit))? = null,
+    footerContent: (LazyListScope.() -> Unit)? = null,
     content: LazyListScope.() -> Unit,
 ) {
     ModalBottomSheet(
@@ -101,7 +102,10 @@ fun ModalSelector(
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 content()
-
+                if (footerContent != null) {
+                    item { Spacer(modifier = Modifier.height(12.dp)) }
+                    footerContent()
+                }
                 item { Spacer(modifier = Modifier.height(50.dp)) }
             }
         }
@@ -120,6 +124,7 @@ inline fun <reified T : Enum<T>> ModalEnumMultiSelector(
     maxHeightFraction: Float = 0.55f,
     skipPartiallyExpanded: Boolean = false,
     noinline headerContent: (@Composable (ColumnScope.() -> Unit))? = null,
+    noinline footerContent: (LazyListScope.() -> Unit)? = null,
 ) {
     val haptic = LocalHapticFeedback.current
 
@@ -132,6 +137,7 @@ inline fun <reified T : Enum<T>> ModalEnumMultiSelector(
         maxHeightFraction = maxHeightFraction,
         skipPartiallyExpanded = skipPartiallyExpanded,
         headerContent = headerContent,
+        footerContent = footerContent,
     ) {
         items(options.filter { it !in separatedOptions }, key = { it }) { option ->
             EnumListItem(
@@ -173,6 +179,7 @@ inline fun <reified T : Enum<T>> ModalEnumSelector(
     maxHeightFraction: Float = 0.55f,
     skipPartiallyExpanded: Boolean = false,
     noinline headerContent: (@Composable (ColumnScope.() -> Unit))? = null,
+    noinline footerContent: (LazyListScope.() -> Unit)? = null,
 ) {
     ModalEnumMultiSelector(
         modifier = modifier,
@@ -184,6 +191,7 @@ inline fun <reified T : Enum<T>> ModalEnumSelector(
         maxHeightFraction = maxHeightFraction,
         skipPartiallyExpanded = skipPartiallyExpanded,
         headerContent = headerContent,
+        footerContent = footerContent,
         onClickDismiss = true,
     )
 }
@@ -236,18 +244,20 @@ inline fun <reified T : Enum<T>> EnumListItem(
 @Composable
 inline fun <reified T : Enum<T>> ModalSortableEnumSelector(
     modifier: Modifier = Modifier,
+    title: String = "Sort By",
     selectedOption: T,
     crossinline onOptionSelected: (T) -> Unit,
     selectedOrder: SortOrder,
     crossinline onOrderChange: (SortOrder) -> Unit,
     noinline onDismiss: () -> Unit,
     separatedOptions: List<T> = emptyList(),
+    noinline footerContent: (LazyListScope.() -> Unit)? = null,
 ) {
     val haptic = LocalHapticFeedback.current
 
     ModalEnumSelector(
         modifier = modifier,
-        title = "Sort By",
+        title = title,
         selectedOption = selectedOption,
         onOptionSelected = onOptionSelected,
         onDismiss = onDismiss,
@@ -263,6 +273,7 @@ inline fun <reified T : Enum<T>> ModalSortableEnumSelector(
                 }
             )
         },
+        footerContent = footerContent,
     )
 }
 

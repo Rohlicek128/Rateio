@@ -32,11 +32,12 @@ fun SettingsScreen(
     ScreenScaffold(
         title = "Settings",
         onBackClick = onBackClick,
-    ) { padding ->
+    ) { padding, listState ->
         LazyColumn(
             modifier = Modifier.padding(horizontal = 20.dp),
             verticalArrangement = Arrangement.spacedBy(4.dp),
             contentPadding = padding,
+            state = listState,
         ) {
             item {
                 val colors = getRatingColor(settingCount)

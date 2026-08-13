@@ -56,6 +56,10 @@ fun RackRatingSlider(
 ) {
     val haptic = LocalHapticFeedback.current
 
+    val difficultPart = if (colorBucketsOverride.buckets.isNotEmpty())
+        colorBucketsOverride.buckets.first().equalOrGreaterThen ?: hardPart
+    else hardPart
+
     // Clamp and snap the incoming value to the nearest step
     val clampedValue = rating.coerceIn(0f, 1f)
     val currentStep = (clampedValue * stepCount).roundToInt()
@@ -123,7 +127,7 @@ fun RackRatingSlider(
                                 // Haptic: step boundary
                                 if (newStep != lastHapticStep.intValue) {
                                     if (newStep != stepCount) {
-                                        if (newStep >= stepCount * hardPart) {
+                                        if (newStep >= stepCount * difficultPart) {
                                             haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                                         }
                                         else if (newStep % majorTickFrequency == 0) {

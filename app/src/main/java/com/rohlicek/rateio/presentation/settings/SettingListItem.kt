@@ -179,6 +179,7 @@ fun SettingsTextField(
     singleLine: Boolean = true,
     showIcon: Boolean = true,
     resetButton: Boolean = true,
+    onReset: () -> Unit = { onValueChange("") },
     placeholder: @Composable (() -> Unit)? = null,
 ) {
     OutlinedTextField(
@@ -206,14 +207,10 @@ fun SettingsTextField(
             {
                 AnimatedVisibility(
                     !value.isBlank(),
-                    enter = fadeIn() + slideInHorizontally(initialOffsetX = { it / 2 }),
-                    exit = fadeOut() + slideOutHorizontally(targetOffsetX = { it / 2 }),
+                    enter = fadeIn() + slideInHorizontally(initialOffsetX = { it / 4 }),
+                    exit = fadeOut() + slideOutHorizontally(targetOffsetX = { it / 4 }),
                 ) {
-                    IconButton(
-                        onClick = {
-                            onValueChange("")
-                        }
-                    ) {
+                    IconButton(onClick = onReset) {
                         Icon(Icons.Default.Refresh, null)
                     }
                 }

@@ -139,23 +139,6 @@ class TmdbShowDetailViewModel(
     }
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    val userRatingsState: StateFlow<Map<Int, Map<Int, Float?>>> = state
-        .map { it.savedItem?.id }
-        .distinctUntilChanged()
-        .flatMapLatest { id ->
-            if (id == null) {
-                flowOf(emptyMap())
-            } else {
-                itemRepository.observeSeasonEpisodeRatings(id)
-            }
-        }
-        .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5000),
-            initialValue = emptyMap()
-        )
-
-    @OptIn(ExperimentalCoroutinesApi::class)
     val userRatingsByIdState: StateFlow<Map<Int, Float?>> = state
         .map { it.savedItem?.id }
         .distinctUntilChanged()

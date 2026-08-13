@@ -55,6 +55,7 @@ import com.rohlicek.rateio.data.repository.RateItemRepository
 import com.rohlicek.rateio.model.CategoryType
 import com.rohlicek.rateio.model.ItemStatus
 import com.rohlicek.rateio.model.RateItem
+import com.rohlicek.rateio.model.calculateStandardDeviation
 import com.rohlicek.rateio.model.computeAggregateChildrenRating
 import com.rohlicek.rateio.model.computeAggregateRating
 import com.rohlicek.rateio.model.computeWeightedRating
@@ -114,7 +115,7 @@ fun TmdbShowDetailScreen(
     onCoverOverrideSaved: ((String?) -> Unit)? = null,
     onMetadataSaved: ((String?) -> Unit)? = null,
     onBackClick: () -> Unit,
-    onEpisodeClick: (seasonItem: RateItem, episodeItem: RateItem) -> Unit,
+    onEpisodeClick: (seasonItem: RateItem, episodeItem: RateItem, saveRatings: Boolean) -> Unit,
 ) {
     val context = LocalContext.current
     val itemRepository = remember {
@@ -190,6 +191,9 @@ fun TmdbShowDetailScreen(
                     RatingsSource.USER -> userRatings.value
                 }
             }
+            val flatRatings = remember(ratings) {
+                ratings.map { it.value }.filterNotNull()
+            }
 
             val childrenGroups: Map<RateItem?, List<RateItem>> = remember(ratings, episodesState.seasonEpisodes, state.savedItem) {
                 episodesState.seasonEpisodes.entries
@@ -247,16 +251,17 @@ fun TmdbShowDetailScreen(
             val onChildClick = { child: RateItem ->
                 val parent = childrenGroups.keys.find { it?.id == child.parentId }
                 if (parent != null) {
-                    onEpisodeClick(parent, child,)
+                    onEpisodeClick(parent, child, state.selectedRatingSource == RatingsSource.USER)
                 }
             }
 
             /*LaunchedEffect(childrenGroups) {
                 childrenGroups.forEach { (season, episodes) ->
-                    println("${season?.title} (avg. ${season?.rating})")
+                    println("${season?.title} (avg. ${"%.3f".format(Locale.US, season?.rating?.times(10f))})")
                     episodes.forEach { episode ->
-                        println("${episode.subtitle?.split(", ")?.getOrNull(1)}: ${episode.title} - ${episode.rating?.times(10f)}")
+                        println("${episode.subtitle?.split(", ")?.getOrNull(1)}: ${episode.title} - ${"%.2f".format(Locale.US, episode.rating?.times(10f))}")
                     }
+                    println("")
                 }
             }*/
 
@@ -398,20 +403,11 @@ fun TmdbShowDetailScreen(
                                     },
                                     singleLine = false,
                                     placeholder = { Text("eg. https://example.org/image.jpg") },
-                                )
-                            }
-                            ,
-                            trailingContent = {
-                                AnimatedVisibility(state.savedItem?.coverImageOverride != null) {
-                                    IconButton(
-                                        onClick = {
-                                            coverOverride = null
-                                            onCoverOverrideSaved?.invoke(null)
-                                        }
-                                    ) {
-                                        Icon(Icons.Default.Refresh, null)
+                                    onReset = {
+                                        coverOverride = null
+                                        onCoverOverrideSaved?.invoke(null)
                                     }
-                                }
+                                )
                             }
                         )
                     }
@@ -899,6 +895,21 @@ fun TmdbShowDetailScreen(
                                         modifier = Modifier.weight(1f),
                                         title = "Weighted",
                                         rating = showWeighted,
+                                        colorBucketsOverride = if (!isSaved || ratingByAverage) RatingColorBucketConstants.RC_IMDB_SHOWS else getCurrentRatingColorBuckets()
+                                    )
+                                }
+                            }
+                            item {
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(horizontal = 16.dp, vertical = 8.dp),
+                                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                ) {
+                                    AggregateRatingStatCard(
+                                        modifier = Modifier.weight(1f),
+                                        title = "Standard Deviation",
+                                        rating = calculateStandardDeviation(flatRatings, showAverage),
                                         colorBucketsOverride = if (!isSaved || ratingByAverage) RatingColorBucketConstants.RC_IMDB_SHOWS else getCurrentRatingColorBuckets()
                                     )
                                 }

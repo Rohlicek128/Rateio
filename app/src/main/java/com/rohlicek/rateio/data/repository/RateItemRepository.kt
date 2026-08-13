@@ -88,6 +88,9 @@ class RateItemRepository(private val dao: RateItemDao) {
     suspend fun getByExternalId(externalId: String, categoryId: Long): RateItem? =
         dao.getByExternalId(externalId, categoryId)?.toDomain()
 
+    fun getByExternalIdBatch(externalIds: List<String>, categoryId: Long): Flow<List<RateItem>> =
+        dao.getByExternalIdBatch(externalIds, categoryId).map { it.map(RateItemEntity::toDomain) }
+
     suspend fun getParentById(childId: Long): RateItem? =
         dao.getParent(childId)?.toDomain()
 

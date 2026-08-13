@@ -5,11 +5,11 @@ import java.util.Locale
 import kotlin.math.abs
 
 
-fun formatCompact(number: Long, decimalsKilo: Int = 0, decimalsMillion: Int = 1, decimalsBillion: Int = 1): String {
+fun formatCompact(number: Long, decimalsThousand: Int = 1, decimalsTenThousand: Int = 0, decimalsMillion: Int = 1, decimalsBillion: Int = 1): String {
     return when {
         number >= 1_000_000_000 -> "%.${decimalsBillion}fB".format(Locale.US, number / 1_000_000_000.0).trimEnd('0').trimEnd('.')
         number >= 1_000_000 -> "%.${decimalsMillion}fM".format(Locale.US, number / 1_000_000.0).trimEnd('0').trimEnd('.')
-        number >= 1_000 -> "%.${decimalsKilo}fK".format(Locale.US, number / 1_000.0).trimEnd('0').trimEnd('.')
+        number >= 1_000 -> "%.${if (number < 10_000) decimalsThousand else decimalsTenThousand}fK".format(Locale.US, number / 1_000.0).trimEnd('0').trimEnd('.')
         else -> number.toString()
     }
 }

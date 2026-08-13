@@ -10,6 +10,8 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.OpenInNew
 import androidx.compose.material.icons.automirrored.filled.Sort
+import androidx.compose.material.icons.filled.Group
+import androidx.compose.material.icons.filled.Groups
 import androidx.compose.material.icons.filled.Save
 import androidx.compose.material.icons.filled.Tv
 import androidx.compose.material3.Button
@@ -43,6 +45,7 @@ import com.rohlicek.rateio.utils.openExternalLink
 @Composable
 fun SortByButton(
     modifier: Modifier = Modifier,
+    interactionSource: MutableInteractionSource? = null,
     onClick: () -> Unit,
 ) {
     val haptic = LocalHapticFeedback.current
@@ -53,6 +56,7 @@ fun SortByButton(
             onClick()
         },
         modifier = modifier,
+        interactionSource = interactionSource,
         shapes = ButtonDefaults.shapes(),
     ) {
         Icon(
@@ -63,6 +67,37 @@ fun SortByButton(
         Spacer(Modifier.size(ToggleButtonDefaults.IconSpacing))
         Text(
             "Sort by",
+            style = MaterialTheme.typography.labelMedium,
+            fontWeight = FontWeight.ExtraBold,
+        )
+    }
+}
+
+@Composable
+fun GroupByButton(
+    modifier: Modifier = Modifier,
+    interactionSource: MutableInteractionSource? = null,
+    onClick: () -> Unit,
+) {
+    val haptic = LocalHapticFeedback.current
+
+    FilledTonalButton(
+        onClick = {
+            haptic.performHapticFeedback(HapticFeedbackType.ToggleOn)
+            onClick()
+        },
+        modifier = modifier,
+        interactionSource = interactionSource,
+        shapes = ButtonDefaults.shapes(),
+    ) {
+        Icon(
+            Icons.Default.Groups,
+            contentDescription = "Group by",
+            modifier = Modifier.size(ToggleButtonDefaults.IconSize)
+        )
+        Spacer(Modifier.size(ToggleButtonDefaults.IconSpacing))
+        Text(
+            "Group by",
             style = MaterialTheme.typography.labelMedium,
             fontWeight = FontWeight.ExtraBold,
         )

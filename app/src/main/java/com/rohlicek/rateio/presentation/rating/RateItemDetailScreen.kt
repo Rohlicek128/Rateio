@@ -96,7 +96,6 @@ fun RateItemDetailScreen(
     headerExtraContent: LazyListScope.() -> Unit = {},
     extraContent: LazyListScope.() -> Unit = {},
     placeholderRatio: Float = 2f / 3f,
-    canAddToLibrary: Boolean = false,
     savedInLibrary: Boolean? = null,
     onChangeLibrary: ((Boolean) -> Unit)? = null,
     onRatingSaved: ((Float?) -> Unit)? = null,

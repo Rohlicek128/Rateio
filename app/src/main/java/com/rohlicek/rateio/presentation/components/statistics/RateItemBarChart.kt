@@ -36,12 +36,15 @@ import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.rohlicek.rateio.model.RateItem
 import com.rohlicek.rateio.presentation.rating.display.getCurrentRatingColorBuckets
 import com.rohlicek.rateio.presentation.rating.display.getCurrentRatingTransformations
 import com.rohlicek.rateio.presentation.rating.display.getRatingColor
 import com.rohlicek.rateio.presentation.rating.display.getTransformedRating
+import kotlin.math.pow
+import kotlin.math.sqrt
 
 data class BarChartEntry(
     val label: String,
@@ -57,6 +60,7 @@ fun RatingsTransformationBarChart(
     title: String,
     entries: List<RateItem>,
     onSelect: ((String) -> Unit)? = null,
+    chartHeight: Dp = 236.dp,
     trailingTitleContent: @Composable (RowScope.() -> Unit)? = null,
 ) {
     val rtf = getCurrentRatingTransformations()
@@ -90,6 +94,7 @@ fun RatingsTransformationBarChart(
         title = title,
         entries =  barChartEntries,
         onSelect = onSelect,
+        chartHeight = chartHeight,
         trailingTitleContent = trailingTitleContent,
     )
 }
@@ -100,6 +105,7 @@ fun RatingsColorBarChart(
     title: String,
     entries: List<RateItem>,
     onSelect: ((String) -> Unit)? = null,
+    chartHeight: Dp = 236.dp,
     trailingTitleContent: @Composable (RowScope.() -> Unit)? = null,
 ) {
     val rcb = getCurrentRatingColorBuckets()
@@ -133,6 +139,7 @@ fun RatingsColorBarChart(
         title = title,
         entries =  barChartEntries,
         onSelect = onSelect,
+        chartHeight = chartHeight,
         trailingTitleContent = trailingTitleContent,
     )
 }
@@ -143,6 +150,7 @@ private fun BardChartCard(
     title: String,
     entries: List<BarChartEntry>,
     onSelect: ((String) -> Unit)? = null,
+    chartHeight: Dp = 236.dp,
     trailingTitleContent: @Composable (RowScope.() -> Unit)? = null,
 ) {
     Card(
@@ -174,7 +182,7 @@ private fun BardChartCard(
             }
 
 
-            BarChart(entries = entries, onSelect = onSelect)
+            BarChart(entries = entries, onSelect = onSelect, chartHeight = chartHeight)
         }
     }
 }
@@ -184,6 +192,7 @@ private fun BardChartCard(
 fun BarChart(
     entries: List<BarChartEntry>,
     modifier: Modifier = Modifier,
+    chartHeight: Dp = 236.dp,
     onSelect: ((String) -> Unit)? = null,
 ) {
     val haptic = LocalHapticFeedback.current
@@ -194,7 +203,6 @@ fun BarChart(
     val spacing = 6.dp
     val minItemWidth = 20.dp
     val maxItemWidth = 88.dp
-    val chartHeight = 236.dp
     val labelMaxLines = 1
     val horizontalContentPadding = 16.dp
 

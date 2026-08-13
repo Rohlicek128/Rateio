@@ -125,6 +125,20 @@ object RatingColorBucketConstants {
         nullBucket = nullBucket
     )
 
+    val RC_CUSTOM_MOVIE = RatingColorBuckets(
+        name = "Custom Movie",
+        buckets = listOf(
+            RatingColorBucket(0.9f, Color(0xFF1DA1F2), whiteText, "Masterpiece"),
+            RatingColorBucket(0.85f, Color(0xFF186A3B), whiteText, "Awesome"),
+            RatingColorBucket(0.75f, Color(0xFF28B463), blackText, "Great"),
+            RatingColorBucket(0.65f, Color(0xFFF4D03F), blackText, "Good"),
+            RatingColorBucket(0.5f, Color(0xFFF39C12), blackText, "Average"),
+            RatingColorBucket(0.4f, Color(0xFFE74C3C), whiteText, "Bad"),
+            RatingColorBucket(0.0f, Color(0xFF633974), whiteText, "Garbage"),
+        ),
+        nullBucket = nullBucket
+    )
+
     val RC_DECADIC = RatingColorBuckets(
         name = "Decadic",
         buckets = listOf(

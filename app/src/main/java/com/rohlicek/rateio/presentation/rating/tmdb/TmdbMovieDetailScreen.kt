@@ -152,20 +152,11 @@ fun TmdbMovieDetailScreen(
                                     },
                                     singleLine = false,
                                     placeholder = { Text("eg. https://example.org/image.jpg") },
-                                )
-                            }
-                            ,
-                            trailingContent = {
-                                AnimatedVisibility(state.savedItem?.coverImageOverride != null) {
-                                    IconButton(
-                                        onClick = {
-                                            coverOverride = null
-                                            onCoverOverrideSaved?.invoke(null)
-                                        }
-                                    ) {
-                                        Icon(Icons.Default.Refresh, null)
+                                    onReset = {
+                                        coverOverride = null
+                                        onCoverOverrideSaved?.invoke(null)
                                     }
-                                }
+                                )
                             }
                         )
                     }
@@ -369,7 +360,7 @@ fun TmdbMovieDetailScreen(
                                     horizontalArrangement = Arrangement.spacedBy(10.dp),
                                 ) {
                                     movie.credits?.cast?.takeIf { it.isNotEmpty() }?.let { cast ->
-                                        items(cast.take(15), key = { it.creditId }) { member ->
+                                        items(cast.take(25), key = { it.creditId }) { member ->
                                             PersonCard(
                                                 name = member.name,
                                                 position = member.character,

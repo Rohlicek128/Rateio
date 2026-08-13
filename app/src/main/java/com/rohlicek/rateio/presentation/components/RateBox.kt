@@ -35,8 +35,10 @@ import com.rohlicek.rateio.presentation.rating.display.getCurrentRatingColorBuck
 import com.rohlicek.rateio.presentation.rating.display.getCurrentRatingTransformations
 import com.rohlicek.rateio.presentation.rating.display.getMaxCharWidth
 import com.rohlicek.rateio.presentation.rating.display.getRatingColor
+import com.rohlicek.rateio.presentation.rating.display.getRoundedRating
 import com.rohlicek.rateio.presentation.rating.display.getTransformedRating
 import com.rohlicek.rateio.ui.theme.GoogleSansRounded
+import com.rohlicek.rateio.utils.glow
 import com.rohlicek.rateio.utils.shimmerLoading
 
 
@@ -74,12 +76,27 @@ fun RateBox(
     )
     val currentShape = RoundedCornerShape(animatedRadius)
 
+    val glowProgress = if (colorBucketsOverride.buckets.firstOrNull() == colors && colors.equalOrGreaterThen != null && rating != null) {
+        ((rating - colors.equalOrGreaterThen) / (1f - colors.equalOrGreaterThen)).coerceIn(0f, 1f)
+    } else 0f
+
     Surface(
         color = colors.backgroundColor,
         contentColor = colors.foregroundColor.copy(alpha = if (isLoading) 0.3f else 0.9f),
         shape = currentShape,
         border = null,
-        modifier = modifier
+        modifier = Modifier
+            .then(
+                if (glowProgress > 0f)
+                    Modifier.glow(
+                        color = colors.backgroundColor,
+                        radius = ((size.textSize.value - 5) * glowProgress + 6).dp,
+                        alpha = 0.5f * glowProgress + 0.1f,
+                        cornerRadius = animatedRadius,
+                    )
+                else Modifier
+            )
+            .then(modifier)
             .clip(currentShape)
             .then(
                 if (onClick != null) Modifier.clickable(

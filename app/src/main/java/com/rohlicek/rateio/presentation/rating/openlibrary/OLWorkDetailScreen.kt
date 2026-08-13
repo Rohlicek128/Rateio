@@ -353,20 +353,11 @@ fun OLWorkDetailScreen(
                                     },
                                     singleLine = false,
                                     placeholder = { Text("eg. https://example.org/image.jpg") },
-                                )
-                            }
-                            ,
-                            trailingContent = {
-                                AnimatedVisibility(state.savedItem?.coverImageOverride != null) {
-                                    IconButton(
-                                        onClick = {
-                                            coverOverride = null
-                                            onCoverOverrideSaved?.invoke(null)
-                                        }
-                                    ) {
-                                        Icon(Icons.Default.Refresh, null)
+                                    onReset = {
+                                        coverOverride = null
+                                        onCoverOverrideSaved?.invoke(null)
                                     }
-                                }
+                                )
                             }
                         )
                     }
@@ -480,7 +471,6 @@ fun OLWorkDetailScreen(
                 ratingVotes = null,
                 onRatingSaved = onRatingSaved,
                 onBackClick = onBackClick,
-                canAddToLibrary = false,
                 onOpenSettings = { showSettings = true },
                 headerExtraContent = {
                     //Stats

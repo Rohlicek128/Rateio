@@ -45,6 +45,7 @@ fun SettingsRatingScreen(
         RatingTransformationsConstants.TF_IMDB,
         RatingTransformationsConstants.TF_IMDB_PRECISE,
         RatingTransformationsConstants.TF_PERCENTAGE,
+        RatingTransformationsConstants.TF_PERCENTAGE_PRECISE,
         RatingTransformationsConstants.TF_TEN_STARS,
         RatingTransformationsConstants.TF_FIVE_STARS_ZERO,
         RatingTransformationsConstants.TF_TEN_ZERO,
@@ -61,6 +62,7 @@ fun SettingsRatingScreen(
         RatingColorBucketConstants.RC_IMDB_MOVIES,
         RatingColorBucketConstants.RC_IMDB_SHOWS,
         RatingColorBucketConstants.RC_IMDB_EPISODES,
+        RatingColorBucketConstants.RC_CUSTOM_MOVIE,
         RatingColorBucketConstants.RC_DECADIC,
         RatingColorBucketConstants.RC_STEAM,
         RatingColorBucketConstants.RC_CSFD,
@@ -75,18 +77,19 @@ fun SettingsRatingScreen(
         RatingTransformationsConstants.currentTransformation,
         RatingColorBucketConstants.currentBuckets
     ) {
-        mutableStateOf<Float?>(0.9f)
+        mutableStateOf<Float?>(0.87654f)
     }
     val rtf = getCurrentRatingTransformations()
 
     ScreenScaffold(
         title = "Rating Visualization",
         onBackClick = onBackClick,
-    ) { padding ->
+    ) { padding, listState ->
         LazyColumn(
             modifier = Modifier.padding(horizontal = 20.dp),
             verticalArrangement = Arrangement.spacedBy(4.dp),
             contentPadding = padding,
+            state = listState,
         ) {
             item {
                 Row(

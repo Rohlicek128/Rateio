@@ -8,12 +8,17 @@ import com.rohlicek.rateio.data.repository.CategoryRepository
 import com.rohlicek.rateio.data.repository.RateItemRepository
 import com.rohlicek.rateio.model.Category
 import com.rohlicek.rateio.model.HasDisplayName
+import com.rohlicek.rateio.model.ItemStatus
 import com.rohlicek.rateio.model.RateItem
+import com.rohlicek.rateio.presentation.components.SortOrder
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 
@@ -24,10 +29,28 @@ enum class SortModeLibrary(override val displayName: String): HasDisplayName {
     CREATED("Date Added"),
 }
 
+enum class GroupByLibrary(override val displayName: String): HasDisplayName {
+    YEAR("Year"),
+    GENRE("Genre (Not Implemented)"),
+    STATUS("Status (Not Implemented)"),
+    NONE("None"),
+}
+
 data class LibraryCategoryState(
     val category: Category? = null,
     val items: List<RateItem> = emptyList(),
     val isLoading: Boolean = false,
+)
+
+data class LibraryCategorySettingsState(
+    val statusFilter: ItemStatus? = null,
+
+    val sortMode: SortModeLibrary = SortModeLibrary.RATING,
+    val sortOrder: SortOrder = SortOrder.DESCENDING,
+    val globalRank: Boolean = false,
+
+    val groupByMode: GroupByLibrary = GroupByLibrary.NONE,
+    val groupByOrder: SortOrder = SortOrder.DESCENDING,
 )
 
 class LibraryCategoryViewModel(
@@ -35,6 +58,8 @@ class LibraryCategoryViewModel(
     categoryRepository: CategoryRepository,
     itemRepository: RateItemRepository,
 ) : ViewModel() {
+    private val _settingsState = MutableStateFlow(LibraryCategorySettingsState())
+    val settingsState: StateFlow<LibraryCategorySettingsState> = _settingsState.asStateFlow()
 
     val state: StateFlow<LibraryCategoryState> = combine(
         categoryRepository.observeUserCategories()
@@ -50,6 +75,27 @@ class LibraryCategoryViewModel(
                 println("${item.rating}; ${item.title}; ${item.id}; ${item.externalId}")
             }
         }
+    }
+
+    fun onStatusFilterSelect(status: ItemStatus?) {
+        _settingsState.update { it.copy(statusFilter = status) }
+    }
+
+    fun onSortModeSelect(sortMode: SortModeLibrary) {
+        _settingsState.update { it.copy(sortMode = sortMode) }
+    }
+    fun onSortOrderChange(order: SortOrder) {
+        _settingsState.update { it.copy(sortOrder = order) }
+    }
+    fun onGlobalRankChange(global: Boolean) {
+        _settingsState.update { it.copy(globalRank = global) }
+    }
+
+    fun onGroupByModeSelect(groupByMode: GroupByLibrary) {
+        _settingsState.update { it.copy(groupByMode = groupByMode) }
+    }
+    fun onGroupByOrderChange(order: SortOrder) {
+        _settingsState.update { it.copy(groupByOrder = order) }
     }
 
     companion object {

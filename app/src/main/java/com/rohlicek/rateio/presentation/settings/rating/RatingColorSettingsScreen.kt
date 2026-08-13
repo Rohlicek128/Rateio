@@ -74,11 +74,12 @@ fun RatingColorSettingsScreen(
                 }
             )
         }
-    ) { padding ->
+    ) { padding, listState ->
         LazyColumn(
             modifier = Modifier.padding(horizontal = 20.dp),
             verticalArrangement = Arrangement.spacedBy(4.dp),
             contentPadding = padding,
+            state = listState,
         ) {
             item { SettingsListHeader("Testing") }
             item {

@@ -24,16 +24,13 @@ import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.unit.dp
-import androidx.work.ExistingWorkPolicy
-import androidx.work.OneTimeWorkRequestBuilder
-import androidx.work.OutOfQuotaPolicy
-import androidx.work.WorkInfo
-import androidx.work.WorkManager
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.rohlicek.rateio.data.db.ImdbRatingEntity
 import com.rohlicek.rateio.data.db.RateioDatabase
 import com.rohlicek.rateio.data.preferences.SyncPreferences
 import com.rohlicek.rateio.data.remote.imdb.ImdbRatingRepository
-import com.rohlicek.rateio.data.remote.imdb.ManualSyncWorker
+import com.rohlicek.rateio.data.repository.CategoryRepository
+import com.rohlicek.rateio.data.repository.RateItemRepository
 import com.rohlicek.rateio.presentation.ScreenScaffold
 import com.rohlicek.rateio.presentation.components.RateBox
 import com.rohlicek.rateio.presentation.rating.display.RatingColorBucketConstants
@@ -47,10 +44,23 @@ fun SettingsDatabaseScreen(
     onBackClick: () -> Unit,
 ) {
     val context = LocalContext.current
+    val itemRepository = remember {
+        val db = RateioDatabase.getDatabase(context)
+        RateItemRepository(db.rateItemDao())
+    }
+    val categoryRepository = remember {
+        val db = RateioDatabase.getDatabase(context)
+        CategoryRepository(db.categoryDao())
+    }
     val imdbRepository = remember {
         val db = RateioDatabase.getDatabase(context)
         ImdbRatingRepository(db.imdbRatingDao())
     }
+
+    val viewModel: SettingsDatabaseViewModel = viewModel(
+        factory = SettingsDatabaseViewModel.factory( categoryRepository, itemRepository)
+    )
+
 
     val haptic = LocalHapticFeedback.current
 
@@ -68,11 +78,12 @@ fun SettingsDatabaseScreen(
     ScreenScaffold(
         title = "Database",
         onBackClick = onBackClick,
-    ) { padding ->
+    ) { padding, listState ->
         LazyColumn(
             modifier = Modifier.padding(horizontal = 20.dp),
             verticalArrangement = Arrangement.spacedBy(4.dp),
             contentPadding = padding,
+            state = listState,
         ) {
 
             item { SettingsListHeader("IMDb") }

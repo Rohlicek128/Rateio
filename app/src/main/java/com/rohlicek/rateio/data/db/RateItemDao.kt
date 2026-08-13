@@ -49,6 +49,9 @@ interface RateItemDao {
     @Query("SELECT * FROM rate_items WHERE externalId = :externalId AND categoryId = :categoryId LIMIT 1")
     suspend fun getByExternalId(externalId: String, categoryId: Long): RateItemEntity?
 
+    @Query("SELECT * FROM rate_items WHERE categoryId = :categoryId AND externalId IN (:externalIds)")
+    fun getByExternalIdBatch(externalIds: List<String>, categoryId: Long): Flow<List<RateItemEntity>>
+
     @Query("""
     SELECT parent.* FROM rate_items AS child
     INNER JOIN rate_items AS parent ON child.parentId = parent.id

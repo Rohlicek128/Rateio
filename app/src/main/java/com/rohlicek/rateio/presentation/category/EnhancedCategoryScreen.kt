@@ -1,24 +1,29 @@
 package com.rohlicek.rateio.presentation.category
 
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.material3.ButtonGroup
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -39,7 +44,9 @@ import com.rohlicek.rateio.model.ItemStatus
 import com.rohlicek.rateio.model.RateItem
 import com.rohlicek.rateio.model.computeWeightedRating
 import com.rohlicek.rateio.presentation.ScreenScaffold
+import com.rohlicek.rateio.presentation.components.ConnectedButtonsExpressive
 import com.rohlicek.rateio.presentation.components.ExpressiveScrollBar
+import com.rohlicek.rateio.presentation.components.GroupByButton
 import com.rohlicek.rateio.presentation.components.HeroCarousel
 import com.rohlicek.rateio.presentation.components.ModalSortableEnumSelector
 import com.rohlicek.rateio.presentation.components.RateItemCard
@@ -48,12 +55,19 @@ import com.rohlicek.rateio.presentation.components.RowButtonEnumSelector
 import com.rohlicek.rateio.presentation.components.SortByButton
 import com.rohlicek.rateio.presentation.components.SortOrder
 import com.rohlicek.rateio.presentation.components.rating.ParentCompletionText
+import com.rohlicek.rateio.presentation.components.statistics.RatingsColorBarChart
 import com.rohlicek.rateio.presentation.components.statistics.StatCard
 import com.rohlicek.rateio.presentation.rating.display.RatingColorBucketConstants
 import com.rohlicek.rateio.presentation.rating.display.getCurrentRatingColorBuckets
+import com.rohlicek.rateio.presentation.rating.display.getTransformedRating
+import com.rohlicek.rateio.presentation.settings.ListItemPosition
+import com.rohlicek.rateio.presentation.settings.SettingListItem
+import com.rohlicek.rateio.presentation.settings.SettingsListHeader
+import com.rohlicek.rateio.presentation.settings.SettingsSwitch
 import com.rohlicek.rateio.utils.bottomShadow
 import com.rohlicek.rateio.utils.formatDate
 import com.rohlicek.rateio.utils.parseDate
+import java.util.Locale
 
 
 @Composable
@@ -76,12 +90,14 @@ fun EnhancedCategoryScreen(
         factory = LibraryCategoryViewModel.factory(categoryId, categoryRepository, itemRepository)
     )
     val state by viewModel.state.collectAsState()
+    val settingsState by viewModel.settingsState.collectAsState()
 
     //val selectedStatuses = remember { ItemStatus.entries.toMutableStateList() }
-    var selectedStatus by remember { mutableStateOf<ItemStatus?>(null) } // null means "All"
     var showSortBySheet by remember { mutableStateOf(false) }
-    var currentSort by remember { mutableStateOf(SortModeLibrary.RATING) }
-    var currentOrder by remember { mutableStateOf(SortOrder.DESCENDING) }
+    var showGroupBySheet by remember { mutableStateOf(false) }
+    val orderInteractionSources = remember(2) {
+        List(2) { MutableInteractionSource() }
+    }
 
     val watchlistItems = remember(state.items) {
         state.items.filter { it.status == ItemStatus.WATCHLIST }
@@ -98,35 +114,60 @@ fun EnhancedCategoryScreen(
     val isAggregate = state.category?.type != null && state.category?.type == CategoryType.TMDB_SHOWS
 
     // Filter and sort the main list based on user selection
-    val filteredAndSortedItems = remember(state.items, selectedStatus, currentSort, currentOrder) {
+    val filteredAndSortedItems = remember(state.items, settingsState.statusFilter, settingsState.sortMode, settingsState.sortOrder) {
         /*val filtered = if (selectedStatuses.isEmpty()) {
             state.items.filter { it.status == ItemStatus.NONE }
         } else {
             state.items.filter { it.status in selectedStatuses }
         }*/
-        val filtered = if (selectedStatus == null) {
+        val filtered = if (settingsState.statusFilter == null) {
             state.items
         } else {
-            state.items.filter { it.status == selectedStatus }
+            state.items.filter { it.status == settingsState.statusFilter }
         }
 
-        val sorted = when (currentSort) {
+        val sorted = when (settingsState.sortMode) {
             SortModeLibrary.NAME -> filtered.sortedBy { it.title }
             SortModeLibrary.RATING -> filtered.sortedBy {
                 (if (isAggregate) {
                     computeWeightedRating(it.rating, it.ratingWeight.toInt())
-                } else it.rating) ?: (if (currentOrder == SortOrder.ASCENDING) 2f else -1f)
+                } else it.rating) ?: (if (settingsState.sortOrder == SortOrder.ASCENDING) 2f else -1f)
             }
             SortModeLibrary.UPDATED -> filtered.sortedBy { it.updatedAt }
             SortModeLibrary.CREATED -> filtered.sortedBy { it.createdAt }
         }
 
-        if (currentOrder == SortOrder.ASCENDING) sorted else sorted.asReversed()
+        if (settingsState.sortOrder == SortOrder.ASCENDING) sorted else sorted.asReversed()
+    }
+
+    val groupedItems: Map<String?, List<RateItem>> = remember(filteredAndSortedItems, settingsState.statusFilter, settingsState.groupByMode, settingsState.groupByOrder) {
+        when (settingsState.groupByMode) {
+            GroupByLibrary.YEAR -> {
+                val yearComparator = Comparator<String?> { s1, s2 ->
+                    val year1 = s1?.toIntOrNull()
+                    val year2 = s2?.toIntOrNull()
+                    when {
+                        year1 == null && year2 == null -> 0
+                        year1 == null -> 1
+                        year2 == null -> -1
+                        else -> year1.compareTo(year2)
+                    }
+                }
+                val finalComparator = if (settingsState.groupByOrder == SortOrder.DESCENDING) {
+                    yearComparator.reversed()
+                } else yearComparator
+
+                filteredAndSortedItems
+                    .groupBy { it.subtitle }
+                    .toSortedMap(finalComparator)
+            }
+            else -> mapOf(null to filteredAndSortedItems)
+        }
     }
 
     /*LaunchedEffect(filteredAndSortedItems) {
         filteredAndSortedItems.filter { it.rating != null }.forEachIndexed { index, show ->
-            println("${index + 1}. ${show.title} - ${ show.rating?.times(10f)
+            println("${index + 1}. ${show.title} (${show.subtitle ?: "????"}) - ${ "%.3f".format(Locale.US, show.rating?.times(10f))
                 //computeWeightedRating(show.rating, show.ratingWeight.toInt())?.let { 
                 //    "%.3f".format(Locale.US, it * 10f)
                 //}
@@ -134,18 +175,16 @@ fun EnhancedCategoryScreen(
         }
     }*/
 
-    val listState = rememberLazyListState()
-
     ScreenScaffold(
         title = state.category?.name ?: "",
         onBackClick = onBackClick,
-    ) { padding ->
+    ) { padding, listState ->
         Box(modifier = Modifier.fillMaxSize()) {
             LazyColumn(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(top = padding.calculateTopPadding(), start = 0.dp, end = 24.dp)
-                    .clip(MaterialTheme.shapes.largeIncreased),
+                    .padding(top = padding.calculateTopPadding(), start = 0.dp, end = 24.dp),
+                    //.clip(MaterialTheme.shapes.largeIncreased),
                 contentPadding = PaddingValues(bottom = 80.dp),
                 state = listState,
             ) {
@@ -232,8 +271,8 @@ fun EnhancedCategoryScreen(
                         )
 
                         StatCard(
-                            title = selectedStatus?.displayName ?: "Watchlist",
-                            value = if (selectedStatus != null && filteredAndSortedItems.isNotEmpty())
+                            title = settingsState.statusFilter?.displayName ?: "Watchlist",
+                            value = if (settingsState.statusFilter != null && filteredAndSortedItems.isNotEmpty())
                                 filteredAndSortedItems.size.toString()
                             else if (watchlistItems.isNotEmpty())
                                 watchlistItems.size.toString()
@@ -248,6 +287,22 @@ fun EnhancedCategoryScreen(
                 }
 
                 item {
+                    RatingsColorBarChart(
+                        modifier = Modifier.padding(16.dp),
+                        chartHeight = 180.dp,
+                        entries = filteredAndSortedItems,
+                        title = state.category?.type?.displayName ?: "Library",
+                        trailingTitleContent = {
+                            ConnectedButtonsExpressive(
+                                selectedIndex = 1,
+                                onSelectionChanged = {},
+                                options = listOf("Ratings", "Buckets"),
+                            )
+                        }
+                    )
+                }
+
+                item {
                     HorizontalDivider(
                         modifier = Modifier
                             .padding(16.dp)
@@ -257,37 +312,95 @@ fun EnhancedCategoryScreen(
                 }
 
                 // --- SECTION 2: FILTERS AND SORTING ---
+                /*item {
+                    Text(
+                        modifier = Modifier.padding(start = 16.dp, end = 10.dp, top = 6.dp),
+                        text = state.category?.type?.displayName ?: "Library",
+                        style = MaterialTheme.typography.displayLarge,
+                        color = MaterialTheme.colorScheme.primary,
+                        fontWeight = FontWeight.Black,
+                    )
+                }*/
                 item {
                     Row (
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(start = 16.dp, end = 10.dp, top = 6.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
+                            .padding(start = 16.dp, end = 8.dp),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text(
-                            text = state.category?.type?.displayName ?: "Library",
-                            style = MaterialTheme.typography.displayMedium,
-                            color = MaterialTheme.colorScheme.primary,
-                            fontWeight = FontWeight.Black,
-                        )
-
-                        SortByButton(onClick = { showSortBySheet = true })
+                        ButtonGroup(
+                            modifier = Modifier.fillMaxWidth(),
+                            expandedRatio = 0.2f,
+                            overflowIndicator = {},
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        ) {
+                            customItem(
+                                buttonGroupContent = {
+                                    GroupByButton(
+                                        modifier = Modifier.weight(1f).animateWidth(interactionSource = orderInteractionSources[0]),
+                                        interactionSource = orderInteractionSources[0],
+                                        onClick = { showGroupBySheet = true }
+                                    )
+                                },
+                                menuContent = {}
+                            )
+                            customItem(
+                                buttonGroupContent = {
+                                    SortByButton(
+                                        modifier = Modifier.weight(1f).animateWidth(interactionSource = orderInteractionSources[1]),
+                                        interactionSource = orderInteractionSources[1],
+                                        onClick = { showSortBySheet = true }
+                                    )
+                                },
+                                menuContent = {}
+                            )
+                        }
+                        if (showGroupBySheet) {
+                            ModalSortableEnumSelector(
+                                title = "Group By",
+                                selectedOption = settingsState.groupByMode,
+                                onOptionSelected = {
+                                    if (it == settingsState.groupByMode) viewModel.onGroupByModeSelect(GroupByLibrary.NONE)
+                                    else viewModel.onGroupByModeSelect(it)
+                                },
+                                selectedOrder = settingsState.groupByOrder,
+                                onOrderChange = viewModel::onGroupByOrderChange,
+                                onDismiss = { showGroupBySheet = false },
+                                separatedOptions = listOf(GroupByLibrary.NONE),
+                                footerContent = {
+                                    item { SettingsListHeader("Other") }
+                                    item {
+                                        SettingListItem(
+                                            title = "Global Ranking",
+                                            position = ListItemPosition.SINGLE,
+                                            trailingContent = {
+                                                SettingsSwitch(
+                                                    checked = settingsState.globalRank,
+                                                    onCheckedChange = viewModel::onGlobalRankChange,
+                                                )
+                                            }
+                                        )
+                                    }
+                                }
+                            )
+                        }
                         if (showSortBySheet) {
                             ModalSortableEnumSelector(
-                                selectedOption = currentSort,
-                                onOptionSelected = { currentSort = it },
-                                selectedOrder = currentOrder,
-                                onOrderChange = { currentOrder = it },
+                                selectedOption = settingsState.sortMode,
+                                onOptionSelected = viewModel::onSortModeSelect,
+                                selectedOrder = settingsState.sortOrder,
+                                onOrderChange = viewModel::onSortOrderChange,
                                 onDismiss = { showSortBySheet = false },
                             )
                         }
                     }
-
+                }
+                item {
                     RowButtonEnumSelector(
-                        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
-                        selectedOption = selectedStatus,
-                        onOptionSelected = { selectedStatus = it },
+                        contentPadding = PaddingValues(start = 16.dp, end = 8.dp, top = 8.dp, bottom = 8.dp),
+                        selectedOption = settingsState.statusFilter,
+                        onOptionSelected = viewModel::onStatusFilterSelect,
                         excludedOptions = listOf(ItemStatus.NONE),
                         nullIsAll = true,
                         modifier = Modifier
@@ -297,42 +410,84 @@ fun EnhancedCategoryScreen(
                 }
 
                 // --- SECTION 3: THE MAIN LIST ---
-                itemsIndexed(
-                    items = filteredAndSortedItems,
-                    key = { _, item -> item.id }
-                ) { index, item ->
-                    RateItemCard(
-                        title = item.title,
-                        subtitle = when (currentSort) {
-                            SortModeLibrary.UPDATED -> formatDate(parseDate(item.updatedAt))
-                            SortModeLibrary.CREATED -> formatDate(parseDate(item.createdAt))
-                            else -> item.subtitle
-                        },
-                        coverImagePath = item.coverImageOverride ?: item.coverImageLowUrl,
-                        rating = if (isAggregate) {
-                            computeWeightedRating(item.rating, item.ratingWeight.toInt())
-                        } else item.rating,
-                        placeholderRatio = 2f / 3f,
-                        padding = PaddingValues(start = 18.dp, top = 6.dp, bottom = 6.dp),
-                        rank = if (currentSort == SortModeLibrary.RATING) index + 1 else null,
-                        onClick = { onItemClick(item) },
-                        //bubbleText = if (item.externalSource == CategoryType.TMDB_MOVIES && item.length != null)
-                        //    formatTime(item.length.toInt())
-                        //else null,
-                        colorBucketsOverride = if (isAggregate) RatingColorBucketConstants.RC_IMDB_SHOWS else getCurrentRatingColorBuckets(),
-                        leadingRateBoxContent = if (isAggregate) {
-                            {
-                                ParentCompletionText(
-                                    numberOfCompleted = item.ratingWeight.toInt(),
-                                    numberOfAll = item.length?.toInt() ?: 0,
-                                )
+                groupedItems.takeIf { it.isNotEmpty() }?.let {
+                    groupedItems.forEach { (group, items) ->
+                        if (settingsState.groupByMode != GroupByLibrary.NONE) {
+                            item {
+                                Row(
+                                    modifier = Modifier.padding(start = 42.dp, end = 10.dp, top = 24.dp),
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                    verticalAlignment = Alignment.Bottom
+                                ) {
+                                    Text(
+                                        text = group ?: "Unknown",
+                                        style = MaterialTheme.typography.displayLarge,
+                                        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.9f),
+                                        fontWeight = FontWeight.Black,
+                                    )
+                                    if (items.isNotEmpty()) {
+                                        val rated = items.filter { it.rating != null }
+                                        if (rated.isNotEmpty()) {
+                                            val avg = rated.sumOf { it.rating?.toDouble() ?: 0.0 } / rated.size
+                                            Text(
+                                                modifier = Modifier.padding(bottom = 12.dp),
+                                                text = "(avg. ${getTransformedRating(avg.toFloat())})",
+                                                style = MaterialTheme.typography.titleLarge,
+                                                fontWeight = FontWeight.SemiBold,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.75f)
+                                            )
+                                        }
+                                    }
+                                }
                             }
-                        } else null,
-                    )
+                        }
+                        itemsIndexed(
+                            items = items,
+                            key = { _, item -> item.id }
+                        ) { index, item ->
+                            val rank = if (settingsState.sortMode == SortModeLibrary.RATING && item.rating != null) {
+                                if (settingsState.globalRank) filteredAndSortedItems.indexOf(item) + 1
+                                else index + 1
+                            }
+                            else null
+                            RateItemCard(
+                                title = item.title,
+                                subtitle = when (settingsState.sortMode) {
+                                    SortModeLibrary.UPDATED -> formatDate(parseDate(item.updatedAt))
+                                    SortModeLibrary.CREATED -> formatDate(parseDate(item.createdAt))
+                                    else -> item.subtitle
+                                    //else -> when (settingsState.groupByMode) {
+                                    //    GroupByLibrary.YEAR -> formatDate(parseDate(item.createdAt))
+                                    //    else -> item.subtitle
+                                    //}
+                                },
+                                coverImagePath = item.coverImageOverride ?: item.coverImageLowUrl,
+                                rating = if (isAggregate) {
+                                    computeWeightedRating(item.rating, item.ratingWeight.toInt())
+                                } else item.rating,
+                                placeholderRatio = 2f / 3f,
+                                padding = PaddingValues(start = 18.dp, top = 6.dp, bottom = 6.dp),
+                                rank = rank,
+                                onClick = { onItemClick(item) },
+                                //bubbleText = if (item.externalSource == CategoryType.TMDB_MOVIES && item.length != null)
+                                //    formatTime(item.length.toInt())
+                                //else null,
+                                colorBucketsOverride = if (isAggregate) RatingColorBucketConstants.RC_IMDB_SHOWS else getCurrentRatingColorBuckets(),
+                                leadingRateBoxContent = if (isAggregate) {
+                                    {
+                                        ParentCompletionText(
+                                            numberOfCompleted = item.ratingWeight.toInt(),
+                                            numberOfAll = item.length?.toInt() ?: 0,
+                                        )
+                                    }
+                                } else null,
+                            )
+                        }
+                    }
                 }
 
                 // --- SECTION 4: EMPTY STATE ---
-                if (filteredAndSortedItems.isEmpty()) {
+                if (groupedItems.isEmpty()) {
                     item {
                         Box(
                             modifier = Modifier

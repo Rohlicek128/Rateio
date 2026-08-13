@@ -142,4 +142,6 @@ dependencies {
     implementation(libs.androidx.core.splashscreen)
 
     implementation(libs.androidx.datastore.preferences)
+
+    implementation(libs.kotlin.csv.jvm)
 }

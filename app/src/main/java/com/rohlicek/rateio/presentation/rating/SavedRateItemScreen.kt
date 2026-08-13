@@ -74,10 +74,11 @@ fun SavedRateItemScreen(
                         onCoverOverrideSaved = viewModel::updateCoverOverride,
                         onMetadataSaved = viewModel::updateMetadata,
                         onBackClick = onBackClick,
-                        onEpisodeClick = { seasonItem, episodeItem ->
+                        onEpisodeClick = { seasonItem, episodeItem, saveRatings ->
                             viewModel.findOrCreateChildAndNavigate(
                                 parentItem = seasonItem,
                                 childItem = episodeItem,
+                                saveRatings = saveRatings,
                                 onNavigate = onChildClick,
                             )
                         }
@@ -185,7 +186,6 @@ fun SavedRateItemScreen(
                         placeholderRatio = 2f / 3f,
                         rating = item.rating,
                         onBackClick = onBackClick,
-                        canAddToLibrary = true,
                         extraContent = { },
                         onRatingSaved = viewModel::saveRating,
                         onOpenSettings = { },

@@ -8,7 +8,10 @@ import com.rohlicek.rateio.RateioApplication
 import com.rohlicek.rateio.data.remote.imdb.ImdbRatingRepository
 import com.rohlicek.rateio.data.remote.tmdb.TmdbClient
 import com.rohlicek.rateio.data.remote.tmdb.toRateItem
+import com.rohlicek.rateio.data.repository.CategoryRepository
+import com.rohlicek.rateio.data.repository.RateItemRepository
 import com.rohlicek.rateio.model.CategoryType
+import com.rohlicek.rateio.model.ItemStatus
 import com.rohlicek.rateio.model.RateItem
 import com.rohlicek.rateio.presentation.rating.tmdb.RatingsSource
 import kotlinx.coroutines.Dispatchers
@@ -36,12 +39,16 @@ data class TmdbLeaderboardState(
     val tmdbRatings: Map<Int, RatingData> = emptyMap(),
     val imdbRatings: Map<Int, RatingData> = emptyMap(),
 
+    val completedItems: Set<String> = emptySet(),
+
     val isLoading: Boolean = false,
     val error: String? = null,
 )
 
 class TmdbLeaderboardViewModel(
     private val category: CategoryType,
+    private val categoryRepository: CategoryRepository,
+    private val itemRepository: RateItemRepository,
     private val imdbRepository: ImdbRatingRepository
 ) : ViewModel() {
     private val _state = MutableStateFlow(TmdbLeaderboardState())
@@ -87,6 +94,26 @@ class TmdbLeaderboardViewModel(
 
                 launch {
                     fetchImdbRatings(tmdbRatings.keys.toList())
+                }
+
+                launch {
+                    val showsCategory = categoryRepository.getCategoryByType(category)
+                    showsCategory?.id?.let { categoryId ->
+                        val externalIds = allPagesResults.mapNotNull { it.externalId }
+                        if (externalIds.isNotEmpty()) {
+                            itemRepository.getByExternalIdBatch(externalIds, categoryId)
+                                .collect { savedItems ->
+                                    _state.update { currentState ->
+                                        currentState.copy(
+                                            completedItems = savedItems
+                                                .filter { it.status == ItemStatus.COMPLETED }
+                                                .mapNotNull { it.externalId }
+                                                .toSet()
+                                        )
+                                    }
+                                }
+                        }
+                    }
                 }
             } catch (e: Exception) {
                 _state.update { it.copy(error = e.message, isLoading = false) }
@@ -151,8 +178,8 @@ class TmdbLeaderboardViewModel(
     }
 
     companion object {
-        fun factory(category: CategoryType, imdbRepository: ImdbRatingRepository) = viewModelFactory {
-            initializer { TmdbLeaderboardViewModel(category, imdbRepository) }
+        fun factory(category: CategoryType, categoryRepository: CategoryRepository, itemRepository: RateItemRepository, imdbRepository: ImdbRatingRepository) = viewModelFactory {
+            initializer { TmdbLeaderboardViewModel(category, categoryRepository, itemRepository, imdbRepository) }
         }
     }
 }

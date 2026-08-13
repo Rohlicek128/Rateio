@@ -162,6 +162,7 @@ class SavedRateItemViewModel(
     fun findOrCreateChildAndNavigate(
         parentItem: RateItem,
         childItem: RateItem,
+        saveRatings: Boolean = false,
         onNavigate: (childId: Long, parentId: Long) -> Unit,
     ) {
         viewModelScope.launch {
@@ -174,6 +175,7 @@ class SavedRateItemViewModel(
             ) {
                 parentItem
             }
+            if (saveRatings) itemRepository.rate(parentId, parentItem.rating)
 
             // Child
             if (childItem.externalId == null) return@launch

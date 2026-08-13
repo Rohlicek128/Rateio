@@ -24,6 +24,11 @@ import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import kotlin.math.cbrt
 import kotlin.math.pow
+import android.graphics.BlurMaskFilter
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.graphics.Paint
+import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
+
 
 fun <T> List<T>.getWrapped(index: Int): T {
     if (isEmpty()) throw NoSuchElementException("List is empty.")
@@ -98,6 +103,36 @@ fun Modifier.bottomShadow(
         topLeft = Offset(0f, size.height),
         size = Size(size.width, shadowHeightPx)
     )
+}
+
+
+fun Modifier.glow(
+    color: Color,
+    radius: Dp,
+    alpha: Float = 0.6f,
+    cornerRadius: Dp,
+) = this.drawBehind {
+    val radiusPx = radius.toPx()
+    val cornerPx = cornerRadius.toPx()
+
+    val paint = Paint().apply {
+        this.color = color.copy(alpha = alpha)
+        asFrameworkPaint().apply {
+            maskFilter = BlurMaskFilter(radiusPx, BlurMaskFilter.Blur.NORMAL)
+        }
+    }
+
+    drawIntoCanvas { canvas ->
+        canvas.drawRoundRect(
+            left = 0f,
+            top = 0f,
+            right = size.width,
+            bottom = size.height,
+            radiusX = cornerPx,
+            radiusY = cornerPx,
+            paint = paint,
+        )
+    }
 }
 
 

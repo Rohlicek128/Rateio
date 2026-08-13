@@ -379,7 +379,7 @@ fun AppNavigation(
                         showId = route.showId,
                         isSaved = false,
                         onBackClick = { navController.popBackStack() },
-                        onEpisodeClick = { _, episodeItem ->
+                        onEpisodeClick = { _, episodeItem, _ ->
                             val metadata = episodeItem.metadataJSON?.let {
                                 runCatching {
                                     Json.decodeFromString<TmdbEpisodeMetadata>(it)
