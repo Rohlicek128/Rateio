@@ -39,7 +39,6 @@ class BrowseViewModel : ViewModel() {
 
     init {
         viewModelScope.launch {
-            // Only show API-backed categories in browse
             val apiCategories = CategoryRegistry.all.filter {
                 it.type != CategoryType.CUSTOM
             }

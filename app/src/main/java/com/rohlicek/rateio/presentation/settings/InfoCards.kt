@@ -69,7 +69,9 @@ fun InfoCard(
         icon = Icons.Outlined.Info,
         colors = ListItemDefaults.colors().copy(
             containerColor = MaterialTheme.colorScheme.primaryFixed,
-            contentColor = MaterialTheme.colorScheme.primary,
+            contentColor = MaterialTheme.colorScheme.onPrimaryFixed,
+            supportingContentColor = MaterialTheme.colorScheme.onPrimaryFixed,
+            leadingContentColor = MaterialTheme.colorScheme.onPrimaryFixed,
         ),
     )
 }

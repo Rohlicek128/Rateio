@@ -35,7 +35,6 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -48,8 +47,11 @@ import com.rohlicek.rateio.model.CategoryType
 import com.rohlicek.rateio.presentation.category.ItemListRow
 import com.rohlicek.rateio.presentation.components.AdaptiveAsyncImage
 import com.rohlicek.rateio.presentation.components.FloatingIconButton
-import com.rohlicek.rateio.presentation.components.statistics.RatingsTransformationBarChart
+import com.rohlicek.rateio.presentation.components.statistics.RatingBarChartType
+import com.rohlicek.rateio.presentation.components.statistics.RatingsBarChart
 import com.rohlicek.rateio.presentation.components.statistics.StatCardRow
+import com.rohlicek.rateio.presentation.rating.display.getBucketDisplayText
+import com.rohlicek.rateio.presentation.rating.display.getRatingColor
 import com.rohlicek.rateio.presentation.rating.display.getTransformedRating
 
 
@@ -71,16 +73,22 @@ fun ProfileScreen(
         factory = ProfileViewModel.factory(itemRepository, categoryRepository)
     )
     val state by viewModel.state.collectAsState()
+    val settingsState by viewModel.settingsState.collectAsState()
 
-    val haptic = LocalHapticFeedback.current
+    CategoryType.entries.forEach { settingsState.selectedCategories.add(it) }
 
-    CategoryType.entries.forEach { state.selectedCategories.add(it) }
+    val ratingGroups = remember(state.items, settingsState.selectedCategories) {
+        state.items
+            .filter { it.externalSource in settingsState.selectedCategories }
+            .groupBy { if (it.rating != null) getTransformedRating(it.rating) else null }
+    }
+    val bucketGroups = remember(state.items, settingsState.selectedCategories) {
+        state.items
+            .filter { it.externalSource in settingsState.selectedCategories }
+            .groupBy { getBucketDisplayText(it.rating?.let { rating -> getRatingColor(rating) }) }
+    }
 
-    val groups = state.items
-        .filter { it.externalSource in state.selectedCategories }
-        .groupBy { if (it.rating != null) getTransformedRating(it.rating) else null }
-
-    var selectedRatingGroup by remember { mutableStateOf("Null") }
+    var selectedGroup by remember { mutableStateOf("Null") }
 
 
     Scaffold { innerPadding ->
@@ -172,24 +180,27 @@ fun ProfileScreen(
 
                     item {
                         StatCardRow(
-                            itemCount = groups.values.sumOf { it.size },
-                            categoryCount = state.selectedCategories.size,
+                            itemCount = ratingGroups.values.sumOf { it.size },
+                            categoryCount = settingsState.selectedCategories.size,
                             modifier = Modifier.padding(horizontal = 20.dp, vertical = 10.dp),
                         )
                     }
 
                     item {
-                        RatingsTransformationBarChart(
+                        RatingsBarChart(
                             modifier = Modifier.padding(horizontal = 20.dp, vertical = 10.dp),
                             title = "All Ratings",
-                            entries = state.items.filter { it.externalSource in state.selectedCategories },
+                            entries = state.items.filter { it.externalSource in settingsState.selectedCategories },
                             onSelect = {
-                                selectedRatingGroup = it
-                            }
+                                selectedGroup = it
+                            },
+                            type = settingsState.chartType,
+                            onTypeSelect = viewModel::onChartTypeSelect,
+                            showDetailCarousel = true,
                         )
                     }
 
-                    if (selectedRatingGroup != "Null") {
+                    if (selectedGroup != "Null") {
                         item {
                             Card(
                                 shape = RoundedCornerShape(28.dp),
@@ -201,13 +212,16 @@ fun ProfileScreen(
                                 ) {
                                     Text(
                                         modifier = Modifier.padding(horizontal = 20.dp),
-                                        text = selectedRatingGroup,
+                                        text = selectedGroup,
                                         style = MaterialTheme.typography.headlineMedium,
                                         fontWeight = FontWeight.SemiBold,
                                         color = MaterialTheme.colorScheme.onSurface
                                     )
 
-                                    val selectedItems = groups[selectedRatingGroup]
+                                    val selectedItems = when (settingsState.chartType) {
+                                        RatingBarChartType.RATINGS -> ratingGroups[selectedGroup]
+                                        RatingBarChartType.BUCKETS -> bucketGroups[selectedGroup]
+                                    }
                                     if (selectedItems != null) {
                                         ItemListRow(
                                             title = "",

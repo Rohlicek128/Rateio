@@ -26,7 +26,10 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -38,12 +41,21 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.rohlicek.rateio.model.HasDisplayName
 import com.rohlicek.rateio.model.RateItem
+import com.rohlicek.rateio.model.calculateStandardDeviation
+import com.rohlicek.rateio.presentation.components.ConnectedButtonsExpressive
+import com.rohlicek.rateio.presentation.components.HeroCarousel
+import com.rohlicek.rateio.presentation.components.SortOrder
+import com.rohlicek.rateio.presentation.rating.display.RatingColorBuckets
+import com.rohlicek.rateio.presentation.rating.display.RatingTransformation
+import com.rohlicek.rateio.presentation.rating.display.getBucketDisplayText
 import com.rohlicek.rateio.presentation.rating.display.getCurrentRatingColorBuckets
 import com.rohlicek.rateio.presentation.rating.display.getCurrentRatingTransformations
 import com.rohlicek.rateio.presentation.rating.display.getRatingColor
 import com.rohlicek.rateio.presentation.rating.display.getTransformedRating
 import kotlin.math.pow
+import kotlin.math.round
 import kotlin.math.sqrt
 
 data class BarChartEntry(
@@ -53,104 +65,142 @@ data class BarChartEntry(
     val color: Color? = null,
 )
 
+enum class RatingBarChartType(override val displayName: String): HasDisplayName {
+    RATINGS("Ratings"),
+    BUCKETS("Buckets")
+}
 
 @Composable
-fun RatingsTransformationBarChart(
+fun RatingsBarChart(
     modifier: Modifier = Modifier,
     title: String,
     entries: List<RateItem>,
     onSelect: ((String) -> Unit)? = null,
+    type: RatingBarChartType,
+    onTypeSelect: (RatingBarChartType) -> Unit,
     chartHeight: Dp = 236.dp,
-    trailingTitleContent: @Composable (RowScope.() -> Unit)? = null,
+    sortOrder: SortOrder = SortOrder.ASCENDING,
+    startingFraction: Float? = null,
+    showDetailCarousel: Boolean = false,
+    onItemClick: ((RateItem) -> Unit)? = null,
 ) {
+    val roundBellCurve = false
+
+    val barChartEntries = remember(entries, type) {
+        when (type) {
+            RatingBarChartType.RATINGS -> ratingBarChartEntries(entries = entries.filter { it.rating != null }, sortOrder = sortOrder)
+            RatingBarChartType.BUCKETS -> bucketBarChartEntries(entries = entries, sortOrder = sortOrder)
+        }
+    }
+    val entriesCountMax = remember(barChartEntries) {
+        barChartEntries.maxOf { it.itemCount }
+    }
+
+    val flatRatings = remember(entries) {
+        entries.mapNotNull { it.rating }.sortedByDescending { it }
+    }
+    val mean = remember(flatRatings) {
+        flatRatings.average().toFloat()
+    }
+    val deviation = remember(flatRatings, mean) {
+        calculateStandardDeviation(flatRatings, mean) ?: 0f
+    }
+
     val rtf = getCurrentRatingTransformations()
-    val barChartEntries = remember(entries) {
-        val groups = entries.groupBy {
-            it.rating?.let { rating ->
-                getTransformedRating(rating)
-            }
-        }
-        val groupEntries = groups.mapValues {
-            BarChartEntry(
-                label = it.key ?: "Null",
-                itemCount = it.value.size.coerceAtLeast(0),
-                order = it.value.first().rating ?: 0.0f,
-                color = getRatingColor(it.value.last().rating).backgroundColor
-            )
-        }.toMutableMap()
-        for (i in 0..rtf.stepCount.toInt()) {
-            val ratingGroup = getTransformedRating(i.toFloat() / rtf.stepCount.toFloat())
-            groupEntries.putIfAbsent(ratingGroup, BarChartEntry(
-                label = ratingGroup,
-                itemCount = 0,
-                order = i.toFloat() / rtf.stepCount.toFloat(),
-            ))
-        }
-        groupEntries.map { it.value }.sortedBy { it.order }
-    }
 
-    BardChartCard(
+    val fraction = if (mean > 0f) startingFraction else 1f
+    val startingItem = fraction?.let { round((barChartEntries.size - 1) * it).toInt() }
+        ?: round((barChartEntries.size - 1) * mean).toInt()
+
+    var selectedGroup by remember { mutableStateOf("") }
+
+    BarChartCard(
         modifier = modifier,
         title = title,
         entries =  barChartEntries,
-        onSelect = onSelect,
+        onSelect = { selectedGroup = it },
         chartHeight = chartHeight,
-        trailingTitleContent = trailingTitleContent,
+        trailingTitleContent = {
+            ConnectedButtonsExpressive(
+                selectedIndex = RatingBarChartType.entries.indexOf(type),
+                onSelectionChanged = {
+                    RatingBarChartType.entries.getOrNull(it)?.let { selected ->
+                        onTypeSelect(selected)
+                    }
+                },
+                options = RatingBarChartType.entries.map { it.displayName },
+            )
+        },
+        fillFunction = { x: Float ->
+            val probableDensity = bellCurveFunction(x, mean, deviation) * (1f / rtf.stepCount.toFloat()) * flatRatings.size
+            (if (roundBellCurve) round(probableDensity) else probableDensity) / entriesCountMax
+        }.takeIf { type == RatingBarChartType.RATINGS && entries.size > 15 },
+        startingItem = startingItem,
     )
-}
 
-@Composable
-fun RatingsColorBarChart(
-    modifier: Modifier = Modifier,
-    title: String,
-    entries: List<RateItem>,
-    onSelect: ((String) -> Unit)? = null,
-    chartHeight: Dp = 236.dp,
-    trailingTitleContent: @Composable (RowScope.() -> Unit)? = null,
-) {
-    val rcb = getCurrentRatingColorBuckets()
-    val barChartEntries = remember(entries) {
-        val groups = entries.groupBy {
-            it.rating?.let { rating ->
-                getRatingColor(rating)
+    if (showDetailCarousel) {
+        val ratingGroups = remember(entries) {
+            entries
+                .groupBy { if (it.rating != null) getTransformedRating(it.rating) else null }
+                .mapValues { it.value.sortedByDescending { item -> item.rating ?: -1f } }
+        }
+        val bucketGroups = remember(entries) {
+            entries
+                .groupBy { getBucketDisplayText(it.rating?.let { rating -> getRatingColor(rating) }) }
+                .mapValues { it.value.sortedByDescending { item -> item.rating ?: -1f } }
+        }
+        val selectedItems = when (type) {
+            RatingBarChartType.RATINGS -> ratingGroups[selectedGroup]
+            RatingBarChartType.BUCKETS -> bucketGroups[selectedGroup]
+        }
+        val globalIndexOffset = remember(type, selectedGroup) {
+            selectedItems?.firstOrNull()?.rating?.let {
+                val index = flatRatings.indexOfFirst { rating -> (rating - 0.000001f) < it }
+                if (index != -1) index
+                else flatRatings.size - 1
             }
         }
-        val groupEntries = groups.mapValues {
-            BarChartEntry(
-                label = it.key?.equalOrGreaterThen?.let { egt -> "≥${getTransformedRating(egt)}" } ?: "Null",
-                itemCount = it.value.size.coerceAtLeast(0),
-                order = it.key?.equalOrGreaterThen ?: 0.0f,
-                color = it.key?.backgroundColor ?: rcb.nullBucket.backgroundColor
-            )
-        }.toMutableMap()
-        for ((_, element) in rcb.buckets.withIndex()) {
-            groupEntries.putIfAbsent(
-                element, BarChartEntry(
-                label = "≥${getTransformedRating(element.equalOrGreaterThen)}",
-                itemCount = 0,
-                order = element.equalOrGreaterThen ?: 0.0f,
-            ))
-        }
-        groupEntries.map { it.value }.sortedBy { it.order }
-    }
 
-    BardChartCard(
-        modifier = modifier,
-        title = title,
-        entries =  barChartEntries,
-        onSelect = onSelect,
-        chartHeight = chartHeight,
-        trailingTitleContent = trailingTitleContent,
-    )
+        if (!selectedItems.isNullOrEmpty()) {
+            Column(
+                modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(10.dp),
+            ) {
+                Text(
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 18.dp),
+                    text = selectedGroup,
+                    style = MaterialTheme.typography.displaySmall,
+                    color = MaterialTheme.colorScheme.primary.copy(alpha = 0.9f),
+                    fontWeight = FontWeight.Black,
+                )
+                HeroCarousel(
+                    padding = PaddingValues(bottom = 6.dp),
+                    preferredItemWidth = 330.dp,
+                    itemHeight = 186.dp,
+                    items = selectedItems,
+                    subtitleBuilder = { it.subtitle},
+                    showOrderedRank = true,
+                    globalRankOffset = globalIndexOffset,
+                    autoScroll = false,
+                    loop = false,
+                    dotIndicator = true,
+                    placeholderPageCount = 3,
+                    onItemClick = onItemClick,
+                )
+            }
+        }
+    }
 }
 
 @Composable
-private fun BardChartCard(
+private fun BarChartCard(
     modifier: Modifier = Modifier,
     title: String,
     entries: List<BarChartEntry>,
     onSelect: ((String) -> Unit)? = null,
     chartHeight: Dp = 236.dp,
+    fillFunction: ((x: Float) -> Float)? = null,
+    startingItem: Int = entries.size - 1,
     trailingTitleContent: @Composable (RowScope.() -> Unit)? = null,
 ) {
     Card(
@@ -171,7 +221,7 @@ private fun BardChartCard(
                     modifier = Modifier.weight(1f),
                     text = title,
                     style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold,
+                    fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onSurface
                 )
 
@@ -182,7 +232,13 @@ private fun BardChartCard(
             }
 
 
-            BarChart(entries = entries, onSelect = onSelect, chartHeight = chartHeight)
+            BarChart(
+                entries = entries,
+                onSelect = onSelect,
+                chartHeight = chartHeight,
+                fillFunction = fillFunction,
+                startingItem = startingItem,
+            )
         }
     }
 }
@@ -193,12 +249,15 @@ fun BarChart(
     entries: List<BarChartEntry>,
     modifier: Modifier = Modifier,
     chartHeight: Dp = 236.dp,
+    fillFunction: ((x: Float) -> Float)? = null,
     onSelect: ((String) -> Unit)? = null,
+    startingItem: Int = entries.size - 1,
 ) {
     val haptic = LocalHapticFeedback.current
 
-    val regularColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.70f)
-    val trackColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.10f)
+    val regularColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.7f)
+    val trackColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
+    val functionColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
 
     val spacing = 6.dp
     val minItemWidth = 20.dp
@@ -210,9 +269,20 @@ fun BarChart(
 
     val listState = rememberLazyListState()
 
-    LaunchedEffect(key1 = entries.size) {
+    LaunchedEffect(entries.size) {
         if (entries.isNotEmpty()) {
             listState.scrollToItem(entries.size - 1)
+        }
+    }
+
+    LaunchedEffect(startingItem) {
+        if (startingItem in entries.indices) {
+            val layoutInfo = listState.layoutInfo
+            val containerHeight = layoutInfo.viewportSize.height
+            val itemWidth = layoutInfo.visibleItemsInfo.firstOrNull()?.size ?: 0
+
+            val centerOffset = -((containerHeight / 2) - (itemWidth / 2))
+            listState.animateScrollToItem(startingItem, scrollOffset = centerOffset)
         }
     }
 
@@ -273,10 +343,19 @@ fun BarChart(
                                     }),
                                 contentAlignment = Alignment.BottomCenter
                             ) {
+                                if (fillFunction != null && entry.order >= 0f) {
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .fillMaxHeight(fillFunction(entry.order))
+                                            .clip(CircleShape)
+                                            .background(functionColor)
+                                    )
+                                }
                                 Box(
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .fillMaxHeight(if (progress == 0f) 0f else progress)
+                                        .fillMaxHeight(progress)
                                         .clip(CircleShape)
                                         .background(entry.color ?: regularColor)
                                 )
@@ -297,4 +376,76 @@ fun BarChart(
             }
         }
     }
+}
+
+
+fun ratingBarChartEntries(
+    entries: List<RateItem>,
+    sortOrder: SortOrder,
+    rtf: RatingTransformation = getCurrentRatingTransformations()
+): List<BarChartEntry> {
+    val groups = entries
+        .sortedWith(compareByDescending(nullsLast()) { it.rating })
+        .groupBy {
+            it.rating?.let { rating ->
+                getTransformedRating(rating)
+            }
+        }
+    val groupEntries = groups.mapValues {
+        BarChartEntry(
+            label = it.key ?: "Null",
+            itemCount = it.value.size.coerceAtLeast(0),
+            order = it.value.firstOrNull()?.rating ?: -1.0f,
+            color = getRatingColor(it.value.last().rating).backgroundColor
+        )
+    }.toMutableMap()
+    for (i in 0..rtf.stepCount.toInt()) {
+        val ratingGroup = getTransformedRating(i.toFloat() / rtf.stepCount.toFloat())
+        groupEntries.putIfAbsent(ratingGroup, BarChartEntry(
+            label = ratingGroup,
+            itemCount = 0,
+            order = i.toFloat() / rtf.stepCount.toFloat(),
+        ))
+    }
+    return groupEntries.map { it.value }.sortedBy { it.order * (if (sortOrder == SortOrder.DESCENDING) -1f else 1f) }
+}
+
+fun bucketBarChartEntries(
+    entries: List<RateItem>,
+    sortOrder: SortOrder,
+    rcb: RatingColorBuckets = getCurrentRatingColorBuckets()
+): List<BarChartEntry> {
+    val groups = entries
+        .sortedWith(compareByDescending(nullsLast()) { it.rating })
+        .groupBy {
+            it.rating?.let { rating ->
+                getRatingColor(rating)
+            }
+        }
+    val groupEntries = groups.mapValues {
+        BarChartEntry(
+            label = getBucketDisplayText(it.key),
+            itemCount = it.value.size.coerceAtLeast(0),
+            order = it.key?.equalOrGreaterThen ?: -1.0f,
+            color = it.key?.backgroundColor ?: rcb.nullBucket.backgroundColor
+        )
+    }.toMutableMap()
+    for ((_, element) in rcb.buckets.withIndex()) {
+        groupEntries.putIfAbsent(
+            element, BarChartEntry(
+                label = "≥${getTransformedRating(element.equalOrGreaterThen)}",
+                itemCount = 0,
+                order = element.equalOrGreaterThen ?: -1.0f,
+            ))
+    }
+    return groupEntries.map { it.value }.sortedBy { it.order * (if (sortOrder == SortOrder.DESCENDING) -1f else 1f) }
+}
+
+
+fun bellCurveFunction(x: Float, mean: Float, deviation: Float): Float {
+    return (Math.E.pow(-((x - mean).pow(2) / (2.0 * deviation.pow(2)))) / (deviation * sqrt(2.0 * Math.PI))).toFloat()
+}
+
+fun bellCurveProbability(density: Float, width: Float): Float {
+    return density * width
 }

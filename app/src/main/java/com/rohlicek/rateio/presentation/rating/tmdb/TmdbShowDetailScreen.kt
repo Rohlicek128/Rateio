@@ -1,6 +1,5 @@
 package com.rohlicek.rateio.presentation.rating.tmdb
 
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
@@ -17,12 +16,10 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CommentsDisabled
 import androidx.compose.material.icons.filled.HideImage
-import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.ReplayCircleFilled
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.ToggleButtonDefaults
@@ -66,8 +63,6 @@ import com.rohlicek.rateio.presentation.components.DateProgressBar
 import com.rohlicek.rateio.presentation.components.GenreChips
 import com.rohlicek.rateio.presentation.components.HeroCarousel
 import com.rohlicek.rateio.presentation.components.ImageSize
-import com.rohlicek.rateio.presentation.components.statistics.ExternalRatingStatCard
-import com.rohlicek.rateio.presentation.components.statistics.ItemStatCard
 import com.rohlicek.rateio.presentation.components.ModalEnumSelector
 import com.rohlicek.rateio.presentation.components.ModalEpisodeGroupsSelector
 import com.rohlicek.rateio.presentation.components.OrderButton
@@ -82,7 +77,9 @@ import com.rohlicek.rateio.presentation.components.rating.DisplayMode
 import com.rohlicek.rateio.presentation.components.rating.ItemProgressBar
 import com.rohlicek.rateio.presentation.components.rating.getTopRatedChildren
 import com.rohlicek.rateio.presentation.components.statistics.AggregateRatingStatCard
-import com.rohlicek.rateio.presentation.components.statistics.RatingsColorBarChart
+import com.rohlicek.rateio.presentation.components.statistics.ExternalRatingStatCard
+import com.rohlicek.rateio.presentation.components.statistics.ItemStatCard
+import com.rohlicek.rateio.presentation.components.statistics.RatingsBarChart
 import com.rohlicek.rateio.presentation.components.statistics.StatCard
 import com.rohlicek.rateio.presentation.rating.RateItemDetailScreen
 import com.rohlicek.rateio.presentation.rating.display.RatingColorBucketConstants
@@ -98,6 +95,7 @@ import com.rohlicek.rateio.presentation.settings.SettingsTextField
 import com.rohlicek.rateio.utils.bottomShadow
 import com.rohlicek.rateio.utils.formatDate
 import com.rohlicek.rateio.utils.formatTime
+import com.rohlicek.rateio.utils.openExternalLink
 import com.rohlicek.rateio.utils.parseDate
 import kotlinx.serialization.json.Json
 import java.util.Locale
@@ -439,6 +437,12 @@ fun TmdbShowDetailScreen(
                 ratingLabel = showAverage?.let { "Average of ${getTransformedRating(it)}" },
                 ratingColorBucketsOverride = if (!isSaved || ratingByAverage) RatingColorBucketConstants.RC_IMDB_SHOWS else getCurrentRatingColorBuckets(),
                 onRatingSaved = if (!ratingByAverage) onRatingSaved else null,
+                onRatingClick = {
+                    openExternalLink(
+                        context,
+                        url = "https://www.imdb.com/title/${show.externalIds?.imdbId}"
+                    )
+                }.takeIf { !isSaved && show.externalIds?.imdbId != null },
                 //review = if (state.savedItem != null) "" else null,
                 onBackClick = onBackClick,
                 savedInLibrary = state.savedItem != null,
@@ -916,17 +920,14 @@ fun TmdbShowDetailScreen(
                             }
 
                             item {
-                                RatingsColorBarChart(
+                                RatingsBarChart(
                                     modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
                                     entries = childrenGroups.flatMap { it.value },
-                                    title = "${show.name}'s Buckets",
-                                    trailingTitleContent = {
-                                        ConnectedButtonsExpressive(
-                                            selectedIndex = 1,
-                                            onSelectionChanged = {},
-                                            options = listOf("Ratings", "Buckets"),
-                                        )
-                                    }
+                                    title = show.name,
+                                    type = state.chartType,
+                                    onTypeSelect = viewModel::onChartTypeSelect,
+                                    showDetailCarousel = true,
+                                    onItemClick = onChildClick,
                                 )
                             }
                         }

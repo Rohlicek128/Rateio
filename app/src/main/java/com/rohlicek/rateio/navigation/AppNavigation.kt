@@ -512,7 +512,7 @@ fun AppNavigation(
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(150.dp)
+                        .height(175.dp)
                         .background(
                             Brush.verticalGradient(
                                 colors = listOf(

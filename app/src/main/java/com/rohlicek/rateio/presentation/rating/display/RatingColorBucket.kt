@@ -74,6 +74,10 @@ fun getRatingColor(
     return buckets.nullBucket
 }
 
+fun getBucketDisplayText(bucket: RatingColorBucket?): String {
+    return bucket?.equalOrGreaterThen?.let { egt -> "≥${getTransformedRating(egt)}" } ?: "Null"
+}
+
 fun getCurrentRatingColorBuckets(): RatingColorBuckets {
     return RatingColorBucketConstants.currentBuckets
 }

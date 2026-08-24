@@ -11,6 +11,7 @@ import com.rohlicek.rateio.model.HasDisplayName
 import com.rohlicek.rateio.model.ItemStatus
 import com.rohlicek.rateio.model.RateItem
 import com.rohlicek.rateio.presentation.components.SortOrder
+import com.rohlicek.rateio.presentation.components.statistics.RatingBarChartType
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -44,6 +45,8 @@ data class LibraryCategoryState(
 
 data class LibraryCategorySettingsState(
     val statusFilter: ItemStatus? = null,
+
+    val chartType: RatingBarChartType = RatingBarChartType.BUCKETS,
 
     val sortMode: SortModeLibrary = SortModeLibrary.RATING,
     val sortOrder: SortOrder = SortOrder.DESCENDING,
@@ -79,6 +82,10 @@ class LibraryCategoryViewModel(
 
     fun onStatusFilterSelect(status: ItemStatus?) {
         _settingsState.update { it.copy(statusFilter = status) }
+    }
+
+    fun onChartTypeSelect(type: RatingBarChartType) {
+        _settingsState.update { it.copy(chartType = type) }
     }
 
     fun onSortModeSelect(sortMode: SortModeLibrary) {

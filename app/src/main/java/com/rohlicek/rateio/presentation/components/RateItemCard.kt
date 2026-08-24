@@ -100,8 +100,8 @@ fun RateItemCard(
         shape = MaterialTheme.shapes.largeIncreased,
         //containerColor = coverColorSwatch?.rgb?.let { Color(it) } ?: MaterialTheme.colorScheme.primaryContainer,
         //contentColor = coverColorSwatch?.titleTextColor?.let { Color(it) } ?: MaterialTheme.colorScheme.onPrimaryContainer,
-        containerColor = if (rankHighlighted) MaterialTheme.colorScheme.tertiaryContainer else MaterialTheme.colorScheme.surfaceContainerLowest,
-        contentColor = if (rankHighlighted) MaterialTheme.colorScheme.onTertiaryContainer else MaterialTheme.colorScheme.surfaceContainerHighest,
+        containerColor = if (rankHighlighted) MaterialTheme.colorScheme.secondaryContainer else MaterialTheme.colorScheme.surfaceContainerLowest,
+        contentColor = if (rankHighlighted) MaterialTheme.colorScheme.onSecondaryContainer else MaterialTheme.colorScheme.surfaceContainerHighest,
         //containerColor = MaterialTheme.colorScheme.primaryContainer,
         //contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
         //containerColor = ratingColor.backgroundColor,
@@ -414,26 +414,21 @@ fun RateItemGridCardOld(
                     }
 
                     if (rating != null || showNullRatings) {
-                        Surface(
-                            color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.0f),
-                            border = null,
+                        Row(
                             modifier = Modifier
                                 .padding(8.dp)
                                 .align(Alignment.BottomEnd),
+                            horizontalArrangement = Arrangement.End,
+                            verticalAlignment = Alignment.CenterVertically,
                         ) {
-                            Row(
-                                horizontalArrangement = Arrangement.End,
-                                verticalAlignment = Alignment.CenterVertically,
-                            ) {
-                                leadingRateBoxContent?.invoke()
+                            leadingRateBoxContent?.invoke()
 
-                                RateBox(
-                                    rating = rating,
-                                    isLoading = isLoading,
-                                    //decimalOffset = if (rank != null) 1u else 0u
-                                    colorBucketsOverride = colorBucketsOverride,
-                                )
-                            }
+                            RateBox(
+                                rating = rating,
+                                isLoading = isLoading,
+                                //decimalOffset = if (rank != null) 1u else 0u
+                                colorBucketsOverride = colorBucketsOverride,
+                            )
                         }
                     }
 

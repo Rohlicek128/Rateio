@@ -290,6 +290,7 @@ fun ChildrenGridExpressive(
                                         modifier = Modifier
                                             .animateWidth(interactionSource = interactionSource)
                                             .darken(!isHighlighted),
+                                        glowBest = isHighlighted,
                                     )
                                 } else {
                                     Spacer(
@@ -393,6 +394,7 @@ fun ChildrenRowExpressive(
                             modifier = Modifier
                                 .animateWidth(interactionSource = interactionSource)
                                 .darken(!isHighlighted),
+                            glowBest = isHighlighted,
                         )
                     } else {
                         Spacer(

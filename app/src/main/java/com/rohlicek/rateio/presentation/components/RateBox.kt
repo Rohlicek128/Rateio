@@ -52,6 +52,7 @@ fun RateBox(
     colorBucketsOverride: RatingColorBuckets = getCurrentRatingColorBuckets(),
     transformationOverride: RatingTransformation = getCurrentRatingTransformations(),
     isLoading: Boolean = false,
+    glowBest: Boolean = true,
     onClick: (() -> Unit)? = null,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
 ) {
@@ -76,8 +77,9 @@ fun RateBox(
     )
     val currentShape = RoundedCornerShape(animatedRadius)
 
-    val glowProgress = if (colorBucketsOverride.buckets.firstOrNull() == colors && colors.equalOrGreaterThen != null && rating != null) {
-        ((rating - colors.equalOrGreaterThen) / (1f - colors.equalOrGreaterThen)).coerceIn(0f, 1f)
+    val highestBucket = colorBucketsOverride.buckets.firstOrNull()
+    val glowProgress = if (glowBest && highestBucket != null && highestBucket.equalOrGreaterThen != null && rating != null) {
+        ((rating - highestBucket.equalOrGreaterThen) / (1f - highestBucket.equalOrGreaterThen)).coerceIn(0f, 1f)
     } else 0f
 
     Surface(
@@ -87,7 +89,7 @@ fun RateBox(
         border = null,
         modifier = Modifier
             .then(
-                if (glowProgress > 0f)
+                if (glowBest && glowProgress > 0f)
                     Modifier.glow(
                         color = colors.backgroundColor,
                         radius = ((size.textSize.value - 5) * glowProgress + 6).dp,
@@ -96,8 +98,8 @@ fun RateBox(
                     )
                 else Modifier
             )
-            .then(modifier)
             .clip(currentShape)
+            .then(modifier)
             .then(
                 if (onClick != null) Modifier.clickable(
                     onClick = {

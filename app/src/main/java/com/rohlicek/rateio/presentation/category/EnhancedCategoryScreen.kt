@@ -55,7 +55,7 @@ import com.rohlicek.rateio.presentation.components.RowButtonEnumSelector
 import com.rohlicek.rateio.presentation.components.SortByButton
 import com.rohlicek.rateio.presentation.components.SortOrder
 import com.rohlicek.rateio.presentation.components.rating.ParentCompletionText
-import com.rohlicek.rateio.presentation.components.statistics.RatingsColorBarChart
+import com.rohlicek.rateio.presentation.components.statistics.RatingsBarChart
 import com.rohlicek.rateio.presentation.components.statistics.StatCard
 import com.rohlicek.rateio.presentation.rating.display.RatingColorBucketConstants
 import com.rohlicek.rateio.presentation.rating.display.getCurrentRatingColorBuckets
@@ -287,18 +287,13 @@ fun EnhancedCategoryScreen(
                 }
 
                 item {
-                    RatingsColorBarChart(
+                    RatingsBarChart(
                         modifier = Modifier.padding(16.dp),
                         chartHeight = 180.dp,
                         entries = filteredAndSortedItems,
                         title = state.category?.type?.displayName ?: "Library",
-                        trailingTitleContent = {
-                            ConnectedButtonsExpressive(
-                                selectedIndex = 1,
-                                onSelectionChanged = {},
-                                options = listOf("Ratings", "Buckets"),
-                            )
-                        }
+                        type = settingsState.chartType,
+                        onTypeSelect = viewModel::onChartTypeSelect,
                     )
                 }
 
@@ -325,7 +320,7 @@ fun EnhancedCategoryScreen(
                     Row (
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(start = 16.dp, end = 8.dp),
+                            .padding(start = 16.dp, end = 8.dp, top = 16.dp),
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {

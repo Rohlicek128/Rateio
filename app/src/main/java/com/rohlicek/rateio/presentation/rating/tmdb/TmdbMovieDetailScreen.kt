@@ -70,6 +70,7 @@ import com.rohlicek.rateio.utils.formatCompact
 import com.rohlicek.rateio.utils.formatDate
 import com.rohlicek.rateio.utils.formatItemRankLabel
 import com.rohlicek.rateio.utils.formatTime
+import com.rohlicek.rateio.utils.openExternalLink
 import com.rohlicek.rateio.utils.parseDate
 import java.util.Locale
 
@@ -182,7 +183,13 @@ fun TmdbMovieDetailScreen(
                 ratingLabel = savedRank?.let { formatItemRankLabel(it, CategoryType.TMDB_MOVIES) },
                 ratingColorBucketsOverride = if (!isSaved) RatingColorBucketConstants.RC_IMDB_MOVIES else getCurrentRatingColorBuckets(),
                 onRatingSaved = onRatingSaved,
-                review = if (state.savedItem != null) "" else null,
+                onRatingClick = {
+                    openExternalLink(
+                        context,
+                        url = "https://www.imdb.com/title/${movie.imdbId}"
+                    )
+                }.takeIf { !isSaved && movie.imdbId != null },
+                //review = if (state.savedItem != null) "" else null,
                 onBackClick = onBackClick,
                 onOpenSettings = if (isSaved) {
                     { showSettings = true }

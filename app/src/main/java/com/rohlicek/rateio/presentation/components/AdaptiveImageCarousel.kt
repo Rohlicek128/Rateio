@@ -18,6 +18,7 @@ import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -34,6 +35,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -316,6 +318,7 @@ fun HeroCarousel(
     itemHeight: Dp = 220.dp,
     padding: PaddingValues = PaddingValues(16.dp),
     showOrderedRank: Boolean = false,
+    globalRankOffset: Int? = null,
     autoScroll: Boolean = false,
     loop: Boolean = true,
     dotIndicator: Boolean = false,
@@ -326,7 +329,7 @@ fun HeroCarousel(
     showNullRating: Boolean = true,
     colorBucketsOverride: RatingColorBuckets = getCurrentRatingColorBuckets(),
     customRatingTransform: (RateItem) -> Float? = { it.rating },
-    onItemClick: (RateItem) -> Unit,
+    onItemClick: ((RateItem) -> Unit)? = null,
 ) {
     val realPageCount = if (items.isNotEmpty()) items.size else placeholderPageCount
     val shape = MaterialTheme.shapes.extraLarge
@@ -339,6 +342,10 @@ fun HeroCarousel(
     val carouselState = rememberCarouselState(
         initialItem = initialPage
     ) { pageCount }
+
+    LaunchedEffect(items) {
+        carouselState.scrollToItem(0)
+    }
 
     if (autoScroll && doLoop) {
         LaunchedEffect(carouselState) {
@@ -386,7 +393,7 @@ fun HeroCarousel(
                 rating = item?.let { customRatingTransform(it) },
                 imagePath = item?.backdropImageUrl ?: item?.backdropImageLowUrl ?: item?.coverImageUrl ?: item?.coverImageLowUrl,
                 itemHeight = itemHeight,
-                rank = if (showOrderedRank) index + 1 else null,
+                rank = if (showOrderedRank) index + 1 + (globalRankOffset ?: 0) else null,
                 isLoading = isLoading,
                 spoilThumbnail = spoilThumbnail,
                 spoilName = spoilName,
@@ -394,7 +401,7 @@ fun HeroCarousel(
                 showNullRating = showNullRating,
                 showContent = carouselState.currentItem == index,
                 colorBucketsOverride = colorBucketsOverride,
-                onItemClick = if (item != null) {
+                onItemClick = if (item != null && onItemClick != null) {
                     {
                         onItemClick(item)
                     }
@@ -431,12 +438,14 @@ fun HeroItemCard(
     Box(
         modifier = modifier
             .then(clipShape)
-            .clickable {
+            .then(
                 if (onItemClick != null) {
-                    haptic.performHapticFeedback(HapticFeedbackType.Confirm)
-                    onItemClick()
-                }
-            }
+                    Modifier.clickable {
+                        haptic.performHapticFeedback(HapticFeedbackType.Confirm)
+                        onItemClick()
+                    }
+                } else Modifier
+            )
     ) {
         AsyncImage(
             model = imagePath,
@@ -556,8 +565,10 @@ fun CarouselDotsIndicator(
 ) {
     val haptic = LocalHapticFeedback.current
     val coroutineScope = rememberCoroutineScope()
+    val scrollState = rememberScrollState()
 
     Row(
+        modifier = Modifier.horizontalScroll(scrollState),
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {

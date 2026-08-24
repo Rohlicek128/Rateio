@@ -99,6 +99,7 @@ fun RateItemDetailScreen(
     savedInLibrary: Boolean? = null,
     onChangeLibrary: ((Boolean) -> Unit)? = null,
     onRatingSaved: ((Float?) -> Unit)? = null,
+    onRatingClick: (() -> Unit)? = null,
     onReviewSaved: ((String?) -> Unit)? = null,
     onOpenSettings: (() -> Unit)? = null,
     debug: String? = null,
@@ -233,6 +234,7 @@ fun RateItemDetailScreen(
                         ratingLabel = ratingLabel,
                         showNullRating = showNullRating,
                         onRatingSaved = onRatingSaved,
+                        onRatingClick = onRatingClick,
                         colorBucketsOverride = ratingColorBucketsOverride,
                         onPaletteSuccess = { posterPalette = it }
                     )
@@ -395,6 +397,7 @@ private fun DetailHeader(
     showNullRating: Boolean = true,
     colorBucketsOverride: RatingColorBuckets,
     onRatingSaved: ((Float?) -> Unit)? = null,
+    onRatingClick: (() -> Unit)? = null,
     onPaletteSuccess: ((Palette) -> Unit)? = null,
 ) {
     /*val backgroundColor = MaterialTheme.colorScheme.background
@@ -466,6 +469,7 @@ private fun DetailHeader(
             colorBucketsOverride = colorBucketsOverride,
             showNullRating = showNullRating,
             onRatingSaved = onRatingSaved,
+            onRatingClick = onRatingClick,
             onPaletteSuccess = onPaletteSuccess,
         )
 
@@ -504,6 +508,7 @@ private fun PosterWithRating(
     showNullRating: Boolean = true,
     placeholderRatio: Float = 2f / 3f,
     onRatingSaved: ((Float?) -> Unit)? = null,
+    onRatingClick: (() -> Unit)? = null,
     onPaletteSuccess: ((Palette) -> Unit)? = null,
 ) {
     var showRatingSheet by remember { mutableStateOf(false) }
@@ -608,13 +613,19 @@ private fun PosterWithRating(
                     size = RateBoxSizeDefaults.DISPLAY,
                     colorBucketsOverride = colorBucketsOverride,
                     onClick = {
-                        showRatingSheet = true
-                    }.takeIf { onRatingSaved != null }
+                        if (onRatingSaved != null) showRatingSheet = true
+                        onRatingClick?.invoke()
+                    }
                 )
 
-                val labelText = if (ratingVotes != null && ratingVotes > 0) "${formatCompact(ratingVotes.toLong())} votes"
-                else ratingLabel
-                //else null
+                //val labelText = if (ratingVotes != null && ratingVotes > 0) "${formatCompact(ratingVotes.toLong())} votes"
+                //else ratingLabel
+                val labelText = when {
+                    ratingVotes != null && ratingVotes > 0 -> "${formatCompact(ratingVotes.toLong())} votes"
+                    ratingLabel != null -> ratingLabel
+                    onRatingSaved != null -> "Click to Rate"
+                    else -> null
+                }
 
                 if (labelText != null) {
                     Text(

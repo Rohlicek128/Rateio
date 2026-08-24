@@ -61,6 +61,7 @@ import com.rohlicek.rateio.presentation.rating.display.RatingTransformationsCons
 import com.rohlicek.rateio.utils.formatDateCompact
 import com.rohlicek.rateio.utils.formatItemRankLabel
 import com.rohlicek.rateio.utils.formatTime
+import com.rohlicek.rateio.utils.openExternalLink
 
 
 @Composable
@@ -124,6 +125,12 @@ fun TmdbEpisodeDetailScreen(
                     ratingVotes = if (!isSaved) state.imdbRating?.numVotes else null,
                     ratingLabel = savedRank?.let { formatItemRankLabel(it, CategoryType.TMDB_EPISODES) },
                     onRatingSaved = onRatingSaved,
+                    onRatingClick = {
+                        openExternalLink(
+                            context,
+                            url = "https://www.imdb.com/title/${state.episode?.externalIds?.imdbId}"
+                        )
+                    }.takeIf { !isSaved && state.episode?.externalIds?.imdbId != null },
                     onBackClick = onBackClick,
                     debug = (if (!episode.productionCode.isNullOrBlank()) {
                         episode.productionCode + "  "
@@ -356,7 +363,9 @@ private fun FloatingMoveButtonsExpressive(
         customItem(
             buttonGroupContent = {
                 ElevatedButton(
-                    modifier = Modifier.width(buttonWidth).animateWidth(interactionSource = interactionSources[0]),
+                    modifier = Modifier
+                        .width(buttonWidth)
+                        .animateWidth(interactionSource = interactionSources[0]),
                     enabled = previousEpisode != null,
                     onClick = {
                         haptic.performHapticFeedback(HapticFeedbackType.Confirm)
@@ -392,7 +401,9 @@ private fun FloatingMoveButtonsExpressive(
         customItem(
             buttonGroupContent = {
                 ElevatedButton(
-                    modifier = Modifier.width(buttonWidth).animateWidth(interactionSource = interactionSources[1]),
+                    modifier = Modifier
+                        .width(buttonWidth)
+                        .animateWidth(interactionSource = interactionSources[1]),
                     enabled = nextEpisode != null,
                     onClick = {
                         haptic.performHapticFeedback(HapticFeedbackType.Confirm)

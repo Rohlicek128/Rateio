@@ -63,7 +63,7 @@ fun ScreenScaffold(
         targetValue = rawFraction,
         animationSpec = spring(
             dampingRatio = Spring.DampingRatioLowBouncy,
-            stiffness = Spring.StiffnessLow,
+            stiffness = Spring.StiffnessMediumLow,
         ),
         label = "topbar_scroll_fraction",
     )

@@ -22,6 +22,7 @@ import com.rohlicek.rateio.model.HasDisplayName
 import com.rohlicek.rateio.model.RateItem
 import com.rohlicek.rateio.presentation.components.SortOrder
 import com.rohlicek.rateio.presentation.components.rating.DisplayMode
+import com.rohlicek.rateio.presentation.components.statistics.RatingBarChartType
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -72,6 +73,7 @@ data class TmdbShowDetailState(
     val selectedDisplayMode: DisplayMode = DisplayMode.LIST,
     val selectedSortMode: SortModeShow = SortModeShow.SEASON,
     val selectedSortOrder: SortOrder = SortOrder.DESCENDING,
+    val chartType: RatingBarChartType = RatingBarChartType.BUCKETS,
     val collapsedHeaders: MutableSet<String> = mutableStateSetOf(),
     val expandedSeasons: MutableSet<String?> = mutableStateSetOf(),
 
@@ -198,6 +200,10 @@ class TmdbShowDetailViewModel(
 
     fun onDisplayModeSelect(selectedMode: DisplayMode) {
         _state.update { it.copy(selectedDisplayMode = selectedMode) }
+    }
+
+    fun onChartTypeSelect(type: RatingBarChartType) {
+        _state.update { it.copy(chartType = type) }
     }
 
     fun onSortModeSelect(sortMode: SortModeShow) {
