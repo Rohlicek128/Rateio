@@ -63,6 +63,7 @@ import androidx.work.WorkInfo
 import androidx.work.WorkManager
 import com.rohlicek.rateio.data.remote.imdb.ManualSyncWorker
 import com.rohlicek.rateio.data.remote.tmdb.TmdbEpisodeMetadata
+import com.rohlicek.rateio.data.remote.tmdb.TmdbListDetail
 import com.rohlicek.rateio.data.remote.tmdb.TmdbRepository
 import com.rohlicek.rateio.features.home.HomeScreen
 import com.rohlicek.rateio.model.CategoryType
@@ -78,6 +79,7 @@ import com.rohlicek.rateio.presentation.rating.display.RatingTransformationsCons
 import com.rohlicek.rateio.presentation.rating.openlibrary.OLWorkDetailScreen
 import com.rohlicek.rateio.presentation.rating.steam.SteamGameDetailScreen
 import com.rohlicek.rateio.presentation.rating.tmdb.TmdbEpisodeDetailScreen
+import com.rohlicek.rateio.presentation.rating.tmdb.TmdbListDetailScreen
 import com.rohlicek.rateio.presentation.rating.tmdb.TmdbMovieDetailScreen
 import com.rohlicek.rateio.presentation.rating.tmdb.TmdbPersonDetailScreen
 import com.rohlicek.rateio.presentation.rating.tmdb.TmdbShowDetailScreen
@@ -378,6 +380,9 @@ fun AppNavigation(
                     TmdbShowDetailScreen(
                         showId = route.showId,
                         isSaved = false,
+                        onPersonClick = { personId ->
+                            navController.navigate(Route.TmdbPersonDetail(personId))
+                        },
                         onBackClick = { navController.popBackStack() },
                         onEpisodeClick = { _, episodeItem, _ ->
                             val metadata = episodeItem.metadataJSON?.let {
@@ -404,9 +409,12 @@ fun AppNavigation(
                         showId = route.showId,
                         season = route.season,
                         episode = route.episode,
-                        isSaved = false,
-                        onBackClick = { navController.popBackStack() },
                         seasonEpisodeCount = route.seasonEpisodeCount,
+                        isSaved = false,
+                        onPersonClick = { personId ->
+                            navController.navigate(Route.TmdbPersonDetail(personId))
+                        },
+                        onBackClick = { navController.popBackStack() },
                         onNextClick = { nextSeason, nextEpisode, nextEpisodeCount ->
                             navController.navigate(Route.TmdbEpisodeDetail(
                                 route.showId,
@@ -438,7 +446,21 @@ fun AppNavigation(
                         onBackClick = { navController.popBackStack() },
                         onPersonClick = { personId ->
                             navController.navigate(Route.TmdbPersonDetail(personId))
-                        }
+                        },
+                        onListClick = { listId ->
+                            navController.navigate(Route.TmdbListDetail(listId))
+                        },
+                    )
+                }
+
+                composable<Route.TmdbListDetail> { back ->
+                    val route = back.toRoute<Route.TmdbListDetail>()
+                    TmdbListDetailScreen(
+                        listId = route.listId,
+                        onItemClick = { tmdbId ->
+                            navController.navigate(Route.TmdbMovieDetail(tmdbId))
+                        },
+                        onBackClick = { navController.popBackStack() },
                     )
                 }
 
@@ -497,6 +519,9 @@ fun AppNavigation(
                         },
                         onPersonClick = { personId ->
                             navController.navigate(Route.TmdbPersonDetail(personId))
+                        },
+                        onListClick = { listId ->
+                            navController.navigate(Route.TmdbListDetail(listId))
                         },
                         onBackClick = { navController.popBackStack() },
                     )

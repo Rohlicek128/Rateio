@@ -12,17 +12,23 @@ import com.rohlicek.rateio.data.db.ImdbRatingEntity
 import com.rohlicek.rateio.data.remote.imdb.ImdbRatingRepository
 import com.rohlicek.rateio.data.remote.tmdb.TmdbClient
 import com.rohlicek.rateio.data.remote.tmdb.TmdbImageResponse
+import com.rohlicek.rateio.data.remote.tmdb.TmdbListResponse
 import com.rohlicek.rateio.data.remote.tmdb.TmdbReviews
 import com.rohlicek.rateio.data.remote.tmdb.toRateItem
 import com.rohlicek.rateio.data.repository.CategoryRepository
 import com.rohlicek.rateio.data.repository.RateItemRepository
 import com.rohlicek.rateio.model.CategoryType
 import com.rohlicek.rateio.model.RateItem
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlin.math.ceil
 
 
 data class TmdbMovieDetailState(
@@ -30,6 +36,7 @@ data class TmdbMovieDetailState(
     val imdbRating: ImdbRatingEntity? = null,
     val images: TmdbImageResponse? = null,
     val reviews: TmdbReviews? = null,
+    val lists: TmdbListResponse? = null,
     val recommendations: List<RateItem> = emptyList(),
     val savedItem: RateItem? = null,
 
@@ -48,6 +55,7 @@ class TmdbMovieDetailViewModel(
     private val _state = MutableStateFlow(TmdbMovieDetailState())
     val state: StateFlow<TmdbMovieDetailState> = _state.asStateFlow()
 
+    val pageCount = 100
 
     init {
         viewModelScope.launch {
@@ -69,6 +77,23 @@ class TmdbMovieDetailViewModel(
                 launch {
                     val reviews = RateioApplication.instance.tmdbClient.tmdb.getMovieReviews(id)
                     _state.update { it.copy(reviews = reviews) }
+                }
+
+                launch {
+                    val pageNumbers = ceil(pageCount / 20f).toInt()
+
+                    val allListResults = coroutineScope {
+                        (1..pageNumbers).map { page ->
+                            async(Dispatchers.IO) {
+                                RateioApplication.instance.tmdbClient.tmdb.getMovieList(id, page = page)
+                            }
+                        }.awaitAll()
+                    }
+                    val allResults = allListResults.flatMap { it.results }
+
+                    _state.update {
+                        it.copy(lists = allListResults.takeIf { lists -> lists.isNotEmpty() }?.firstOrNull()?.copy(results = allResults))
+                    }
                 }
 
                 launch {

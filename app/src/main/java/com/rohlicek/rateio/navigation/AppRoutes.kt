@@ -45,6 +45,8 @@ sealed interface Route {
         val seasonEpisodeCount: Int? = null,
     ) : Route
 
+    @Serializable data class TmdbListDetail(val listId: Int) : Route
+
     @Serializable data class TmdbPersonDetail(val personId: Int) : Route
 
     @Serializable data class SteamGameDetail(val appId: String) : Route

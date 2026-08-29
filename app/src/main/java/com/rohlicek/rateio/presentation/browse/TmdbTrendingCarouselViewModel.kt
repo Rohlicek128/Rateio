@@ -59,7 +59,7 @@ class TmdbTrendingCarouselViewModel(
                         RateItem(
                             id = 0,
                             categoryId = 0,
-                            title = movie.title,
+                            title = movie.title ?: "N/A",
                             subtitle = movie.releaseDate?.take(4),
                             backdropImageUrl = movie.backdropPath?.let { "https://image.tmdb.org/t/p/w1280$it" },
                             backdropImageLowUrl = movie.backdropPath?.let { "https://image.tmdb.org/t/p/w780$it" },

@@ -42,11 +42,13 @@ class DiscoverViewModel(
                 val results = when (category) {
                     CategoryType.TMDB_SHOWS -> RateioApplication.instance.tmdbClient.tmdb.discoverShows(
                         sortBy = sortBy,
+                        minVoteAverage = 6.0,
                         airDateGte = today.minusMonths(6).toString(),
                         airDateLte = today.toString(),
                     ).results.map { it.toRateItem() }
                     CategoryType.TMDB_MOVIES -> RateioApplication.instance.tmdbClient.tmdb.discoverMovies(
                         sortBy = sortBy,
+                        minVoteAverage = 5.5,
                         releaseDateGte = today.minusMonths(6).toString(),
                         releaseDateLte = today.toString(),
                     ).results.map { it.toRateItem() }

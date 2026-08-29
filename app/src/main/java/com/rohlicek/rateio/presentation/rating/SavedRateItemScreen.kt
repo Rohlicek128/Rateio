@@ -30,6 +30,7 @@ fun SavedRateItemScreen(
     tmdbRepository: TmdbRepository,
     onChildClick: (childId: Long, parentId: Long) -> Unit,
     onPersonClick: (Int) -> Unit,
+    onListClick: (Int) -> Unit,
     onBackClick: () -> Unit,
 ) {
     val context = LocalContext.current
@@ -73,6 +74,7 @@ fun SavedRateItemScreen(
                         onStatusSaved = viewModel::updateStatus,
                         onCoverOverrideSaved = viewModel::updateCoverOverride,
                         onMetadataSaved = viewModel::updateMetadata,
+                        onPersonClick = onPersonClick,
                         onBackClick = onBackClick,
                         onEpisodeClick = { seasonItem, episodeItem, saveRatings ->
                             viewModel.findOrCreateChildAndNavigate(
@@ -102,6 +104,7 @@ fun SavedRateItemScreen(
                             savedRank = state.itemRank,
                             onRatingSaved = viewModel::saveRatingAndComplete,
                             seasonEpisodeCount = metadata.seasonEpisodeCount,
+                            onPersonClick = onPersonClick,
                             onBackClick = onBackClick,
                             onNextClick = { nextSeason, nextEpisode, nextEpisodeCount ->
                                 viewModel.findOrCreateEpisodeAndNavigate(
@@ -134,6 +137,7 @@ fun SavedRateItemScreen(
                         onStatusSaved = viewModel::updateStatus,
                         onCoverOverrideSaved = viewModel::updateCoverOverride,
                         onPersonClick = onPersonClick,
+                        onListClick = onListClick,
                         onBackClick = onBackClick,
                     )
                 }

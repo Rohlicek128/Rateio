@@ -49,8 +49,8 @@ fun LazyListScope.showBrowseSection(
     item {
         SettingListItem(
             modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp),
-            title = "Top Rated",
-            description = "Leaderboard of ${CategoryType.TMDB_SHOWS.displayName}",
+            title = "Leaderboard",
+            description = "Sorted list of ${CategoryType.TMDB_SHOWS.displayName}",
             icon = Icons.Default.Leaderboard,
             position = ListItemPosition.SINGLE,
             onClick = { onTopRatedClick(CategoryType.TMDB_SHOWS) },

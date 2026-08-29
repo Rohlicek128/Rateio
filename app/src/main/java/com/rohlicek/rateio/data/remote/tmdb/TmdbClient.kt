@@ -18,7 +18,7 @@ class TmdbClient(private val preferences: SyncPreferences) {
 
         val savedToken = runBlocking {
             preferences.tmdbApiToken.first()
-        } //.ifBlank { BuildConfig.TMDB_API_KEY }
+        } .ifBlank { BuildConfig.TMDB_API_KEY }
 
         val requestBuilder = originalRequest.newBuilder()
             .header("accept", "application/json")
@@ -51,11 +51,4 @@ class TmdbClient(private val preferences: SyncPreferences) {
         .addConverterFactory(GsonConverterFactory.create())
         .build()
         .create(TmdbService::class.java)
-
-    /*val imdb: ImdbService = Retrofit.Builder()
-        .baseUrl("https://api.imdbapi.dev/")
-        .client(okHttpClient)
-        .addConverterFactory(GsonConverterFactory.create())
-        .build()
-        .create(ImdbService::class.java)*/
 }

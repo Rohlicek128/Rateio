@@ -48,8 +48,8 @@ fun LazyListScope.movieBrowseSection(
     item {
         SettingListItem(
             modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp),
-            title = "Top Rated",
-            description = "Leaderboard of ${CategoryType.TMDB_MOVIES.displayName}",
+            title = "Leaderboard",
+            description = "Sorted list of ${CategoryType.TMDB_MOVIES.displayName}",
             icon = Icons.Default.Leaderboard,
             position = ListItemPosition.SINGLE,
             onClick = { onTopRatedClick(CategoryType.TMDB_MOVIES) },

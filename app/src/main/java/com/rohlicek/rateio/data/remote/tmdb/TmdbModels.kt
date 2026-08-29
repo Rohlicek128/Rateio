@@ -4,8 +4,11 @@ import com.rohlicek.rateio.model.CategoryType
 import com.rohlicek.rateio.model.RateItem
 import com.rohlicek.rateio.presentation.components.CarouselImage
 import com.google.gson.annotations.SerializedName
+import com.rohlicek.rateio.presentation.leaderboard.DiscoverSortBy
+import com.rohlicek.rateio.utils.formatDate
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
+import java.util.Locale
 
 
 data class TmdbShowSearchResponse(
@@ -22,6 +25,7 @@ data class TmdbShow(
     @SerializedName("first_air_date") val firstAirDate: String?,
     @SerializedName("vote_average") val voteAverage: Float?,
     @SerializedName("vote_count") val voteCount: Int?,
+    @SerializedName("popularity") val popularity: Float?,
     @SerializedName("origin_country") val originCountry: List<String>,
 )
 
@@ -234,14 +238,18 @@ data class TmdbMovieSearchResponse(
 
 data class TmdbMovie(
     @SerializedName("id") val id: Int,
-    @SerializedName("title") val title: String,
+    @SerializedName("title") val title: String?,
     @SerializedName("overview") val overview: String?,
     @SerializedName("poster_path") val posterPath: String?,
     @SerializedName("backdrop_path") val backdropPath: String?,
+
     @SerializedName("release_date") val releaseDate: String?,
+    @SerializedName("original_language") val originalLanguage: String?,
+    @SerializedName("genre_ids") val genreIds: List<String>,
+
     @SerializedName("vote_average") val voteAverage: Float?,
     @SerializedName("vote_count") val voteCount: Int?,
-    @SerializedName("original_language") val originalLanguage: String?,
+    @SerializedName("popularity") val popularity: Float?,
 )
 
 data class TmdbMovieDetail(
@@ -341,6 +349,39 @@ data class TmdbAuthorDetail(
 )
 
 
+data class TmdbListResponse(
+    @SerializedName("page") val page: Int,
+    @SerializedName("total_pages") val totalPages: Int,
+    @SerializedName("total_results") val totalResults: Int,
+    @SerializedName("results") val results: List<TmdbList>,
+)
+
+data class TmdbList(
+    @SerializedName("id") val id: String?,
+    @SerializedName("name") val name: String?,
+    @SerializedName("description") val description: String?,
+    @SerializedName("iso_639_1") val languageIso: String?,
+    @SerializedName("created_by") val createdBy: String?,
+    @SerializedName("poster_path") val posterPath: String?,
+    @SerializedName("item_count") val itemCount: Int?,
+    @SerializedName("favorite_count") val favoriteCount: Int?,
+)
+
+data class TmdbListDetail(
+    @SerializedName("id") val id: String?,
+    @SerializedName("name") val name: String?,
+    @SerializedName("description") val description: String?,
+    @SerializedName("iso_639_1") val languageIso: String?,
+    @SerializedName("created_by") val createdBy: String?,
+    @SerializedName("poster_path") val posterPath: String?,
+
+    @SerializedName("item_count") val itemCount: Int?,
+    @SerializedName("favorite_count") val favoriteCount: Int?,
+
+    @SerializedName("items") val items: List<TmdbMovie>,
+)
+
+
 @Serializable
 data class TmdbShowMetadata(
     val showSpoilers: Boolean = true,
@@ -372,11 +413,15 @@ fun TmdbEpisodeGroupEpisode.toEpisodeSummary() = TmdbEpisodeSummary(
 )
 
 
-fun TmdbShow.toRateItem(categoryId: Long = 0, weight: Float = 1f) = RateItem(
+fun TmdbShow.toRateItem(categoryId: Long = 0, weight: Float = 1f, subtitleOverride: DiscoverSortBy? = null) = RateItem(
     id = 0,
     categoryId = categoryId,
     title = name,
-    subtitle = firstAirDate?.take(4),
+    subtitle = when (subtitleOverride) {
+        DiscoverSortBy.RELEASE_DATE -> formatDate(firstAirDate)
+        DiscoverSortBy.POPULARITY -> popularity?.let { "%.1f".format(Locale.US, it) } ?: "N/A"
+        else -> firstAirDate?.take(4)
+    },
     coverImageUrl = posterPath?.let { "https://image.tmdb.org/t/p/original$it" },
     coverImageLowUrl = posterPath?.let { "https://image.tmdb.org/t/p/w342$it" },
     backdropImageUrl = backdropPath?.let { "https://image.tmdb.org/t/p/w1280$it" },
@@ -451,11 +496,15 @@ fun TmdbEpisodeSummary.toRateItem(categoryId: Long = 0, showId: Int, parentId: L
 )
 
 
-fun TmdbMovie.toRateItem(categoryId: Long = 0, weight: Float = 1f) = RateItem(
+fun TmdbMovie.toRateItem(categoryId: Long = 0, weight: Float = 1f, subtitleOverride: DiscoverSortBy? = null) = RateItem(
     id = 0,
     categoryId = categoryId,
-    title = title,
-    subtitle = releaseDate?.take(4),
+    title = title ?: "N/A",
+    subtitle = when (subtitleOverride) {
+        DiscoverSortBy.RELEASE_DATE -> formatDate(releaseDate)
+        DiscoverSortBy.POPULARITY -> popularity?.let { "%.1f".format(Locale.US, it) } ?: "N/A"
+        else -> releaseDate?.take(4)
+    },
     coverImageUrl = posterPath?.let { "https://image.tmdb.org/t/p/original$it" },
     coverImageLowUrl = posterPath?.let { "https://image.tmdb.org/t/p/w342$it" },
     backdropImageUrl = backdropPath?.let { "https://image.tmdb.org/t/p/w1280$it" },

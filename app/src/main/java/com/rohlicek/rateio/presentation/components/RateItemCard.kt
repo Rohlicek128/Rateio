@@ -82,6 +82,7 @@ fun RateItemCard(
     spoilName: Boolean = true,
     titleStyle: TextStyle = MaterialTheme.typography.titleMedium,
     preciseRatings: Boolean = false,
+    showNullRating: Boolean = true,
     leadingRateBoxContent: @Composable (() -> Unit)? = null,
 ) {
     val haptic = LocalHapticFeedback.current
@@ -218,12 +219,14 @@ fun RateItemCard(
                     modifier = Modifier.padding(vertical = 5.dp),
                 ) {
                     leadingRateBoxContent?.invoke()
-                    RateBox(
-                        rating = rating,
-                        isLoading = isLoading,
-                        decimalOffset = if (preciseRatings) 1u else 0u,
-                        colorBucketsOverride = colorBucketsOverride,
-                    )
+                    if (showNullRating || rating != null) {
+                        RateBox(
+                            rating = rating,
+                            isLoading = isLoading,
+                            decimalOffset = if (preciseRatings) 1u else 0u,
+                            colorBucketsOverride = colorBucketsOverride,
+                        )
+                    }
                 }
             },
         )

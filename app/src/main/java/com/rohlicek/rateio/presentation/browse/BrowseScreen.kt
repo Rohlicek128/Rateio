@@ -110,7 +110,7 @@ fun BrowseScreen(
                 emptyContent = {
                     Text(
                         if (state.query.isBlank()) "Search for something"
-                        else "No results for \"${state.error}\"",
+                        else "No results for \"${state.query}\"",
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 },

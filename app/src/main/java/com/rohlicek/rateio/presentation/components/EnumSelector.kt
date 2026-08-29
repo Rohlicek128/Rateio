@@ -57,9 +57,9 @@ import com.rohlicek.rateio.model.HasDisplayName
 import com.rohlicek.rateio.model.ItemStatus
 
 
-enum class SortOrder(override val displayName: String) : HasDisplayName {
-    ASCENDING("Ascending"),
-    DESCENDING("Descending"),
+enum class SortOrder(override val displayName: String, val value: String) : HasDisplayName {
+    ASCENDING("Ascending", "asc"),
+    DESCENDING("Descending", "desc"),
 }
 
 

@@ -1,6 +1,5 @@
 package com.rohlicek.rateio.presentation.rating.tmdb
 
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -13,14 +12,12 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.ReplayCircleFilled
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.ToggleButtonDefaults
@@ -51,13 +48,14 @@ import com.rohlicek.rateio.presentation.components.CollapsibleHeader
 import com.rohlicek.rateio.presentation.components.CrewPersonRow
 import com.rohlicek.rateio.presentation.components.GenreChips
 import com.rohlicek.rateio.presentation.components.ImageSize
-import com.rohlicek.rateio.presentation.components.statistics.ExternalRatingStatCard
-import com.rohlicek.rateio.presentation.components.statistics.ItemStatCard
 import com.rohlicek.rateio.presentation.components.ModalEnumSelector
 import com.rohlicek.rateio.presentation.components.PersonCard
+import com.rohlicek.rateio.presentation.components.RateItemCard
 import com.rohlicek.rateio.presentation.components.ReviewCard
 import com.rohlicek.rateio.presentation.components.ScreenError
 import com.rohlicek.rateio.presentation.components.ScreenLoading
+import com.rohlicek.rateio.presentation.components.statistics.ExternalRatingStatCard
+import com.rohlicek.rateio.presentation.components.statistics.ItemStatCard
 import com.rohlicek.rateio.presentation.rating.RateItemDetailScreen
 import com.rohlicek.rateio.presentation.rating.display.RatingColorBucketConstants
 import com.rohlicek.rateio.presentation.rating.display.RatingTransformationsConstants
@@ -66,6 +64,7 @@ import com.rohlicek.rateio.presentation.settings.ListItemPosition
 import com.rohlicek.rateio.presentation.settings.ModalSettings
 import com.rohlicek.rateio.presentation.settings.SettingListItem
 import com.rohlicek.rateio.presentation.settings.SettingsTextField
+import com.rohlicek.rateio.presentation.settings.SettingsValueText
 import com.rohlicek.rateio.utils.formatCompact
 import com.rohlicek.rateio.utils.formatDate
 import com.rohlicek.rateio.utils.formatItemRankLabel
@@ -85,6 +84,7 @@ fun TmdbMovieDetailScreen(
     onStatusSaved: ((ItemStatus) -> Unit)? = null,
     onCoverOverrideSaved: ((String?) -> Unit)? = null,
     onPersonClick: ((Int) -> Unit)? = null,
+    onListClick: ((Int) -> Unit)? = null,
     onBackClick: () -> Unit,
 ) {
     val context = LocalContext.current
@@ -367,7 +367,7 @@ fun TmdbMovieDetailScreen(
                                     horizontalArrangement = Arrangement.spacedBy(10.dp),
                                 ) {
                                     movie.credits?.cast?.takeIf { it.isNotEmpty() }?.let { cast ->
-                                        items(cast.take(25), key = { it.creditId }) { member ->
+                                        items(cast, key = { it.creditId }) { member ->
                                             PersonCard(
                                                 name = member.name,
                                                 position = member.character,
@@ -521,6 +521,43 @@ fun TmdbMovieDetailScreen(
                                     },
                                     colorBucketsOverride = RatingColorBucketConstants.RC_IMDB_MOVIES,
                                 )
+                            }
+                        }
+                    }
+
+                    // Lists
+                    state.lists?.results.takeIf { !it.isNullOrEmpty() }?.let { lists ->
+                        item {
+                            val headerName = "Lists"
+                            CollapsibleHeader(
+                                headerName,
+                                isOpened = headerName !in state.collapsedHeaders,
+                                onClick = {
+                                    if (it) state.collapsedHeaders.remove(headerName)
+                                    else state.collapsedHeaders.add(headerName)
+                                }
+                            ) {
+                                Column(
+                                    verticalArrangement = Arrangement.spacedBy(6.dp),
+                                ) {
+                                    lists.forEach { list ->
+                                        RateItemCard(
+                                            title = list.name ?: "N/A",
+                                            subtitle = list.description?.takeIf { it.isNotBlank() },
+                                            coverImagePath = list.posterPath,
+                                            rating = null,
+                                            showNullRating = false,
+                                            onClick = {
+                                                list.id?.toIntOrNull()?.let {
+                                                    onListClick?.invoke(it)
+                                                }
+                                            },
+                                            leadingRateBoxContent = {
+                                                SettingsValueText(list.itemCount?.toString() ?: "N/A")
+                                            },
+                                        )
+                                    }
+                                }
                             }
                         }
                     }

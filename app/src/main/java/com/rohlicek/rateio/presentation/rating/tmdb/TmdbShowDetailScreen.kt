@@ -112,6 +112,7 @@ fun TmdbShowDetailScreen(
     onStatusSaved: ((ItemStatus) -> Unit)? = null,
     onCoverOverrideSaved: ((String?) -> Unit)? = null,
     onMetadataSaved: ((String?) -> Unit)? = null,
+    onPersonClick: ((Int) -> Unit)? = null,
     onBackClick: () -> Unit,
     onEpisodeClick: (seasonItem: RateItem, episodeItem: RateItem, saveRatings: Boolean) -> Unit,
 ) {
@@ -720,6 +721,9 @@ fun TmdbShowDetailScreen(
                                             profilePath = member.profilePath?.let { "https://image.tmdb.org/t/p/w185$it" },
                                             width = 80.dp,
                                             height = 100.dp,
+                                            onClick = {
+                                                onPersonClick?.invoke(member.id)
+                                            },
                                         )
                                     }
                                 }
@@ -750,6 +754,9 @@ fun TmdbShowDetailScreen(
                                                 name = member.name,
                                                 position = member.character,
                                                 profilePath = member.profilePath?.let { "https://image.tmdb.org/t/p/w185$it" },
+                                                onClick = {
+                                                    onPersonClick?.invoke(member.id)
+                                                },
                                             )
                                         }
                                     }
